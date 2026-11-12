@@ -35,7 +35,11 @@ import java.util.Map;
 public class MainActivity extends Activity {
     static final String HOST = "appassets.androidplatform.net";
     static final String PREFIX = "/assets/www/";
-    static final String REMOTE = "https://raw.githubusercontent.com/dl74284014-eng/Six-Lands/main/app/src/main/assets/www/";
+    static final String REPO = "dl74284014-eng/Six-Lands";
+    static final String PATH = "/app/src/main/assets/www/";
+    private volatile String remoteBase = "https://raw.githubusercontent.com/" + REPO + "/main" + PATH;
+    private volatile String status = "проверка обновлений...";
+    private volatile int fetched = 0;
 
     private WebView web;
     private final Map<String, String> bundled = new HashMap<>();
@@ -76,12 +80,17 @@ public class MainActivity extends Activity {
 
         new Thread(() -> {
             try {
-                byte[] m = download(REMOTE + "manifest.json?t=" + System.currentTimeMillis(), 5000);
+                String rev = null;
+                byte[] c = download("https://api.github.com/repos/" + REPO + "/commits/main", 6000);
+                if (c != null) rev = new JSONObject(new String(c, "UTF-8")).getString("sha");
+                if (rev != null) remoteBase = "https://raw.githubusercontent.com/" + REPO + "/" + rev + PATH;
+                byte[] m = download(remoteBase + "manifest.json", 8000);
+                status = m != null ? ("онлайн, сборка " + (rev != null ? rev.substring(0, 7) : "main")) : "нет связи, офлайн-версия";
                 if (m != null) {
                     remote = parse(new String(m, "UTF-8"));
                     write(new File(cacheDir, "manifest.json"), m);
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) { status = "нет связи, офлайн-версия"; }
             if (remote == null) {
                 try { remote = parse(new String(readFile(new File(cacheDir, "manifest.json")), "UTF-8")); } catch (Exception ignored) {}
             }
@@ -101,8 +110,9 @@ public class MainActivity extends Activity {
             } else if (want != null && f.exists() && h.exists() && want.equals(new String(readFile(h), "UTF-8"))) {
                 data = readFile(f);
             } else if (want != null && remote != null) {
-                data = download(REMOTE + rel + "?v=" + want, 15000);
-                if (data != null) { f.getParentFile().mkdirs(); write(f, data); write(h, want.getBytes("UTF-8")); }
+                data = download(remoteBase + rel, 15000);
+                if (data != null && !want.equals(sha16(data))) data = null;
+                if (data != null) { f.getParentFile().mkdirs(); write(f, data); write(h, want.getBytes("UTF-8")); fetched++; }
             }
             if (data == null && f.exists()) data = readFile(f);
             if (data == null) data = readAll(getAssets().open("www/" + rel));
@@ -115,6 +125,15 @@ public class MainActivity extends Activity {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    static String sha16(byte[] d) {
+        try {
+            byte[] h = java.security.MessageDigest.getInstance("SHA-1").digest(d);
+            StringBuilder sb = new StringBuilder();
+            for (byte b : h) sb.append(String.format("%02x", b));
+            return sb.substring(0, 16);
+        } catch (Exception e) { return ""; }
     }
 
     static String mime(String p) {
@@ -143,6 +162,8 @@ public class MainActivity extends Activity {
             c.setConnectTimeout(timeout);
             c.setReadTimeout(timeout * 3);
             c.setUseCaches(false);
+            c.setRequestProperty("User-Agent", "SixLands-Android");
+            c.setRequestProperty("Cache-Control", "no-cache");
             if (c.getResponseCode() != 200) return null;
             return readAll(c.getInputStream());
         } catch (Exception e) {
@@ -174,6 +195,8 @@ public class MainActivity extends Activity {
     class Bridge {
         @JavascriptInterface
         public void exit() { runOnUiThread(() -> finishAndRemoveTask()); }
+        @JavascriptInterface
+        public String status() { return status + (fetched > 0 ? ", скачано файлов: " + fetched : ""); }
     }
 
     @Override protected void onPause() { super.onPause(); web.onPause(); }

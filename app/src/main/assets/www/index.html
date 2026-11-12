@@ -381,7 +381,7 @@ html.noanim *,html.noanim *::before,html.noanim *::after{animation:none!importan
 <style id="imgcss"></style>
 
 <script>
-const BUILD_VER="12.11.2026 10:04";
+const BUILD_VER="12.11.2026 10:09";
 const KEY='tiholesye-v3';
 const I=k=>`<i class="ico i-${k}"></i>`;
 
@@ -2123,6 +2123,7 @@ renderAudio();
 
 /* ---------- меню, настройки, главный экран ---------- */
 const IS_APP=!!window.AndroidApp;
+const appStatus=()=>{try{return window.AndroidApp&&AndroidApp.status?AndroidApp.status():''}catch(e){return''}};
 const SET={music:.6,sfx:.6,anim:true,big:false};
 try{Object.assign(SET,JSON.parse(localStorage.getItem('sixlands-settings')||'{}'))}catch(e){}
 function setSave(){try{localStorage.setItem('sixlands-settings',JSON.stringify(SET))}catch(e){}}
@@ -2151,7 +2152,7 @@ function showTitle(){
       ${IS_APP?'<button class="btn ghost" id="tExit">Выход</button>':''}
     </div>
     <div class="tem">${CK.map(c=>`<i class="ico em i-em-${c}" title="${CULTURES[c].n}"></i>`).join('')}</div>
-    <div class="tver">версия ${BUILD_VER}</div></div>`;
+    <div class="tver">версия ${BUILD_VER}${appStatus()?`<br>${appStatus()}`:''}</div></div>`;
   t.hidden=false;
   const on=(id,f)=>{const b=$('#'+id);if(b)b.onclick=()=>{sfx('card');f()}};
   on('tCont',()=>{hideTitle();render();if(AU.musicOn&&!AU.playing)musicStart()});
@@ -2178,7 +2179,7 @@ function openSettings(){
     <div class="setgrp"><h3>Звук</h3>${tg('stMusOn','Музыка',AU.musicOn)}${sl('stMus','Громкость музыки',SET.music)}${tg('stSfxOn','Звуки',AU.sfxOn)}${sl('stSfx','Громкость звуков',SET.sfx)}</div>
     <div class="setgrp"><h3>Экран</h3>${tg('stAnim','Анимации',SET.anim,'Раздача карт, вспышки, смена сезона')}${tg('stBig','Крупный текст',SET.big)}</div>
     <div class="setgrp"><h3>Игра</h3><div class="row"><button class="btn ghost" id="stRename">Переименовать деревню</button><button class="btn ghost danger-t" id="stReset">Удалить сохранение</button></div></div>
-    <div class="small muted">Шесть Земель · версия ${BUILD_VER}${IS_APP?' · обновления приходят сами при запуске с интернетом':''}</div>
+    <div class="small muted">Шесть Земель · версия ${BUILD_VER}${IS_APP?` · ${appStatus()||'обновления приходят сами при запуске с интернетом'}`:''}</div>
     <button class="btn" id="stOk">Готово</button>`,true);
   const v=id=>$('#'+id);
   v('stMusOn').onchange=e=>{AU.musicOn=e.target.checked;auSave();AU.musicOn?musicStart():musicStop();renderAudio()};
