@@ -398,7 +398,7 @@ body{overflow-x:hidden}
 <style id="imgcss"></style>
 
 <script>
-const BUILD_VER="12.11.2026 10:22";
+const BUILD_VER="12.11.2026 10:35";
 const KEY='tiholesye-v3';
 const I=k=>`<i class="ico i-${k}"></i>`;
 
@@ -2198,7 +2198,7 @@ function openSettings(){
   openModal(`<h2>Настройки</h2>
     <div class="setgrp"><h3>Звук</h3>${tg('stMusOn','Музыка',AU.musicOn)}${sl('stMus','Громкость музыки',SET.music)}${tg('stSfxOn','Звуки',AU.sfxOn)}${sl('stSfx','Громкость звуков',SET.sfx)}</div>
     <div class="setgrp"><h3>Экран</h3>${tg('stAnim','Анимации',SET.anim,'Раздача карт, вспышки, смена сезона')}${tg('stBig','Крупный текст',SET.big)}</div>
-    <div class="setgrp"><h3>Игра</h3><div class="row"><button class="btn ghost" id="stRename">Переименовать деревню</button><button class="btn ghost danger-t" id="stReset">Удалить сохранение</button></div></div>
+    <div class="setgrp"><h3>Игра</h3><div class="row"><button class="btn ghost" id="stRename">Переименовать деревню</button><button class="btn ghost danger-t" id="stReset">Удалить сохранение</button>${IS_APP&&window.AndroidApp.checkNow?'<button class="btn ghost" id="stUpd">Проверить обновления</button>':''}</div></div>
     <div class="small muted">Шесть Земель · версия ${BUILD_VER}${IS_APP?` · ${appStatus()||'обновления приходят сами при запуске с интернетом'}`:''}</div>
     <button class="btn" id="stOk">Готово</button>`,true);
   const v=id=>$('#'+id);
@@ -2212,6 +2212,7 @@ function openSettings(){
   v('stRename').onclick=()=>{openModal(`<h2>Название деревни</h2><input type="text" id="rnI" maxlength="28" value="${esc(s.name||'')}"><div class="row"><button class="btn" id="rnOk">Сохранить</button><button class="btn ghost" id="rnX">Отмена</button></div>`,true);
     $('#rnX').onclick=openSettings;$('#rnOk').onclick=()=>{const n=$('#rnI').value.trim();if(n){s.name=n;save();render()}openSettings()}};
   v('stReset').onclick=()=>confirmBox('Удалить сохранение?','Деревня, армия и весь прогресс будут стёрты. Это нельзя отменить.','Удалить',()=>{try{localStorage.removeItem(KEY)}catch(e){}location.reload()});
+  {const u=$('#stUpd');if(u)u.onclick=()=>{try{AndroidApp.checkNow()}catch(e){}toast('Проверяю обновления… Если есть новая версия, игра перезагрузится.')}}
   v('stOk').onclick=closeModal;
 }
 function howTo(){

@@ -79,22 +79,47 @@ public class MainActivity extends Activity {
         setContentView(web);
 
         new Thread(() -> {
-            try {
-                String rev = null;
-                byte[] c = download("https://api.github.com/repos/" + REPO + "/commits/main", 6000);
-                if (c != null) rev = new JSONObject(new String(c, "UTF-8")).getString("sha");
-                if (rev != null) remoteBase = "https://raw.githubusercontent.com/" + REPO + "/" + rev + PATH;
-                byte[] m = download(remoteBase + "manifest.json", 8000);
-                status = m != null ? ("онлайн, сборка " + (rev != null ? rev.substring(0, 7) : "main")) : "нет связи, офлайн-версия";
-                if (m != null) {
-                    remote = parse(new String(m, "UTF-8"));
-                    write(new File(cacheDir, "manifest.json"), m);
-                }
-            } catch (Exception ignored) { status = "нет связи, офлайн-версия"; }
+            checkUpdate();
             if (remote == null) {
                 try { remote = parse(new String(readFile(new File(cacheDir, "manifest.json")), "UTF-8")); } catch (Exception ignored) {}
             }
             runOnUiThread(() -> web.loadUrl("https://" + HOST + PREFIX + "index.html"));
+        }).start();
+    }
+
+    private volatile String currentRev = null;
+    private volatile long lastCheck = 0;
+
+    /** Узнаёт свежую ревизию на GitHub и её manifest. true — если версия игры сменилась. */
+    private synchronized boolean checkUpdate() {
+        lastCheck = System.currentTimeMillis();
+        try {
+            String rev = null;
+            byte[] c = download("https://api.github.com/repos/" + REPO + "/commits/main", 6000);
+            if (c != null) rev = new JSONObject(new String(c, "UTF-8")).getString("sha");
+            if (rev != null && rev.equals(currentRev)) { status = "онлайн, сборка " + rev.substring(0, 7); return false; }
+            String base = rev != null ? "https://raw.githubusercontent.com/" + REPO + "/" + rev + PATH : remoteBase;
+            byte[] m = download(base + "manifest.json", 8000);
+            if (m == null) { status = currentRev != null ? status : "нет связи, офлайн-версия"; return false; }
+            Map<String, String> nm = parse(new String(m, "UTF-8"));
+            String oldIndex = remote != null ? remote.get("index.html") : null;
+            remoteBase = base;
+            remote = nm;
+            write(new File(cacheDir, "manifest.json"), m);
+            boolean changed = currentRev != null && (oldIndex == null || !oldIndex.equals(nm.get("index.html")));
+            currentRev = rev != null ? rev : "main";
+            status = "онлайн, сборка " + currentRev.substring(0, Math.min(7, currentRev.length()));
+            return changed;
+        } catch (Exception e) {
+            if (currentRev == null) status = "нет связи, офлайн-версия";
+            return false;
+        }
+    }
+
+    private void checkInBackground(boolean force) {
+        if (!force && System.currentTimeMillis() - lastCheck < 60000) return;
+        new Thread(() -> {
+            if (checkUpdate()) runOnUiThread(() -> web.reload());
         }).start();
     }
 
@@ -197,10 +222,12 @@ public class MainActivity extends Activity {
         public void exit() { runOnUiThread(() -> finishAndRemoveTask()); }
         @JavascriptInterface
         public String status() { return status + (fetched > 0 ? ", скачано файлов: " + fetched : ""); }
+        @JavascriptInterface
+        public void checkNow() { checkInBackground(true); }
     }
 
     @Override protected void onPause() { super.onPause(); web.onPause(); }
-    @Override protected void onResume() { super.onResume(); web.onResume(); }
+    @Override protected void onResume() { super.onResume(); web.onResume(); if (currentRev != null) checkInBackground(false); }
 
     @Override
     public void onBackPressed() {
