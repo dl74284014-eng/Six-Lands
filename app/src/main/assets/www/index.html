@@ -398,7 +398,7 @@ body{overflow-x:hidden}
 <style id="imgcss"></style>
 
 <script>
-const BUILD_VER="12.11.2026 10:35";
+const BUILD_VER="12.11.2026 10:47";
 const KEY='tiholesye-v3';
 const I=k=>`<i class="ico i-${k}"></i>`;
 
@@ -418,7 +418,7 @@ const SEASONS=[['Весна',1,'<i class="ico i-s_spring"></i>'],['Лето',1.2
 const CULTURES={
  east:{n:'Утренняя Роса',full:'Земли Утренней Росы',ic:'',aggr:.95,
   about:'Народ гармонии: рисовые поля, храмы в тумане, фонари и сакура.',
-  bonus:['Урожай ферм +20%','Культура +25%','Счастье +5','Святилища дают в 1.5 раза больше милости','Особый воин: Самурай (сильная атака и защита)'],
+  bonus:['Урожай ферм +20%','Культура +25%','Счастье +5','Ниндзя: шпионы успешнее на 15%','Святилища дают в 1.5 раза больше милости','Особый воин: Самурай (сильная атака и защита)'],
   minus:['Войска обучаются на 1 ход дольше'],
   mods:{farm:1.2,happy:5,favor:1.5,train:1,cult:1.25},
   unit:{n:'Самурай',ic:'',atk:9,def:7,turns:5,cost:{gold:45,stone:10},up:{food:.6,gold:.5},melee:1,r:'an armored samurai warrior with a katana'},
@@ -719,7 +719,7 @@ const BCIVIC={theater:'drama'};
 const UTECH={soldier:'bronze',unique:'bronze',archer:'archery',cavalry:'riding',siege:'math',mage:'arcana'};
 const SCI={hall:2,library:4,observatory:3,tower:2,mapper:1,workshop:2,alchemy:1,enchanter:1,runes:1,glass:1,infirmary:1,beacon:2};
 const CUL={hall:2,temple:3,theater:4,wonder:6,fountain:1,tavern:1,library:1,garden:2,grove:1,jeweler:1,potter:1,tailor:1,sh_harvest:1,sh_forge:1,sh_magic:1,sh_guard:1,sh_hearth:1,sh_trade:1};
-function ensureProg(){ensureTrade();if(!s.gp)s.gp={sci:0,cult:0,war:0,nS:90,nC:70,nW:3};if(!s.quests)s.quests=[];if(s.qDone==null)s.qDone=0;if(!s.tech)s.tech={known:[],cur:null,p:0};if(!s.civ)s.civ={known:[],cur:null,p:0};if(s.cultTotal==null){s.cultTotal=0;s.borderAt=30}}
+function ensureProg(){if(!s.spies){s.spies=[];s.intel={};s.spyId=1}ensureTrade();if(!s.gp)s.gp={sci:0,cult:0,war:0,nS:90,nC:70,nW:3};if(!s.quests)s.quests=[];if(s.qDone==null)s.qDone=0;if(!s.tech)s.tech={known:[],cur:null,p:0};if(!s.civ)s.civ={known:[],cur:null,p:0};if(s.cultTotal==null){s.cultTotal=0;s.borderAt=30}}
 const canT=t=>!hasT(t.id)&&t.req.every(hasT);
 const canC=t=>!hasC(t.id)&&t.req.every(hasC);
 
@@ -1127,7 +1127,7 @@ function tick(){
   while(s.rank<RANKS.length-1&&RANKS[s.rank+1].ok()){s.rank++;s.rep=Math.min(100,s.rep+5);sfx('good');log(`Деревня получает звание «${RANKS[s.rank].n}»! Слава +5.`,'arc');toast('Новое звание: '+RANKS[s.rank].n)}
   trainTurn();
   REPORT=[];aiTurn();
-  progTurn(st);greatTurn(st);checkQuests(true);tradeTurn();
+  progTurn(st);greatTurn(st);checkQuests(true);tradeTurn();spyTurn();
 
   if(!s.won&&(s.rivals.every(r=>r.vassal)||s.rank>=RANKS.length-1||hasT('final')||hasC('golden'))){s.won=true;REPORT.push(['Победа!',s.rivals.every(r=>r.vassal)?'Военная победа: все народы признали вашу власть.':hasT('final')?'Научная победа: ваш народ совершил Великое открытие.':hasC('golden')?'Культурная победа: настал Золотой век.':'Ваша деревня стала Городом чудес.','good'])}
   if(s.trip&&s.day>=s.trip.at)persuade();
@@ -1191,7 +1191,7 @@ function aiTurn(){
 function enemyAttack(r){
   const n=rivalName(r);
   if(buff('mirage')){delete s.buffs.mirage;r.army*=.85;REPORT.push([`Набег: ${n}`,'Войско врага заблудилось в мираже и ушло.','good']);return}
-  const A=rivalSide(r,{attacking:true}),D=mySide({home:true});const res=battle(A,D);
+  const A=rivalSide(r,{attacking:true}),D=mySide({home:true});if(hasIntel(s.rivals.indexOf(r)))A.g.forEach(x=>x.atk*=.85);const res=battle(A,D);
   applyMyLosses(D);r.army=remainArmy(A);const html=battleHTML(res,false);
   if(!res.win){s.rep=Math.min(100,s.rep+2);s.wins=(s.wins||0)+1;s.gp.war++;REPORT.push([`Набег отбит: ${n}`,`Враг отступил. Слава +2.`,'good',html]);sfx('good')}
   else if(res.pa<res.pd*2.2){const g=Math.round(s.res.gold*.15),f=Math.round(s.res.food*.15);s.res.gold-=g;s.res.food-=f;REPORT.push([`Тяжёлый бой: ${n}`,`Враг прорвался и унёс ${g} золота и ${f} еды.`,'bad',html]);sfx('bad')}
@@ -1204,7 +1204,7 @@ function attackRival(i,tac){
     const est=rivalCounts(r,false);
     openModal(`<h2>Поход на народ «${n}»</h2>
       <p class="small">Разведка: у врага около ${Math.round(r.army)} воинов, стены ${Math.round(r.wall*3)}. Их любимая тактика — <b>${TACT[favTac(r.c)].n}</b>.</p>
-      <div class="small muted">Состав: ${Object.entries(est).filter(([k,v])=>v>.3).map(([k,v])=>{const u=rivalUnit(r.c,k);return`${u.ic} ${u.n} ~${Math.round(v)}`}).join(' · ')}</div>
+      <div class="small muted">${hasIntel(i)?'<b class="up">Точные сведения шпиона.</b> ':''}Состав: ${Object.entries(est).filter(([k,v])=>v>.3).map(([k,v])=>{const u=rivalUnit(r.c,k);return`${u.ic} ${u.n} ~${Math.round(v)}`}).join(' · ')}</div>
       <h3>Выберите тактику</h3><div class="cards picker">${TK.map(k=>tacCard(k,{attrs:`data-tc="${k}"`})).join('')}</div>
       <div class="small muted">Стена щитов бьёт Натиск, Натиск бьёт Обход, Обход бьёт Стену щитов. Осадные машины пробивают стены.</div>
       <button class="btn ghost" id="tcx">Отмена</button>`,true);
@@ -1770,7 +1770,7 @@ const NAV=[
  {id:'build',n:'Постройки',ic:'jobs',subs:[['b','Постройки']]},
  {id:'people',n:'Мастера',ic:'people',subs:[['m','Мастера']]},
  {id:'trade',n:'Торговля',ic:'trade',subs:[['tr','Рынок'],['tgd','Товары'],['tnb','Соседи'],['tcs','Города']]},
- {id:'war',n:'Война',ic:'atk',subs:[['a','Войска'],['ab','Тактика'],['n','Народы'],['pir','Пираты']]},
+ {id:'war',n:'Война',ic:'atk',subs:[['a','Войска'],['ab','Тактика'],['n','Народы'],['spy','Шпионаж'],['pir','Пираты']]},
  {id:'prog',n:'Развитие',ic:'science',subs:[['t','Наука'],['tc','Культура'],['s','Магия'],['g','Боги']]}
 ];
 const navOf=t=>NAV.find(n=>n.subs.some(x=>x[0]===t))||NAV[0];
@@ -1925,6 +1925,97 @@ function renderPirates(p){
     <button class="btn" id="cvA" ${armySize()?'':'disabled'}>${I('atk')} Штурмовать бухту</button></div></div>`;
   $('#cvA').onclick=()=>confirmBox('Штурмовать пиратскую бухту?',`Ваша армия: ${armySize()} воинов против примерно ${Math.round(pirStrength()*1.3)} пиратов за стенами.`,'В атаку',attackCove,false);
 }
+
+/* ---------- шпионаж ---------- */
+const SPYC={
+ east:{n:'Ниндзя',p:'a stealthy ninja in dark shinobi garb with a mask, kunai and drifting smoke, crouching on a temple rooftop at night'},
+ europe:{n:'Тайный агент',p:'a cloaked secret agent in a hooded cape with a hidden dagger and a sealed letter, in a dark cobblestone alley'},
+ elves:{n:'Лесная тень',p:'an elven shadow scout camouflaged among leaves with a silver dagger and faintly glowing eyes'},
+ magi:{n:'Иллюзионист',p:'an illusionist spy mage dissolving into shimmering violet mist, wearing a mirrored mask'},
+ north:{n:'Вороний следопыт',p:'a nordic spy tracker in furs with a raven on his shoulder, hiding among snowy pines'},
+ desert:{n:'Тень песков',p:'a desert spy assassin in dark flowing robes and veil with a curved dagger on a moonlit rooftop'}
+};
+const CODEN=['Тень','Шёпот','Ворон','Лис','Сова','Кинжал','Туман','Полночь','Змей','Пепел','Ветер','Мотылёк','Игла','Луна'];
+const SLV=['Новичок','Агент','Мастер'];
+const MS={
+ scout:{n:'Разведка',t:'rival',turns:2,base:.85,d:'Узнать точный состав армии соседа. 15 ходов вы видите их силы, а их набеги на вас слабее на 15%.',p:'a spy hiding in tall grass watching an enemy army camp through a small spyglass at dusk'},
+ steal:{n:'Кража знаний',t:'rival',turns:4,base:.5,d:'Выкрасть чертежи и свитки: половина стоимости текущего исследования.',p:'a spy secretly copying glowing blueprints and scrolls by candlelight in an enemy library'},
+ sabotage:{n:'Диверсия',t:'rival',turns:3,base:.55,d:'Поджечь склады и арсенал: армия соседа −20%, стены −25%.',p:'a spy escaping from a burning enemy armory at night, flames and smoke behind'},
+ gold:{n:'Ограбление казны',t:'rival',turns:3,base:.6,d:'Вынести четверть золота из казны соседа (до 200).',p:'a spy sneaking out of a treasury vault with a sack of gold coins, guards sleeping nearby'},
+ rig:{n:'Тайное влияние',t:'city',turns:3,base:.7,d:'Подкупить советников города-государства: влияние +25.',p:'a spy whispering to a city councilor in a shadowy corridor, passing a pouch of coins'},
+ counter:{n:'Контрразведка',t:'home',turns:0,base:1,d:'Шпион остаётся дома и ловит вражеских лазутчиков.',p:'a vigilant spy-catcher with a lantern catching a hooded intruder on the village wall at night'}
+};
+const spyMax=()=>1+(hasT('writing')?1:0)+(hasT('math')?1:0)+(hasT('arcana')?1:0);
+const spyCost=()=>50+25*s.spies.length+Math.round(s.day*.2);
+const hasIntel=i=>i>=0&&s.intel&&s.intel[i]>s.day;
+function spyChance(sp,k,tg){const m=MS[k];let c=m.base+.1*sp.lvl+(s.culture==='east'?.15:0);
+  if(m.t==='rival'){const r=s.rivals[tg];if(r.c==='east')c-=.1;if(r.war)c-=.05;if(r.vassal)c+=.15}
+  return Math.max(.1,Math.min(.95,c))}
+function spyCard(sp,o={}){const m=sp.m;const tag=!m?'Свободен':m.k==='counter'?'Охраняет':`${MS[m.k].n}: ${Math.max(0,m.end-s.day)} ход.`;
+  return card({cls:`c-unit ${o.cls||''}`,name:sp.name,artCls:'cat',art:artOf('spy',I('lock')),text:`${SPYC[s.culture].n} · ${SLV[sp.lvl]}`,tag,tagCls:!m?'ok':m.k==='counter'?'gold':'arc',attrs:o.attrs||'',el:o.el})}
+function msCard(k,o={}){const m=MS[k];return card({cls:`c-spell ${o.cls||''}`,name:m.n,artCls:'cat',art:artOfRaw('ms_'+k,I('spark')),text:m.d,attrs:o.attrs||'',el:o.el})}
+function targetName(m){return m.t==='city'?CITY[m.tg].n:m.t==='rival'?rivalName(s.rivals[m.tg]):'Деревня'}
+function openSpy(id){
+  const sp=s.spies.find(x=>x.id===id);if(!sp)return;
+  if(sp.m){openModal(`<div class="cv">${spyCard(sp,{cls:'big',el:'div'})}<div class="info"><h2>${sp.name}</h2><div class="muted">${SPYC[s.culture].n} · ${SLV[sp.lvl]} · заданий выполнено: ${sp.xp}</div>
+      <p>${sp.m.k==='counter'?'Охраняет деревню от вражеских шпионов.':`Задание «${MS[sp.m.k].n}» — цель: ${targetName(sp.m)}. Вернётся через ${Math.max(0,sp.m.end-s.day)} ход. Шанс успеха ${Math.round(sp.m.ch*100)}%.`}</p>
+      <div class="row"><button class="btn ghost" id="spRe">${sp.m.k==='counter'?'Снять с охраны':'Отозвать'}</button><button class="btn ghost" id="spX">Закрыть</button></div></div></div>`,true);
+    $('#spX').onclick=closeModal;$('#spRe').onclick=()=>{sp.m=null;save();render();openSpy(id)};return}
+  openModal(`<div class="cv">${spyCard(sp,{cls:'big',el:'div'})}<div class="info"><h2>${sp.name}</h2><div class="muted">${SPYC[s.culture].n} · ${SLV[sp.lvl]} · заданий выполнено: ${sp.xp}</div>
+    <p class="small">Выберите задание. Опытный шпион справляется чаще. Если шпиона поймают, отношения с целью испортятся.</p></div></div>
+    <div class="cards picker">${Object.keys(MS).map(k=>msCard(k,{attrs:`data-ms="${k}"`})).join('')}</div><button class="btn ghost" id="spX">Закрыть</button>`,true);
+  $('#spX').onclick=closeModal;
+  document.querySelectorAll('[data-ms]').forEach(b=>b.onclick=()=>pickTarget(sp,b.dataset.ms));
+}
+function pickTarget(sp,k){
+  const m=MS[k];
+  if(m.t==='home'){sp.m={k,t:'home',end:s.day};sfx('card');log(`${sp.name} охраняет деревню.`);closeModal();save();render();return}
+  const opts=m.t==='city'?CITIES.filter(c=>!s.cs[c.id].own&&!s.cs[c.id].war).map(c=>({tg:c.id,n:c.n,sub:`влияние ${Math.round(s.cs[c.id].inf)}`})):
+    s.rivals.map((r,i)=>({tg:i,n:rivalName(r),sub:relText(r)})).filter(o=>!(k==='steal'&&!s.tech.cur));
+  openModal(`<h2>${m.n}</h2><p class="small">${m.d} Займёт ${m.turns} ход.</p>${k==='steal'&&!s.tech.cur?'<p class="small dn">Сначала выберите исследование.</p>':''}
+    <div class="stack">${opts.map(o=>{const ch=m.t==='city'?Math.min(.95,m.base+.1*sp.lvl+(s.culture==='east'?.15:0)):spyChance(sp,k,o.tg);return`<button class="opt" data-tg="${o.tg}"><span><b>${o.n}</b><br><span class="small muted">${o.sub}</span></span><span class="p">${Math.round(ch*100)}%</span></button>`}).join('')}</div>
+    <button class="btn ghost" id="tgX">Назад</button>`,true);
+  $('#tgX').onclick=()=>openSpy(sp.id);
+  document.querySelectorAll('[data-tg]').forEach(b=>b.onclick=()=>{const tg=m.t==='city'?b.dataset.tg:+b.dataset.tg;const ch=m.t==='city'?Math.min(.95,m.base+.1*sp.lvl+(s.culture==='east'?.15:0)):spyChance(sp,k,tg);
+    sp.m={k,t:m.t,tg,end:s.day+m.turns,ch};sfx('card');log(`${sp.name} отправлен: ${m.n} (${targetName(sp.m)}).`);closeModal();save();render()});
+}
+function spyTurn(){
+  s.spies.slice().forEach(sp=>{const m=sp.m;if(!m||m.k==='counter'||s.day<m.end)return;const M0=MS[m.k];const tn=targetName(m);
+    if(rnd()<m.ch){let t='';
+      if(m.k==='scout'){s.intel[m.tg]=s.day+15;t='Мы знаем точный состав их армии на 15 ходов.'}
+      else if(m.k==='steal'){const c=s.tech.cur&&TECH[s.tech.cur];const v=c?Math.round(c.cost*.5):40;s.tech.p+=v;t=`Украдено знаний: +${v} науки.`}
+      else if(m.k==='sabotage'){const r=s.rivals[m.tg];r.army*=.8;r.wall*=.75;t='Армия врага −20%, стены −25%.'}
+      else if(m.k==='gold'){const r=s.rivals[m.tg];const v=Math.min(200,Math.round(r.gold*.25));r.gold-=v;s.res.gold+=v;t=`Добыто ${v}${RI.gold}.`}
+      else if(m.k==='rig'){const x=s.cs[m.tg];x.inf=Math.min(100,x.inf+25);t='Влияние +25.'}
+      sp.xp++;if(sp.lvl<2&&sp.xp>=[2,5][sp.lvl]){sp.lvl++;t+=` ${sp.name} теперь ${SLV[sp.lvl]}.`}
+      REPORT.push([`Шпион: «${M0.n}» — успех`,`${sp.name} (${tn}). ${t}`,'good']);log(`${sp.name}: «${M0.n}» — успех. ${t}`,'good');sp.m=null;
+    }else if(rnd()<.5){
+      s.spies=s.spies.filter(x=>x!==sp);if(m.t==='rival')s.rivals[m.tg].rel-=15;if(m.t==='city')s.cs[m.tg].inf=Math.max(0,s.cs[m.tg].inf-20);
+      REPORT.push([`Шпион пойман`,`${sp.name} схвачен (${tn}) во время задания «${M0.n}». ${m.t==='rival'?'Отношения −15.':'Влияние −20.'}`,'bad']);log(`${sp.name} пойман: ${tn}.`,'bad');
+    }else{REPORT.push([`Задание сорвалось`,`${sp.name} не справился с заданием «${M0.n}» (${tn}), но сумел уйти.`,'bad']);sp.m=null}
+  });
+  // вражеские шпионы
+  s.rivals.forEach(r=>{if(r.vassal||(r.rel>-10&&!r.war))return;if(rnd()>.025*CULTURES[r.c].aggr*(r.c==='east'?1.5:1))return;
+    const guard=s.spies.filter(x=>x.m&&x.m.k==='counter');const catchCh=guard.length?Math.min(.9,.55+.12*Math.max(...guard.map(x=>x.lvl))):.15+(cnt('watchtower')?.1:0);const n=rivalName(r);
+    if(rnd()<catchCh){r.rel-=8;guard.forEach(x=>x.xp++);REPORT.push([`Пойман вражеский шпион`,`Лазутчик народа «${n}» схвачен${guard.length?' вашей контрразведкой':''}. Их замыслы сорваны.`,'good']);log(`Пойман шпион народа «${n}».`,'good');return}
+    const k=['gold','steal','sabotage'][(rnd()*3)|0];let t;
+    if(k==='gold'){const v=Math.round(s.res.gold*.12);s.res.gold-=v;r.gold+=v;t=`Из казны пропало ${v}${RI.gold}.`}
+    else if(k==='steal'){const v=Math.round(s.tech.p*.3);s.tech.p-=v;t=`Украдены записи учёных: −${v} науки.`}
+    else{const u=Object.keys(s.army).find(id=>s.army[id]>0);if(u){s.army[u]--;t=`Диверсия в лагере: потерян воин (${U[u].n}).`}else{const v=Math.round(s.res.food*.15);s.res.food-=v;t=`Поджог амбара: −${v}${RI.food}.`}}
+    REPORT.push([`Вражеский шпион`,`Лазутчик народа «${n}» побывал в деревне. ${t} Назначьте шпиона на контрразведку.`,'bad']);log(`Вражеский шпион (${n}): ${t}`,'bad');
+  });
+}
+function renderSpies(p){
+  const max=spyMax(),cost=spyCost();
+  p.innerHTML=`<div class="two" style="margin-bottom:12px"><div class="stack"><h3>Шпионы: ${s.spies.length}/${max}</h3>
+    <div class="small">${SPYC[s.culture].n} — тайные агенты вашего народа. Разведка, кража знаний, диверсии, ограбление казны, влияние на города и охрана деревни.</div>
+    <div class="small muted">Больше шпионов открывают технологии Письменность, Математика и Тайные искусства. Соседи с плохими отношениями тоже засылают лазутчиков.</div>
+    <button class="btn" id="spN" ${s.spies.length<max&&s.res.gold>=cost?'':'disabled'}>Нанять: ${cost}${RI.gold}</button></div>
+    <div class="stack"><h3>Разведданные</h3>${s.rivals.map((r,i)=>hasIntel(i)?`<div class="small">${CULTURES[r.c].ic} ${CULTURES[r.c].n}: армия ${Math.round(r.army)}, стены ${Math.round(r.wall*3)}, золото ${Math.round(r.gold)} <span class="muted">(ещё ${s.intel[i]-s.day} ход.)</span></div>`:'').join('')||'<div class="small muted">Нет свежих сведений. Отправьте шпиона на разведку.</div>'}</div></div>
+    <div class="cards">${s.spies.map(sp=>spyCard(sp,{attrs:`data-sp2="${sp.id}"`})).join('')}</div>${s.spies.length?'':'<div class="small muted">Пока ни одного шпиона.</div>'}`;
+  $('#spN').onclick=()=>{if(s.spies.length>=max||s.res.gold<cost)return;s.res.gold-=cost;const nm=`${SPYC[s.culture].n} «${CODEN[(rnd()*CODEN.length)|0]}»`;s.spies.push({id:s.spyId++,name:nm,lvl:0,xp:0,m:null});sfx('card');log(`Нанят шпион: ${nm}.`,'good');save();render()};
+  p.querySelectorAll('[data-sp2]').forEach(b=>b.onclick=()=>openSpy(+b.dataset.sp2));
+}
 function renderPane(){
   renderNav();
   const p=$('#pane');
@@ -1932,6 +2023,7 @@ function renderPane(){
   if(tab==='t'||tab==='tc'){progTab=tab==='t'?'t':'c';renderProg(p);return}
   if(['tr','tgd','tnb','tcs'].includes(tab)){renderTrade(p);return}
   if(tab==='pir'){renderPirates(p);return}
+  if(tab==='spy'){renderSpies(p);return}
   if(tab==='b'){
     const all=BL.filter(d=>!d.noBuild);const ok=d=>!lockReason(d);
     const cats=[['ready','Можно строить',all.filter(ok).length],...Object.keys(CATS).map(c=>[c,CATS[c],all.filter(d=>d.cat===c).length])];
