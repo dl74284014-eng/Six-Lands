@@ -340,6 +340,15 @@ html.noanim *,html.noanim *::before,html.noanim *::after{animation:none!importan
 @keyframes swl{from{opacity:.2;transform:translateX(40px)}}@keyframes swr{from{opacity:.2;transform:translateX(-40px)}}
 .bump-l{animation:bpl .3s ease}.bump-r{animation:bpr .3s ease}@keyframes bpl{40%{transform:translateX(-14px)}}@keyframes bpr{40%{transform:translateX(14px)}}
 body{overflow-x:hidden}
+.card.constr .art{filter:grayscale(.55) brightness(.75)}
+.card.constr .art::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(135deg,rgba(232,192,106,.16) 0 8px,transparent 8px 18px);animation:cstripe 2.4s linear infinite}
+.card.constr.upg .art{filter:grayscale(.25) brightness(.85)}
+@keyframes cstripe{from{background-position:0 0}to{background-position:50px 0}}
+.card.canup::before{content:"";position:absolute;z-index:4;top:6px;left:6px;width:18px;height:18px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe7a6,#c99a3e);box-shadow:0 0 8px rgba(232,192,106,.8);
+ -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Ccircle cx='10' cy='10' r='10'/%3E%3C/svg%3E");}
+.card.canup::after{content:"";position:absolute;z-index:5;top:10px;left:10px;width:10px;height:10px;background:#3a2408;clip-path:polygon(50% 0,100% 55%,68% 55%,68% 100%,32% 100%,32% 55%,0 55%)}
+.upbox{display:grid;gap:6px;padding:10px;border:1px solid rgba(232,192,106,.35);border-radius:10px;background:rgba(232,192,106,.06)}
+.upbox .btn{justify-self:start}
 .diffbox{display:grid;gap:8px;padding:12px;border:1px solid rgba(232,192,106,.3);border-radius:12px;background:rgba(0,0,0,.18)}
 .diffbox .dlab{font-family:var(--title);color:var(--brass);font-size:16px}
 .dseg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
@@ -405,7 +414,7 @@ body{overflow-x:hidden}
 <style id="imgcss"></style>
 
 <script>
-const BUILD_VER="12.11.2026 11:15";
+const BUILD_VER="12.11.2026 14:59";
 const KEY='tiholesye-v3';
 const I=k=>`<i class="ico i-${k}"></i>`;
 
@@ -833,7 +842,17 @@ let s,tab='h',timer=null,modalOpen=false,imgTab=null;
 const $=q=>document.querySelector(q);
 const rnd=Math.random;
 const pop=()=>s.pop.p;
-const cnt=id=>s.lands.filter(l=>l.b===id).length;
+const busy=l=>l.bt>0&&!l.up;
+const cnt=id=>s.lands.filter(l=>l.b===id&&!busy(l)).length;
+const UPG={hut:'house',house:'manor',fence:'palisade',palisade:'stonewall'};
+function bTurns(d){if(d.bt)return d.bt;if(d.id==='wonder')return 6;
+  const v=Object.entries(d.cost||{}).reduce((a,[r,n])=>a+n*(r==='mana'?2:1),0);
+  let k=v<=25?1:v<=55?2:v<=100?3:4;if(k>=3&&here('workshop'))k--;return k}
+function upTurns(d){return Math.max(1,bTurns(d)-1)}
+function upCost(from,to){const c={};for(const[r,n]of Object.entries(to.cost)){const v=Math.max(0,n-Math.floor(((from.cost||{})[r]||0)/2));if(v)c[r]=v}return c}
+function crews(){return 2+(here('workshop')?1:0)+(pop()>=30?1:0)}
+function crewsBusy(){return s.lands.filter(l=>l.bt>0).length}
+function rushCost(l){return 25*l.bt}
 const mcount=()=>Object.values(s.masters).filter(v=>v==='here').length;
 const here=id=>s.masters[id]==='here';
 const fmt=n=>Math.floor(n);
@@ -841,7 +860,7 @@ const sgn=n=>(n>0?'+':n<0?'−':'')+Math.abs(Math.round(n*10)/10);
 const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const lvl=id=>{const f=(s.favor&&s.favor[id])||0;return f>=80?2:f>=40?1:0};
 const buff=k=>s.buffs[k]&&s.buffs[k]>s.day;
-function capT(){return s.lands.reduce((a,l)=>a+((l.b&&B[l.b].cap)||0),0)}
+function capT(){return s.lands.reduce((a,l)=>a+((l.b&&!busy(l)&&B[l.b].cap)||0),0)}
 function afford(c){return Object.entries(c).every(([r,n])=>s.res[r]>=n)}
 function pay(c){for(const[r,n]of Object.entries(c))s.res[r]-=n}
 function season(){const i=Math.floor(((s.day-1)%40)/10);return{i,n:SEASONS[i][0],farm:SEASONS[i][1],ic:SEASONS[i][2]}}
@@ -967,7 +986,7 @@ function card({cls='',name,artCls='',art='',cost='',text='',tag='',tagCls='',att
 const tr={tl:'',tr:'translate(40 0) scale(-1 1)',bl:'translate(0 40) scale(1 -1)',br:'translate(40 40) scale(-1 -1)'};
 for(const k in tr){const svg=`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><g transform='${tr[k]}'>${p}</g></svg>`;document.documentElement.style.setProperty('--c-'+k,`url("data:image/svg+xml,${encodeURIComponent(svg)}")`)}})();
 function buildingCard(d,o={}){
-  return card({cls:`c-${d.cat} ${o.cls||''}`,name:d.n,artCls:o.land?`tex-${o.land}`:'cat',art:artOf(o.key||d.id,d.ic),cost:o.cost?costSpans(d.cost):'',
+  return card({cls:`c-${d.cat} ${o.cls||''}`,name:d.n,artCls:o.land?`tex-${o.land}`:'cat',art:artOf(o.key||d.id,d.ic),cost:o.cost?costSpans(d.cost)+` ${bTurns(d)}<i class="ico i-turns"></i>`:'',
     text:o.why?`<span class="why"><i class="ico i-lock"></i> ${o.why}</span>`:effText(d),tag:o.tag||'',tagCls:o.tagCls||'',attrs:o.attrs||'',el:o.el});
 }
 function masterCard(m,o={}){
@@ -1059,6 +1078,7 @@ function stats(){
   const towerOn=cnt('tower')>0&&here('tower');
   s.lands.forEach((l,i)=>{
     const d=l.b&&B[l.b];if(!d)return;
+    if(busy(l)){off.set(i,'Строится');return}
     if(d.master&&!here(d.master)){off.set(i,'Нет мастера');return}
     if(d.tower&&!towerOn){off.set(i,'Нужна Башня мага');return}
     if(d.use){const miss=Object.entries(d.use).find(([r,n])=>stock[r]<n);if(miss){off.set(i,'Нет: '+RN[miss[0]].toLowerCase());return}for(const[r,n]of Object.entries(d.use))stock[r]-=n}
@@ -1125,6 +1145,9 @@ function tick(){
   for(const r of RES)s.res[r]=Math.max(0,s.res[r]+st.delta[r]);
   s.rep=Math.max(0,Math.min(100,s.rep+st.rep));s.happy=st.happy;
   s.day++;
+  s.lands.forEach(l=>{if(!(l.bt>0))return;l.bt--;if(l.bt>0)return;delete l.bt;
+    if(l.up){const was=B[l.b].n;l.b=l.up;delete l.up;log(`Улучшено: ${was} → ${B[l.b].n}.`,'good');REPORT.push([`Улучшено: ${B[l.b].n}`,`${was} перестроен. Постройка уже работает.`,'good'])}
+    else{log(`Достроено: ${B[l.b].n}.`,'good');REPORT.push([`Достроено: ${B[l.b].n}`,'Строители закончили работу. Постройка уже работает.','good'])}});
   if((s.day-1)%10===0)log(`Наступает ${season().n.toLowerCase()}.`,'arc');
   GODS.forEach(g=>{
     const before=lvl(g.id);let f=s.favor[g.id]||0;
@@ -1487,7 +1510,7 @@ function lockReason(d){
   {const t=BTECH[d.id],c=BCIVIC[d.id];if(t&&!hasT(t))return`Нужна технология: ${TECH[t].n}`;if(c&&!hasC(c))return`Нужен институт: ${CIVIC[c].n}`}
   if(d.master&&!here(d.master))return`Нужен мастер: ${M[d.master].trade.toLowerCase()}`;
   if(d.tower&&!(cnt('tower')&&here('tower')))return'Нужна Башня мага';
-  if((d.god||d.id==='wonder')&&cnt(d.id))return'Уже построено';
+  if((d.god||d.id==='wonder')&&s.lands.some(l=>l.b===d.id||l.up===d.id))return'Уже построено';
   const l=d.lock&&d.lock();return l||'';
 }
 function pickLand(d){
@@ -1499,30 +1522,52 @@ function pickLand(d){
 }
 function placeReason(d){return pickLand(d)<0?(d.land?`Нет свободного участка: ${LAND[d.land].n}`:'Нет свободных участков'):''}
 function openBuild(id){
-  const d=B[id];const lock=lockReason(d);const pl=lock?'':placeReason(d);const ok=!lock&&!pl&&afford(d.cost);const li=pickLand(d);
+  const d=B[id];const lock=lockReason(d);const pl=lock?'':placeReason(d);const noCrew=crewsBusy()>=crews();const ok=!lock&&!pl&&!noCrew&&afford(d.cost);const bt=bTurns(d);const li=pickLand(d);
   openModal(`<div class="cv">${buildingCard(d,{cls:'big',cost:1,el:'div',land:li>=0?s.lands[li].t:null})}<div class="info">
     <h2>${d.n}</h2><p>${d.desc}</p><div class="small">${effText(d)} в день</div>
     ${d.land?`<div class="small muted">Только на участке «${LAND[d.land].n}».</div>`:''}
+    <div class="small"><i class="ico i-turns"></i> Строительство: <b>${bt} ход.</b> · бригады заняты ${crewsBusy()}/${crews()}</div>
+    ${noCrew&&!lock?'<div class="small" style="color:var(--bad)">Все строительные бригады заняты. Дождитесь окончания стройки или ускорьте её.</div>':''}
     ${lock?`<div class="small" style="color:var(--bad)">${lock}</div>`:pl?`<div class="small" style="color:var(--bad)">${pl}. Купите новый участок на столе.</div>`:`<div class="small muted">Ляжет на участок «${LAND[s.lands[li].t].n}».</div>`}
     <div class="row"><button class="btn" id="bb" ${ok?'':'disabled'}>Построить</button><button class="btn ghost" id="bx">Закрыть</button></div></div></div>`,true);
   $('#bx').onclick=closeModal;$('#bb').onclick=()=>build(id);
 }
 function build(id){
-  const d=B[id];if(lockReason(d)||placeReason(d)||!afford(d.cost))return;
-  const i=pickLand(d);pay(d.cost);s.lands[i].b=id;JUST=i;setTimeout(()=>JUST=null,50);
-  sfx('build');log(`Построено: ${d.n}.`);toast(`${d.n}: карта легла на стол`);closeModal();checkQuests(false);save();render();
+  const d=B[id];if(lockReason(d)||placeReason(d)||!afford(d.cost)||crewsBusy()>=crews())return;
+  const i=pickLand(d);pay(d.cost);s.lands[i].b=id;s.lands[i].bt=bTurns(d);JUST=i;setTimeout(()=>JUST=null,50);
+  sfx('build');log(`Заложено: ${d.n} (${s.lands[i].bt} ход.).`);toast(`${d.n}: стройка началась, ${s.lands[i].bt} ход.`);closeModal();checkQuests(false);save();render();
 }
 function openLand(i){
   const l=s.lands[i];const st=stats();
-  if(l.b){
+  if(l.bt>0){
+    const d=B[l.b],tg=l.up?B[l.up]:d;const rc=rushCost(l);
+    openModal(`<div class="cv">${buildingCard(tg,{cls:'big constr',land:l.t,el:'div',tag:`Строится: ${l.bt} ход.`,tagCls:'arc'})}<div class="info">
+      <h2>${l.up?`Улучшение: ${d.n} → ${tg.n}`:`Стройка: ${tg.n}`}</h2><p>${tg.desc}</p>
+      <div class="small"><i class="ico i-turns"></i> До конца стройки: <b>${l.bt} ход.</b></div>
+      <div class="small muted">${l.up?`Пока идёт улучшение, ${d.n.toLowerCase()} продолжает работать.`:'Постройка заработает, когда строители закончат.'}</div>
+      <div class="row"><button class="btn" id="lr" ${s.res.gold>=rc?'':'disabled'}>Ускорить: ${rc}<i class="ico i-gold"></i></button><button class="btn ghost" id="lc">Отменить</button><button class="btn ghost" id="lx">Закрыть</button></div>
+      <div class="small muted">При отмене вернётся половина затрат.</div></div></div>`,true);
+    $('#lr').onclick=()=>{if(s.res.gold<rc)return;s.res.gold-=rc;sfx('coin');closeModal();
+      if(l.up){l.b=l.up;delete l.up}delete l.bt;log(`Стройка ускорена: ${B[l.b].n} готово.`,'good');toast(`${B[l.b].n}: готово`);JUST=i;setTimeout(()=>JUST=null,50);checkQuests(false);save();render()};
+    $('#lc').onclick=()=>confirmBox('Отменить стройку?','Вернётся половина затраченных ресурсов.','Отменить стройку',()=>{
+      const c=l.up?upCost(d,tg):tg.cost;for(const[r,n]of Object.entries(c))s.res[r]+=Math.floor(n/2);
+      if(l.up){delete l.up}else l.b=null;delete l.bt;log(`Стройка отменена: ${tg.n}.`);save();render()},true);
+  }else if(l.b){
     const d=B[l.b];const why=st.off.get(i);
+    const nx=UPG[l.b]&&B[UPG[l.b]];let upH='';
+    if(nx){const uc=upCost(d,nx);const lk=lockReason(nx);const nc=crewsBusy()>=crews();const ok=!lk&&!nc&&afford(uc);
+      upH=`<div class="upbox"><div class="small"><b>Улучшить до «${nx.n}»</b> · ${effText(nx)}</div><div class="small">${costSpans(uc)} · ${upTurns(nx)}<i class="ico i-turns"></i> · постройка работает во время улучшения</div>
+        ${lk?`<div class="small" style="color:var(--bad)">${lk}</div>`:nc?'<div class="small" style="color:var(--bad)">Все строительные бригады заняты.</div>':''}
+        <button class="btn" id="lu" ${ok?'':'disabled'}>Улучшить</button></div>`;
+      window.__up=()=>{if(!ok)return;pay(uc);l.up=nx.id;l.bt=upTurns(nx);sfx('build');log(`Начато улучшение: ${d.n} → ${nx.n} (${l.bt} ход.).`);toast(`Улучшение: ${nx.n}, ${l.bt} ход.`);closeModal();save();render()}}
     openModal(`<div class="cv">${buildingCard(d,{cls:'big'+(why?' off':''),land:l.t,el:'div',tag:why?'Простаивает':'',tagCls:'bad'})}<div class="info">
       <h2>${d.n}</h2><p>${d.desc}</p><div class="small">${effText(d)} в день</div>
       <div class="small muted">Участок: ${LAND[l.t].n}${l.t==='ley'&&d.ley?` (×${d.ley})`:''}</div>
       ${why?`<div class="small" style="color:var(--bad)">Простаивает: ${why}</div>`:'<div class="small" style="color:var(--good)">Работает</div>'}
+      ${upH}
       <div class="row">${d.noBuild?'':'<button class="btn ghost" id="ld">Снести</button>'}<button class="btn ghost" id="lx">Закрыть</button></div>
       ${d.noBuild?'':'<div class="small muted">При сносе вернётся половина ресурсов.</div>'}</div></div>`,true);
-    const dm=$('#ld');if(dm)dm.onclick=()=>demolish(i);
+    const dm=$('#ld');if(dm)dm.onclick=()=>demolish(i);const ub=$('#lu');if(ub)ub.onclick=()=>window.__up();
   }else{
     openModal(`<div class="cv">${card({cls:'c-land big',name:LAND[l.t].n,artCls:`tex-${l.t}`,text:LAND[l.t].d,el:'div'})}<div class="info">
       <h2>${LAND[l.t].n}</h2><p>${LAND[l.t].d}</p><p class="muted small">Свободный участок. Выберите карту в колоде построек, и она ляжет на подходящую землю.</p>
@@ -1781,7 +1826,9 @@ function renderTable(){
   $('#lands').innerHTML=s.lands.map((l,i)=>{
     if(!l.b)return card({cls:'c-land',name:LAND[l.t].n,artCls:`tex-${l.t}`,text:'Свободный участок',attrs:`data-l="${i}"`});
     const d=B[l.b];const why=st.off.get(i);
-    return buildingCard(d,{cls:(why?'off':'')+(JUST===i?' placed':''),land:l.t,tag:why||'',tagCls:'bad',attrs:`data-l="${i}"`});
+    if(l.bt>0){const tg=l.up?B[l.up]:d;return buildingCard(tg,{cls:'constr'+(l.up?' upg':'')+(JUST===i?' placed':''),land:l.t,tag:`${l.up?'Улучшение':'Стройка'}: ${l.bt} ход.`,tagCls:'arc',attrs:`data-l="${i}"`})}
+    const canUp=UPG[l.b]&&!lockReason(B[UPG[l.b]]);
+    return buildingCard(d,{cls:(why?'off':'')+(JUST===i?' placed':'')+(canUp?' canup':''),land:l.t,tag:why||'',tagCls:'bad',attrs:`data-l="${i}"`});
   }).join('')+(s.lands.length<48?`<button class="card newland" id="newland" ${afford(c)?'':'disabled'}><span class="plus">+</span><span class="nl">Новый участок</span><span class="nc">${c.gold}<i class="ico i-gold"></i> ${c.wood}<i class="ico i-wood"></i><br>тянете карту земли</span></button>`:'');
 }
 
@@ -2050,7 +2097,7 @@ function renderPane(){
     const cats=[['ready','Можно строить',all.filter(ok).length],...Object.keys(CATS).map(c=>[c,CATS[c],all.filter(d=>d.cat===c).length])];
     const items=buildCat==='ready'?all.filter(ok).sort((a,b)=>afford(b.cost)-afford(a.cost)):all.filter(d=>d.cat===buildCat).sort((a,b)=>!!lockReason(a)-!!lockReason(b));
     const free=s.lands.filter(l=>!l.b).length;
-    p.innerHTML=chipRow(cats,buildCat,'bc')+`<div class="small muted" style="margin:0 0 10px">Свободных участков: ${free}. ${buildCat==='ready'?'Здесь все постройки, которые уже открыты; сначала те, на которые хватает ресурсов.':''}</div><div class="cards">`+items.map(d=>{
+    p.innerHTML=chipRow(cats,buildCat,'bc')+`<div class="small muted" style="margin:0 0 10px">Свободных участков: ${free}. Строительные бригады: ${crewsBusy()}/${crews()}. ${buildCat==='ready'?'Здесь все постройки, которые уже открыты; сначала те, на которые хватает ресурсов.':''}</div><div class="cards">`+items.map(d=>{
         const why=lockReason(d);return buildingCard(d,{cls:why?'locked':(!afford(d.cost)?'poor':''),cost:!why,why,attrs:`data-b="${d.id}"`});
       }).join('')+`</div>${items.length?'':'<div class="small muted">Пока ничего. Загляните в другие категории.</div>'}`;
     p.querySelectorAll('[data-bc]').forEach(b=>b.onclick=()=>{buildCat=b.dataset.bc;renderPane();dealIn($('#pane'))});
