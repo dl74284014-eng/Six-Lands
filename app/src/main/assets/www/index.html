@@ -363,6 +363,14 @@ body{overflow-x:hidden}
 @keyframes hintp{50%{box-shadow:0 0 0 1.5px rgba(232,192,106,.95),0 0 16px rgba(232,192,106,.35)}}
 #wxc{position:fixed;inset:0;width:100%;height:100%;z-index:11;pointer-events:none;display:none}
 .herocv{max-width:220px;margin:0 auto}
+.diplist{display:grid;gap:8px;margin-bottom:12px}
+.diprow{display:flex;gap:12px;align-items:center;width:100%;text-align:left;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:rgba(0,0,0,.18);color:inherit;font:inherit;cursor:pointer}
+.diprow.war{border-color:rgba(228,110,90,.55);background:rgba(228,110,90,.08)}.diprow.vas{border-color:rgba(232,192,106,.5)}
+.dipem{flex:none;width:40px;height:40px;display:flex;align-items:center;justify-content:center}.dipem .ico{width:38px;height:38px}
+.dipm{flex:1;min-width:0;display:grid;gap:3px}.dipgo{flex:none;font-size:22px;color:var(--brass)}
+.relbar{display:block;height:5px;border-radius:3px;background:linear-gradient(90deg,#b5483a,#8a7a5a 50%,#7fb35e);position:relative;opacity:.85}
+.relbar i{position:absolute;top:-3px;width:3px;height:11px;margin-left:-1px;background:#fff3d6;border-radius:2px;box-shadow:0 0 4px #000}
+#rivalsBar{display:none!important}
 .lnk{background:none;border:0;padding:0;color:var(--brass);font:inherit;font-size:12px;text-decoration:underline dotted;cursor:pointer}
 .btn.sm{padding:6px 10px;font-size:13px}
 .cards.hand{grid-template-columns:repeat(3,minmax(0,1fr))}
@@ -457,7 +465,7 @@ body{overflow-x:hidden}
 <style id="imgcss"></style>
 
 <script>
-const BUILD_VER="12.11.2026 23:06";
+const BUILD_VER="13.11.2026 08:10";
 let SLOT=1;try{SLOT=+localStorage.getItem('sixlands-slot')||1}catch(e){}
 const SK_=n=>'sixlands-save-'+n;
 try{const old=localStorage.getItem('tiholesye-v3');if(old&&!localStorage.getItem(SK_(1))){localStorage.setItem(SK_(1),old);localStorage.removeItem('tiholesye-v3')}}catch(e){}
@@ -2454,9 +2462,21 @@ function renderMerc(p){ensureMerc();const M=s.merc;
      <div class="row"><button class="btn" id="mcR" ${s.res.gold>=pr?'':'disabled'}>Продлить на ${MERC_T} ходов: ${pr}${RI.gold}</button><button class="btn ghost" id="mcX">Закрыть</button></div></div></div>`,true);
     $('#mcX').onclick=closeModal;$('#mcR').onclick=()=>{if(s.res.gold<pr)return;s.res.gold-=pr;bd.until+=MERC_T;sfx('coin');closeModal();save();render()}})}
 
+function renderDip(p){
+  const row=(r,i)=>{const st=dipStatus(r);const w=Math.max(0,Math.min(100,(r.rel+100)/2));
+    return`<button class="diprow ${r.war?'war':r.vassal?'vas':''}" data-rv="${i}"><span class="dipem">${CULTURES[r.c].ic}</span>
+      <span class="dipm"><b>${CULTURES[r.c].full}</b><span class="small">${r.war?`${I('war')} Война · ${r.warT} ход.`:r.vassal?`${I('vassal')} Ваш вассал`:`${relText(r)} (${Math.round(r.rel)})`}${r.trade?' · торговый договор':''}${st?' · '+st:''}</span>
+      ${r.vassal?'':`<span class="relbar"><i style="left:${w}%"></i></span>`}<span class="small muted">Армия ${hasIntel(i)?Math.round(r.army):'≈'+Math.round(r.army/3)*3} · жителей ${Math.round(r.pop)}</span></span>
+      <span class="dipgo">›</span></button>`};
+  const cs=CITIES.map(c=>{const x=s.cs[c.id];return`<button class="diprow" data-cs="1"><span class="dipem">${I('trade')}</span><span class="dipm"><b>${c.n}</b><span class="small">${x.own?'Под вашей властью':x.war?'Война':`Влияние ${Math.round(x.inf)}`}</span></span><span class="dipgo">›</span></button>`}).join('');
+  p.innerHTML=`<p class="small muted" style="margin:0 0 12px">Отношения с соседними народами и городами-государствами. Нажмите на народ, чтобы подарить, заключить договор, союз, брак, потребовать дань или объявить войну.</p>
+   <div class="zone-h"><span>Народы</span><span>${s.rivals.filter(r=>r.ally).length?'союзов: '+s.rivals.filter(r=>r.ally).length:''}</span></div><div class="diplist">${s.rivals.map(row).join('')}</div>
+   <div class="zone-h"><span>Города-государства</span><span></span></div><div class="diplist">${cs}</div>
+   <div class="small muted" style="margin-top:8px">Караванов в пути: ${(s.car||[]).length}/${carMax()} · шпионов: ${(s.spies||[]).length}</div>`;
+  p.querySelectorAll('[data-rv]').forEach(b=>b.onclick=()=>openRival(+b.dataset.rv));p.querySelectorAll('[data-cs]').forEach(b=>b.onclick=()=>go('tcs'))}
 /* ---------- навигация ---------- */
 const NAV=[
- {id:'home',n:'Деревня',ic:'home',subs:[['h','Стол'],['v','Сводка'],['l','Летопись']]},
+ {id:'home',n:'Деревня',ic:'home',subs:[['h','Стол'],['dip','Дипломатия'],['v','Сводка'],['l','Летопись']]},
  {id:'build',n:'Постройки',ic:'jobs',subs:[['b','Постройки'],['gw','Великие стройки']]},
  {id:'people',n:'Мастера',ic:'people',subs:[['m','Мастера']]},
  {id:'trade',n:'Торговля',ic:'trade',subs:[['tr','Рынок'],['tgd','Товары'],['tnb','Соседи'],['tcs','Города'],['tcv','Караваны']]},
@@ -2721,6 +2741,7 @@ function renderPane(){
   if(['tr','tgd','tnb','tcs'].includes(tab)){renderTrade(p);return}
   if(tab==='pir'){renderPirates(p);return}
   if(tab==='spy'){renderSpies(p);return}
+  if(tab==='dip'){renderDip(p);return}
   if(tab==='hero'){renderHero(p);return}
   if(tab==='gw'){renderGW(p);return}
   if(tab==='merc'){renderMerc(p);return}
