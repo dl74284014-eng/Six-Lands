@@ -349,6 +349,11 @@ body{overflow-x:hidden}
 .card.canup::after{content:"";position:absolute;z-index:5;top:10px;left:10px;width:10px;height:10px;background:#3a2408;clip-path:polygon(50% 0,100% 55%,68% 55%,68% 100%,32% 100%,32% 55%,0 55%)}
 .upbox{display:grid;gap:6px;padding:10px;border:1px solid rgba(232,192,106,.35);border-radius:10px;background:rgba(232,192,106,.06)}
 .upbox .btn{justify-self:start}
+.chev{display:inline-flex;flex-direction:column;gap:1px;vertical-align:middle;margin:0 2px}
+.chev b{display:block;width:12px;height:6px;background:linear-gradient(#ffe39a,#c99a3e);clip-path:polygon(0 100%,50% 0,100% 100%,78% 100%,50% 45%,22% 100%)}
+.chev.off b{background:#5a4a30}
+.vetbox{display:grid;gap:6px;padding:10px;border:1px solid rgba(232,192,106,.35);border-radius:10px;background:rgba(232,192,106,.06)}
+.vetmsg{display:grid;gap:4px;padding:8px 10px;margin:6px 0;border-radius:10px;background:linear-gradient(90deg,rgba(232,192,106,.22),rgba(232,192,106,.04));border-left:3px solid var(--brass);font-size:13px;animation:modalin .5s both}
 .diffbox{display:grid;gap:8px;padding:12px;border:1px solid rgba(232,192,106,.3);border-radius:12px;background:rgba(0,0,0,.18)}
 .diffbox .dlab{font-family:var(--title);color:var(--brass);font-size:16px}
 .dseg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
@@ -414,7 +419,7 @@ body{overflow-x:hidden}
 <style id="imgcss"></style>
 
 <script>
-const BUILD_VER="12.11.2026 14:59";
+const BUILD_VER="12.11.2026 15:07";
 const KEY='tiholesye-v3';
 const I=k=>`<i class="ico i-${k}"></i>`;
 
@@ -735,7 +740,7 @@ const BCIVIC={theater:'drama'};
 const UTECH={soldier:'bronze',unique:'bronze',archer:'archery',cavalry:'riding',siege:'math',mage:'arcana'};
 const SCI={hall:2,library:4,observatory:3,tower:2,mapper:1,workshop:2,alchemy:1,enchanter:1,runes:1,glass:1,infirmary:1,beacon:2};
 const CUL={hall:2,temple:3,theater:4,wonder:6,fountain:1,tavern:1,library:1,garden:2,grove:1,jeweler:1,potter:1,tailor:1,sh_harvest:1,sh_forge:1,sh_magic:1,sh_guard:1,sh_hearth:1,sh_trade:1};
-function ensureProg(){if(!s.spies){s.spies=[];s.intel={};s.spyId=1}ensureTrade();if(!s.gp)s.gp={sci:0,cult:0,war:0,nS:90,nC:70,nW:3};if(!s.quests)s.quests=[];if(s.qDone==null)s.qDone=0;if(!s.tech)s.tech={known:[],cur:null,p:0};if(!s.civ)s.civ={known:[],cur:null,p:0};if(s.cultTotal==null){s.cultTotal=0;s.borderAt=30}}
+function ensureProg(){if(!s.vet)s.vet={};if(!s.spies){s.spies=[];s.intel={};s.spyId=1}ensureTrade();if(!s.gp)s.gp={sci:0,cult:0,war:0,nS:90,nC:70,nW:3};if(!s.quests)s.quests=[];if(s.qDone==null)s.qDone=0;if(!s.tech)s.tech={known:[],cur:null,p:0};if(!s.civ)s.civ={known:[],cur:null,p:0};if(s.cultTotal==null){s.cultTotal=0;s.borderAt=30}}
 const canT=t=>!hasT(t.id)&&t.req.every(hasT);
 const canC=t=>!hasC(t.id)&&t.req.every(hasC);
 
@@ -794,10 +799,11 @@ function battle(A,D){
   }
   const pa=sidePow(A),pd=sidePow(D);
   const hl=[];['a','d'].forEach(tag=>{const best=Object.entries(contrib).filter(([k])=>k[0]===tag).sort((a,b)=>b[1]-a[1])[0];if(best){const[,x,y]=best[0].split('|');hl.push({tag,x,y})}});
+  LASTRES={win:pa>pd*1.05,A,D};
   return{win:pa>pd*1.05,A,D,ma,md,rounds,hl,pa,pd,brk,wallMul};
 }
 function sideTable(S){return`<table><tr><th>Отряд</th><th class="n">Было</th><th class="n">Осталось</th></tr>${S.g.map(x=>`<tr><td>${x.ic} ${x.name} <span class="muted small">${TY[x.type].n}</span></td><td class="n">${Math.round(x.n0)}</td><td class="n ${x.n<x.n0-.5?'dn':''}">${Math.max(0,Math.round(x.n))}</td></tr>`).join('')}</table>`}
-function battleHTML(res,meA){
+function battleHTML(res,meA){setTimeout(()=>VETMSG=[],0);
   const me=meA?res.A:res.D,en=meA?res.D:res.A,mm=meA?res.ma:res.md,em=meA?res.md:res.ma;
   const tl=mm.win?`Ваша тактика сильнее: ${TACT[me.tac].n} бьёт ${TACT[en.tac].n}.`:em.win?`Тактика врага сильнее: ${TACT[en.tac].n} бьёт ${TACT[me.tac].n}.`:'Тактики равны.';
   const myTag=meA?'a':'d';
@@ -806,16 +812,27 @@ function battleHTML(res,meA){
   const wl=(meA?res.D:res.A)===en&&en.wall&&meA?`<div class="small muted">Стены врага ${Math.round(en.wall)}${res.brk?`, осадные машины пробили ${Math.round(res.brk*100)}%`:''}.</div>`:(!meA&&me.wall?`<div class="small muted">Ваши стены ${Math.round(me.wall)} снизили урон по войску${res.brk?`, но осада врага пробила ${Math.round(res.brk*100)}%`:''}.</div>`:'');
   return`<div class="small"><b>${TACT[me.tac].ic} ${TACT[me.tac].n}</b> против <b>${TACT[en.tac].ic} ${TACT[en.tac].n}</b>. ${tl}</div>${wl}
     <ul class="req">${hl}${rl}</ul>
+    ${VETMSG.length?`<div class="vetmsg">${VETMSG.map(m=>`<div><i class="chev"><b></b></i> ${m}</div>`).join('')}</div>`:''}
     <div class="two"><div class="stack"><h3>Ваше войско</h3><div class="tblw">${sideTable(me)}</div></div><div class="stack"><h3>${esc(en.name)}</h3><div class="tblw">${sideTable(en)}</div></div></div>`;
 }
-function applyMyLosses(S){S.g.forEach(x=>{if(x.fixed)return;const k=Math.max(0,x.n);s.army[x.id]=Math.min(s.army[x.id]||0,Math.floor(k)+(rnd()<k-Math.floor(k)?1:0))})}
-function mySide(o={}){const st=stats();return mkSide('Ваше войско',s.army,id=>U[id],uAtk,{garrison:o.home?st.bdef/5+st.P/10:0,wall:o.home?st.bdef:0,tac:o.tac||s.tactic||'shield',home:o.home})}
+const VR=[{n:'Новобранцы',xp:0,b:0},{n:'Бывалые',xp:2,b:.1},{n:'Ветераны',xp:5,b:.2},{n:'Элита',xp:9,b:.3},{n:'Легенды',xp:14,b:.4}];
+const vxp=id=>(s.vet&&s.vet[id])||0;
+const vr=id=>{let r=0;VR.forEach((x,i)=>{if(vxp(id)>=x.xp)r=i});return r};
+const vb=id=>VR[vr(id)].b;
+const chev=r=>r?`<i class="chev">${'<b></b>'.repeat(r)}</i>`:'';
+let LASTRES=null,VETMSG=[];
+function gainVet(S,won){if(!s.vet)s.vet={};VETMSG=[];
+  S.g.forEach(x=>{if(x.fixed||!U[x.id]||!(s.army[x.id]>0))return;const r0=vr(x.id);s.vet[x.id]=vxp(x.id)+(won?1:.35);const r1=vr(x.id);
+    if(r1>r0){const m=`${U[x.id].n}: новое звание «${VR[r1].n}» — атака +${Math.round(VR[r1].b*100)}%, стойкость +${Math.round(VR[r1].b*50)}%.`;VETMSG.push(m);log(m,'good')}})}
+function applyMyLosses(S){if(LASTRES)gainVet(S,S===LASTRES.A?LASTRES.win:!LASTRES.win);S.g.forEach(x=>{if(x.fixed)return;const k=Math.max(0,x.n);s.army[x.id]=Math.min(s.army[x.id]||0,Math.floor(k)+(rnd()<k-Math.floor(k)?1:0))})}
+function mySide(o={}){const st=stats();const S=mkSide('Ваше войско',s.army,id=>({...U[id],def:U[id].def*(1+vb(id)/2)}),u=>uAtk(u)*(1+vb(u.id)),{garrison:o.home?st.bdef/5+st.P/10:0,wall:o.home?st.bdef:0,tac:o.tac||s.tactic||'shield',home:o.home});
+  S.g.forEach(x=>{if(!x.fixed&&vr(x.id))x.name+=` · ${VR[vr(x.id)].n}`});return S}
 function rivalSide(r,o={}){return mkSide(rivalName(r),rivalCounts(r,o.attacking),id=>rivalUnit(r.c,id),u=>rivalAtk(r.c,u),{garrison:o.home?r.wall*3/4+r.pop/10:0,wall:o.home?r.wall*3:0,tac:o.tac||pickTac(r.c),home:o.home})}
 function remainArmy(S){return S.g.filter(x=>!x.fixed).reduce((a,x)=>a+Math.max(0,x.n),0)}
 
 const uTurns=u=>Math.max(1,u.turns+MOD('train')-(u.cav?MOD('cav'):0));
 const uAtk=u=>u.atk*(1+.1*((s&&s.gens)||0))*MOD('atk')*(u.bow?MOD('bow'):1)*(u.melee?MOD('melee'):1);
-function armyAtk(){return UNITS.reduce((a,u)=>a+(s.army[u.id]||0)*uAtk(u),0)}
+function armyAtk(){return UNITS.reduce((a,u)=>a+(s.army[u.id]||0)*uAtk(u)*(1+vb(u.id)),0)}
 function armyDef(){return UNITS.reduce((a,u)=>a+(s.army[u.id]||0)*u.def,0)}
 function armySize(){return UNITS.reduce((a,u)=>a+(s.army[u.id]||0),0)}
 function myPower(){return armyAtk()+stats().def*.5}
@@ -1014,7 +1031,7 @@ function cultureCard(c,o={}){const cu=CULTURES[c];
 
 function unitCard(u,o={}){const why=u.need&&u.need();const k=s.army[u.id]||0;
   return card({cls:`c-unit ${why&&!o.big?'locked':''} ${o.cls||''}`,name:u.n,artCls:'cat',art:artOf('u_'+u.id,u.ic),cost:o.noCost?'':costSpans(u.cost),
-    text:why&&!o.noWhy?`<span class="why"><i class="ico i-lock"></i> ${why}</span>`:`${TY[uType(u)].n} · <i class="ico i-atk"></i>${Math.round(uAtk(u)*10)/10} <i class="ico i-def"></i>${u.def} · ${uTurns(u)}<i class="ico i-turns"></i>`,tag:k?`В армии: ${k}`:'',tagCls:'ok',attrs:o.attrs||'',el:o.el});
+    text:why&&!o.noWhy?`<span class="why"><i class="ico i-lock"></i> ${why}</span>`:`${TY[uType(u)].n} · <i class="ico i-atk"></i>${Math.round(uAtk(u)*10)/10} <i class="ico i-def"></i>${u.def} · ${uTurns(u)}<i class="ico i-turns"></i>`,tag:k?`В армии: ${k}${vr(u.id)?' · '+VR[vr(u.id)].n:''}`:'',tagCls:vr(u.id)>=3?'gold':'ok',attrs:o.attrs||'',el:o.el});
 }
 function rivalCard(r,o={}){const cu=CULTURES[r.c];
   return card({cls:`c-rival ${o.cls||''}`,name:cu.n,artCls:'cat',art:artOfRaw(r.c+'__emblem',cu.ic),text:`Семей ${Math.round(r.pop)} · армия ~${Math.round(r.army)}`,tag:relText(r),tagCls:r.war?'bad':r.vassal?'gold':r.rel>=10?'ok':'',attrs:o.attrs||'',el:o.el});
@@ -1191,7 +1208,7 @@ function trainTurn(){
   const slots=cnt('barracks')&&here('barracks')?2:1;
   for(let i=0;i<Math.min(slots,s.queue.length);i++)s.queue[i].left--;
   const done=s.queue.filter(q=>q.left<=0);s.queue=s.queue.filter(q=>q.left>0);
-  done.forEach(q=>{s.army[q.u]=(s.army[q.u]||0)+1;log(`Обучен воин: ${U[q.u].n}.`,'good')});
+  done.forEach(q=>{const k0=s.army[q.u]||0;if(s.vet&&s.vet[q.u])s.vet[q.u]=s.vet[q.u]*k0/(k0+1);s.army[q.u]=k0+1;log(`Обучен воин: ${U[q.u].n}.`,'good')});
   if(done.length)sfx('build');
 }
 function casualties(frac){
@@ -1202,6 +1219,8 @@ function openUnit(id){
   openModal(`<div class="cv">${unitCard(u,{cls:'big',el:'div'})}<div class="info"><h2>${u.n}</h2>
     <div class="small">${TY[uType(u)].ic} ${TY[uType(u)].n} · Атака ${Math.round(uAtk(u)*10)/10} · Защита ${u.def} · Обучение ${uTurns(u)} ход.</div><div class="small"><span class="up">Силён против: ${strongVs(uType(u)).join(', ')||'—'}.</span> <span class="dn">Слаб против: ${weakVs(uType(u)).join(', ')||'—'}.</span></div>${uType(u)==='siege'?'<div class="small muted">Каждая машина пробивает четверть вражеских стен.</div>':''}${RANGED[uType(u)]?'<div class="small muted">Стреляет в первом раунде, до сечи.</div>':''}
     <div class="small muted">Содержание за ход: ${Object.entries(u.up).map(([r,n])=>`${Math.round(n*MOD('upkeep')*10)/10}${RI[r]}`).join(' ')}. Сейчас в армии: ${s.army[id]||0}.</div>
+    ${s.army[id]?(()=>{const r=vr(id),nx=VR[r+1];return`<div class="vetbox"><div><b>Звание: ${VR[r].n}</b> ${chev(r)}${r?` · атака +${Math.round(VR[r].b*100)}%, стойкость +${Math.round(VR[r].b*50)}%`:''}</div>
+      ${nx?`<div class="bar"><i style="width:${Math.min(100,(vxp(id)-VR[r].xp)/(nx.xp-VR[r].xp)*100)}%"></i></div><div class="small muted">До звания «${nx.n}»: ${Math.max(0,Math.ceil((nx.xp-vxp(id))*10)/10)} побед. Новобранцы снижают общий опыт отряда.</div>`:'<div class="small muted">Высшее звание.</div>'}</div>`})():''}
     ${why?`<div class="small" style="color:var(--bad)">${why}</div>`:''}
     <div class="row"><button class="btn" id="ut" ${ok?'':'disabled'}>Обучить</button><button class="btn ghost" id="ux">Закрыть</button></div></div></div>`,true);
   $('#ux').onclick=closeModal;
@@ -2004,7 +2023,11 @@ const SPYC={
  desert:{n:'Тень песков',p:'a desert spy assassin in dark flowing robes and veil with a curved dagger on a moonlit rooftop'}
 };
 const CODEN=['Тень','Шёпот','Ворон','Лис','Сова','Кинжал','Туман','Полночь','Змей','Пепел','Ветер','Мотылёк','Игла','Луна'];
-const SLV=['Новичок','Агент','Мастер'];
+const SLV=['Новичок','Агент','Мастер','Тень','Легенда'];
+const SXP=[0,2,5,9,14];
+const SPERK=['—','+7% к успеху','реже попадается при провале','задания на 1 ход короче','добыча и эффект заданий ×1.5'];
+function spyXp(sp){sp.xp++;if(sp.lvl<4&&sp.xp>=SXP[sp.lvl+1]){sp.lvl++;const m=`${sp.name} получает звание «${SLV[sp.lvl]}»: ${SPERK[sp.lvl]}.`;log(m,'good');return' '+m}return''}
+const spyCh=(sp,m)=>m.base+.07*sp.lvl+(s.culture==='east'?.15:0);
 const MS={
  scout:{n:'Разведка',t:'rival',turns:2,base:.85,d:'Узнать точный состав армии соседа. 15 ходов вы видите их силы, а их набеги на вас слабее на 15%.',p:'a spy hiding in tall grass watching an enemy army camp through a small spyglass at dusk'},
  steal:{n:'Кража знаний',t:'rival',turns:4,base:.5,d:'Выкрасть чертежи и свитки: половина стоимости текущего исследования.',p:'a spy secretly copying glowing blueprints and scrolls by candlelight in an enemy library'},
@@ -2016,20 +2039,23 @@ const MS={
 const spyMax=()=>1+(hasT('writing')?1:0)+(hasT('math')?1:0)+(hasT('arcana')?1:0);
 const spyCost=()=>50+25*s.spies.length+Math.round(s.day*.2);
 const hasIntel=i=>i>=0&&s.intel&&s.intel[i]>s.day;
-function spyChance(sp,k,tg){const m=MS[k];let c=m.base+.1*sp.lvl+(s.culture==='east'?.15:0);
+function spyChance(sp,k,tg){const m=MS[k];let c=spyCh(sp,m);
   if(m.t==='rival'){const r=s.rivals[tg];if(r.c==='east')c-=.1;if(r.war)c-=.05;if(r.vassal)c+=.15}
   return Math.max(.1,Math.min(.95,c))}
+function spyRankHTML(sp){const nx=sp.lvl<4?SXP[sp.lvl+1]:0;
+  return`<div class="vetbox"><div class="small">${SLV.map((n,i)=>i?`<div class="${i<=sp.lvl?'up':'muted'}">${i<=sp.lvl?'<i class="chev"><b></b></i>':'<i class="chev off"><b></b></i>'} <b>${n}</b> (${SXP[i]} усп.): ${SPERK[i]}</div>`:'').join('')}</div>
+  ${nx?`<div class="bar"><i style="width:${Math.min(100,(sp.xp-SXP[sp.lvl])/(nx-SXP[sp.lvl])*100)}%"></i></div><div class="small muted">До звания «${SLV[sp.lvl+1]}»: ${nx-sp.xp} усп.</div>`:''}</div>`}
 function spyCard(sp,o={}){const m=sp.m;const tag=!m?'Свободен':m.k==='counter'?'Охраняет':`${MS[m.k].n}: ${Math.max(0,m.end-s.day)} ход.`;
   return card({cls:`c-unit ${o.cls||''}`,name:sp.name,artCls:'cat',art:artOf('spy',I('lock')),text:`${SPYC[s.culture].n} · ${SLV[sp.lvl]}`,tag,tagCls:!m?'ok':m.k==='counter'?'gold':'arc',attrs:o.attrs||'',el:o.el})}
 function msCard(k,o={}){const m=MS[k];return card({cls:`c-spell ${o.cls||''}`,name:m.n,artCls:'cat',art:artOfRaw('ms_'+k,I('spark')),text:m.d,attrs:o.attrs||'',el:o.el})}
 function targetName(m){return m.t==='city'?CITY[m.tg].n:m.t==='rival'?rivalName(s.rivals[m.tg]):'Деревня'}
 function openSpy(id){
   const sp=s.spies.find(x=>x.id===id);if(!sp)return;
-  if(sp.m){openModal(`<div class="cv">${spyCard(sp,{cls:'big',el:'div'})}<div class="info"><h2>${sp.name}</h2><div class="muted">${SPYC[s.culture].n} · ${SLV[sp.lvl]} · заданий выполнено: ${sp.xp}</div>
+  if(sp.m){openModal(`<div class="cv">${spyCard(sp,{cls:'big',el:'div'})}<div class="info"><h2>${sp.name}</h2><div class="muted">${SPYC[s.culture].n} · ${SLV[sp.lvl]} ${chev(sp.lvl)} · успехов: ${sp.xp}</div>${spyRankHTML(sp)}
       <p>${sp.m.k==='counter'?'Охраняет деревню от вражеских шпионов.':`Задание «${MS[sp.m.k].n}» — цель: ${targetName(sp.m)}. Вернётся через ${Math.max(0,sp.m.end-s.day)} ход. Шанс успеха ${Math.round(sp.m.ch*100)}%.`}</p>
       <div class="row"><button class="btn ghost" id="spRe">${sp.m.k==='counter'?'Снять с охраны':'Отозвать'}</button><button class="btn ghost" id="spX">Закрыть</button></div></div></div>`,true);
     $('#spX').onclick=closeModal;$('#spRe').onclick=()=>{sp.m=null;save();render();openSpy(id)};return}
-  openModal(`<div class="cv">${spyCard(sp,{cls:'big',el:'div'})}<div class="info"><h2>${sp.name}</h2><div class="muted">${SPYC[s.culture].n} · ${SLV[sp.lvl]} · заданий выполнено: ${sp.xp}</div>
+  openModal(`<div class="cv">${spyCard(sp,{cls:'big',el:'div'})}<div class="info"><h2>${sp.name}</h2><div class="muted">${SPYC[s.culture].n} · ${SLV[sp.lvl]} ${chev(sp.lvl)} · успехов: ${sp.xp}</div>${spyRankHTML(sp)}
     <p class="small">Выберите задание. Опытный шпион справляется чаще. Если шпиона поймают, отношения с целью испортятся.</p></div></div>
     <div class="cards picker">${Object.keys(MS).map(k=>msCard(k,{attrs:`data-ms="${k}"`})).join('')}</div><button class="btn ghost" id="spX">Закрыть</button>`,true);
   $('#spX').onclick=closeModal;
@@ -2041,31 +2067,31 @@ function pickTarget(sp,k){
   const opts=m.t==='city'?CITIES.filter(c=>!s.cs[c.id].own&&!s.cs[c.id].war).map(c=>({tg:c.id,n:c.n,sub:`влияние ${Math.round(s.cs[c.id].inf)}`})):
     s.rivals.map((r,i)=>({tg:i,n:rivalName(r),sub:relText(r)})).filter(o=>!(k==='steal'&&!s.tech.cur));
   openModal(`<h2>${m.n}</h2><p class="small">${m.d} Займёт ${m.turns} ход.</p>${k==='steal'&&!s.tech.cur?'<p class="small dn">Сначала выберите исследование.</p>':''}
-    <div class="stack">${opts.map(o=>{const ch=m.t==='city'?Math.min(.95,m.base+.1*sp.lvl+(s.culture==='east'?.15:0)):spyChance(sp,k,o.tg);return`<button class="opt" data-tg="${o.tg}"><span><b>${o.n}</b><br><span class="small muted">${o.sub}</span></span><span class="p">${Math.round(ch*100)}%</span></button>`}).join('')}</div>
+    <div class="stack">${opts.map(o=>{const ch=m.t==='city'?Math.min(.95,spyCh(sp,m)):spyChance(sp,k,o.tg);return`<button class="opt" data-tg="${o.tg}"><span><b>${o.n}</b><br><span class="small muted">${o.sub}</span></span><span class="p">${Math.round(ch*100)}%</span></button>`}).join('')}</div>
     <button class="btn ghost" id="tgX">Назад</button>`,true);
   $('#tgX').onclick=()=>openSpy(sp.id);
-  document.querySelectorAll('[data-tg]').forEach(b=>b.onclick=()=>{const tg=m.t==='city'?b.dataset.tg:+b.dataset.tg;const ch=m.t==='city'?Math.min(.95,m.base+.1*sp.lvl+(s.culture==='east'?.15:0)):spyChance(sp,k,tg);
-    sp.m={k,t:m.t,tg,end:s.day+m.turns,ch};sfx('card');log(`${sp.name} отправлен: ${m.n} (${targetName(sp.m)}).`);closeModal();save();render()});
+  document.querySelectorAll('[data-tg]').forEach(b=>b.onclick=()=>{const tg=m.t==='city'?b.dataset.tg:+b.dataset.tg;const ch=m.t==='city'?Math.min(.95,spyCh(sp,m)):spyChance(sp,k,tg);
+    sp.m={k,t:m.t,tg,end:s.day+Math.max(1,m.turns-(sp.lvl>=3?1:0)),ch};sfx('card');log(`${sp.name} отправлен: ${m.n} (${targetName(sp.m)}).`);closeModal();save();render()});
 }
 function spyTurn(){
   s.spies.slice().forEach(sp=>{const m=sp.m;if(!m||m.k==='counter'||s.day<m.end)return;const M0=MS[m.k];const tn=targetName(m);
-    if(rnd()<m.ch){let t='';
-      if(m.k==='scout'){s.intel[m.tg]=s.day+15;t='Мы знаем точный состав их армии на 15 ходов.'}
-      else if(m.k==='steal'){const c=s.tech.cur&&TECH[s.tech.cur];const v=c?Math.round(c.cost*.5):40;s.tech.p+=v;t=`Украдено знаний: +${v} науки.`}
-      else if(m.k==='sabotage'){const r=s.rivals[m.tg];r.army*=.8;r.wall*=.75;t='Армия врага −20%, стены −25%.'}
-      else if(m.k==='gold'){const r=s.rivals[m.tg];const v=Math.min(200,Math.round(r.gold*.25));r.gold-=v;s.res.gold+=v;t=`Добыто ${v}${RI.gold}.`}
-      else if(m.k==='rig'){const x=s.cs[m.tg];x.inf=Math.min(100,x.inf+25);t='Влияние +25.'}
-      sp.xp++;if(sp.lvl<2&&sp.xp>=[2,5][sp.lvl]){sp.lvl++;t+=` ${sp.name} теперь ${SLV[sp.lvl]}.`}
+    if(rnd()<m.ch){let t='';const X=sp.lvl>=4?1.5:1;
+      if(m.k==='scout'){s.intel[m.tg]=s.day+Math.round(15*X);t=`Мы знаем точный состав их армии на ${Math.round(15*X)} ходов.`}
+      else if(m.k==='steal'){const c=s.tech.cur&&TECH[s.tech.cur];const v=Math.round((c?c.cost*.5:40)*X);s.tech.p+=v;t=`Украдено знаний: +${v} науки.`}
+      else if(m.k==='sabotage'){const r=s.rivals[m.tg];r.army*=X>1?.7:.8;r.wall*=X>1?.65:.75;t=X>1?'Армия врага −30%, стены −35%.':'Армия врага −20%, стены −25%.'}
+      else if(m.k==='gold'){const r=s.rivals[m.tg];const v=Math.min(Math.round(200*X),Math.round(r.gold*.25*X));r.gold-=v;s.res.gold+=v;t=`Добыто ${v}${RI.gold}.`}
+      else if(m.k==='rig'){const x=s.cs[m.tg];const v=Math.round(25*X);x.inf=Math.min(100,x.inf+v);t=`Влияние +${v}.`}
+      t+=spyXp(sp);
       REPORT.push([`Шпион: «${M0.n}» — успех`,`${sp.name} (${tn}). ${t}`,'good']);log(`${sp.name}: «${M0.n}» — успех. ${t}`,'good');sp.m=null;
-    }else if(rnd()<.5){
+    }else if(rnd()<Math.max(.1,.5-(sp.lvl>=2?.2:0)-.03*sp.lvl)){
       s.spies=s.spies.filter(x=>x!==sp);if(m.t==='rival')s.rivals[m.tg].rel-=15;if(m.t==='city')s.cs[m.tg].inf=Math.max(0,s.cs[m.tg].inf-20);
       REPORT.push([`Шпион пойман`,`${sp.name} схвачен (${tn}) во время задания «${M0.n}». ${m.t==='rival'?'Отношения −15.':'Влияние −20.'}`,'bad']);log(`${sp.name} пойман: ${tn}.`,'bad');
     }else{REPORT.push([`Задание сорвалось`,`${sp.name} не справился с заданием «${M0.n}» (${tn}), но сумел уйти.`,'bad']);sp.m=null}
   });
   // вражеские шпионы
   s.rivals.forEach(r=>{if(r.vassal||(r.rel>-10&&!r.war))return;if(rnd()>.025*CULTURES[r.c].aggr*(r.c==='east'?1.5:1))return;
-    const guard=s.spies.filter(x=>x.m&&x.m.k==='counter');const catchCh=guard.length?Math.min(.9,.55+.12*Math.max(...guard.map(x=>x.lvl))):.15+(cnt('watchtower')?.1:0);const n=rivalName(r);
-    if(rnd()<catchCh){r.rel-=8;guard.forEach(x=>x.xp++);REPORT.push([`Пойман вражеский шпион`,`Лазутчик народа «${n}» схвачен${guard.length?' вашей контрразведкой':''}. Их замыслы сорваны.`,'good']);log(`Пойман шпион народа «${n}».`,'good');return}
+    const guard=s.spies.filter(x=>x.m&&x.m.k==='counter');const catchCh=guard.length?Math.min(.92,.55+.08*Math.max(...guard.map(x=>x.lvl))):.15+(cnt('watchtower')?.1:0);const n=rivalName(r);
+    if(rnd()<catchCh){r.rel-=8;guard.forEach(x=>spyXp(x));REPORT.push([`Пойман вражеский шпион`,`Лазутчик народа «${n}» схвачен${guard.length?' вашей контрразведкой':''}. Их замыслы сорваны.`,'good']);log(`Пойман шпион народа «${n}».`,'good');return}
     const k=['gold','steal','sabotage'][(rnd()*3)|0];let t;
     if(k==='gold'){const v=Math.round(s.res.gold*.12);s.res.gold-=v;r.gold+=v;t=`Из казны пропало ${v}${RI.gold}.`}
     else if(k==='steal'){const v=Math.round(s.tech.p*.3);s.tech.p-=v;t=`Украдены записи учёных: −${v} науки.`}
@@ -2107,7 +2133,8 @@ function renderPane(){
     const up={};UNITS.forEach(u=>{const k=s.army[u.id]||0;for(const[r,n]of Object.entries(u.up))up[r]=(up[r]||0)+n*k*MOD('upkeep')});
     p.innerHTML=`<div class="two" style="margin-bottom:14px"><div class="stack"><h3>Армия: ${armySize()} воин.</h3>
       <div>Атака <i class="ico i-atk"></i> ${Math.round(armyAtk())} · Защита армии <i class="ico i-def"></i> ${armyDef()} · Оборона деревни ${stats().def}</div>
-      <div class="small muted">Содержание за ход: ${Object.entries(up).map(([r,n])=>`${Math.round(n*10)/10}${RI[r]}`).join(' ')||'нет'}</div></div>
+      <div class="small muted">Содержание за ход: ${Object.entries(up).map(([r,n])=>`${Math.round(n*10)/10}${RI[r]}`).join(' ')||'нет'}</div>
+      <div class="small muted">Звания: за каждую победу отряды набираются опыта (за поражение — меньше). ${VR.slice(1).map(x=>`${x.n} +${Math.round(x.b*100)}%`).join(' · ')} к атаке.</div></div>
       <div class="stack"><h3>Обучаются</h3>${q?`<ul class="req">${q}</ul>`:'<div class="small muted">Никого. Выберите карту воина ниже.</div>'}
       <div class="small muted">${cnt('barracks')&&here('barracks')?'Казарма: обучаются двое одновременно.':'Одновременно обучается один воин. Казарма с воеводой позволит двоих.'}</div></div></div>
       <div class="cards">${UNITS.map(u=>unitCard(u,{attrs:`data-u="${u.id}"`})).join('')}</div>`;
