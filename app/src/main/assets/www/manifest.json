@@ -1,6 +1,7 @@
 {
 "files": {
 "audio/theme.mp3": "4326efe7cad7c5c2",
+"audio/theme_desert.mp3": "9ac79eff95833791",
 "audio/theme_east.mp3": "3b3cd8a2ff858c5d",
 "audio/theme_elves.mp3": "1f38219a71be1475",
 "audio/theme_europe.mp3": "940abf8925f998aa",
@@ -252,6 +253,6 @@
 "img/watchtower.jpg": "9981f7c513e996ba",
 "img/witchhut.jpg": "459c6b9818589517",
 "img/workshop.jpg": "4e07260150d09921",
-"index.html": "b80ad2d7b88a7c7f"
+"index.html": "95b67652bb6ec822"
 }
 }
