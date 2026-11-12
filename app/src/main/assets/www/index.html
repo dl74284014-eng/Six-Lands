@@ -428,7 +428,7 @@ body{overflow-x:hidden}
 <style id="imgcss"></style>
 
 <script>
-const BUILD_VER="12.11.2026 21:35";
+const BUILD_VER="12.11.2026 22:01";
 const KEY='tiholesye-v3';
 const I=k=>`<i class="ico i-${k}"></i>`;
 
@@ -2478,7 +2478,7 @@ function genTick(){
 AU.tr={};AU.key=null;
 function musicKey(){const t=$('#title');return(!s||(t&&!t.hidden))?'menu':s.culture}
 function loadTrack(){const k=AU.key,T=AU.tr[k]||(AU.tr[k]={st:'idle'});if(T.st!=='idle')return;T.st='loading';
-  fetch(k==='menu'?'audio/theme.mp3':`audio/theme_${k}.mp3`).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()}).then(b=>new Promise((res,rej)=>AU.ctx.decodeAudioData(b,res,rej)))
+  fetch(k==='menu'||k==='desert'?'audio/theme.mp3':`audio/theme_${k}.mp3`).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()}).then(b=>new Promise((res,rej)=>AU.ctx.decodeAudioData(b,res,rej)))
     .then(buf=>{T.buf=buf;T.st='ready';if(AU.playing&&AU.key===k)playTrack()})
     .catch(()=>{T.st='failed';if(AU.playing&&AU.key===k)startGen()})}
 function playTrack(){if(AU.src)return;const T=AU.tr[AU.key];if(!T||!T.buf)return;const c=AU.ctx;AU.src=c.createBufferSource();AU.src.buffer=T.buf;AU.src.loop=true;
