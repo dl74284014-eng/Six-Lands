@@ -128,6 +128,14 @@
 "img/gp_general.jpg": "f27bbd450b6547a0",
 "img/gp_scientist.jpg": "21c0f08ada45bc27",
 "img/grove.jpg": "1dcdd00a37fea541",
+"img/gw_academy.jpg": "f779704944134ab8",
+"img/gw_cathedral.jpg": "fecc172367edb4e9",
+"img/gw_colosseum.jpg": "0b260261e5cfd364",
+"img/gw_gardens.jpg": "a37ad042e7486091",
+"img/gw_library.jpg": "3ca7a34958d73c91",
+"img/gw_lighthouse.jpg": "10bffd359eec2e39",
+"img/gw_mint.jpg": "0edc57a330f4ff7f",
+"img/gw_wall.jpg": "ec47af0dbe466370",
 "img/hall.jpg": "09f145c1f9ce2295",
 "img/herbalist.jpg": "633da29e80ca2699",
 "img/hole.jpg": "6ce4673ad25bafdd",
@@ -176,6 +184,13 @@
 "img/manawell.jpg": "a965c28daca49e51",
 "img/mapper.jpg": "18a7687163ccbf16",
 "img/market.jpg": "313158a2e79824b0",
+"img/mc_axes.jpg": "2dbac3aaa452d216",
+"img/mc_bows.jpg": "b82d1b079a44ab06",
+"img/mc_mages.jpg": "39f0a98186880883",
+"img/mc_pikes.jpg": "04c5e1e9cc99949c",
+"img/mc_rabble.jpg": "56afba72eda23e96",
+"img/mc_riders.jpg": "71316657d167952d",
+"img/mc_siege.jpg": "7b090ed0fcbd40c1",
 "img/mill.jpg": "746a97302fa9f8f5",
 "img/ms_counter.jpg": "ab4269ee9b5967ab",
 "img/ms_gold.jpg": "26e7bc78156a325b",
@@ -307,6 +322,6 @@
 "img/watchtower.jpg": "9981f7c513e996ba",
 "img/witchhut.jpg": "459c6b9818589517",
 "img/workshop.jpg": "4e07260150d09921",
-"index.html": "b28122202a6dd3ce"
+"index.html": "3b75fbf7386fd32d"
 }
 }
