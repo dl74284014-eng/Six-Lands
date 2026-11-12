@@ -354,6 +354,13 @@ body{overflow-x:hidden}
 .chev.off b{background:#5a4a30}
 .vetbox{display:grid;gap:6px;padding:10px;border:1px solid rgba(232,192,106,.35);border-radius:10px;background:rgba(232,192,106,.06)}
 .vetmsg{display:grid;gap:4px;padding:8px 10px;margin:6px 0;border-radius:10px;background:linear-gradient(90deg,rgba(232,192,106,.22),rgba(232,192,106,.04));border-left:3px solid var(--brass);font-size:13px;animation:modalin .5s both}
+.advice{display:grid;gap:6px;margin:8px 0 10px}
+.adv{display:flex;align-items:flex-start;gap:8px;text-align:left;padding:7px 10px;border-radius:10px;border:1px dashed rgba(232,192,106,.35);background:rgba(232,192,106,.05);color:#cdbf9f;font:inherit;font-size:12.5px;line-height:1.35;cursor:pointer}
+.adv .ico{flex:none;margin-top:1px;opacity:.85}.adv:active{background:rgba(232,192,106,.12)}
+.advwhy{color:var(--brass)}
+.card.rec{box-shadow:0 0 0 2px rgba(232,192,106,.85),0 0 14px rgba(232,192,106,.35)}
+.card.c-land.hint{box-shadow:0 0 0 1.5px rgba(232,192,106,.6);animation:hintp 2.6s ease-in-out infinite}
+@keyframes hintp{50%{box-shadow:0 0 0 1.5px rgba(232,192,106,.95),0 0 16px rgba(232,192,106,.35)}}
 .diffbox{display:grid;gap:8px;padding:12px;border:1px solid rgba(232,192,106,.3);border-radius:12px;background:rgba(0,0,0,.18)}
 .diffbox .dlab{font-family:var(--title);color:var(--brass);font-size:16px}
 .dseg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
@@ -401,6 +408,7 @@ body{overflow-x:hidden}
       <div class="chips" id="buffs"></div>
       <div class="chips" id="rivalsBar"></div>
       <div id="questBox"></div>
+      <div id="advice"></div>
       <div class="zone-h"><span>Земли деревни</span><span id="landCount"></span></div>
       <div class="cards" id="lands"></div>
     </div>
@@ -419,7 +427,7 @@ body{overflow-x:hidden}
 <style id="imgcss"></style>
 
 <script>
-const BUILD_VER="12.11.2026 15:07";
+const BUILD_VER="12.11.2026 21:14";
 const KEY='tiholesye-v3';
 const I=k=>`<i class="ico i-${k}"></i>`;
 
@@ -820,7 +828,7 @@ const vxp=id=>(s.vet&&s.vet[id])||0;
 const vr=id=>{let r=0;VR.forEach((x,i)=>{if(vxp(id)>=x.xp)r=i});return r};
 const vb=id=>VR[vr(id)].b;
 const chev=r=>r?`<i class="chev">${'<b></b>'.repeat(r)}</i>`:'';
-let LASTRES=null,VETMSG=[];
+let LASTRES=null,VETMSG=[],REPORT0=[];
 function gainVet(S,won){if(!s.vet)s.vet={};VETMSG=[];
   S.g.forEach(x=>{if(x.fixed||!U[x.id]||!(s.army[x.id]>0))return;const r0=vr(x.id);s.vet[x.id]=vxp(x.id)+(won?1:.35);const r1=vr(x.id);
     if(r1>r0){const m=`${U[x.id].n}: новое звание «${VR[r1].n}» — атака +${Math.round(VR[r1].b*100)}%, стойкость +${Math.round(VR[r1].b*50)}%.`;VETMSG.push(m);log(m,'good')}})}
@@ -1139,7 +1147,8 @@ function stats(){
   if(def>=th){happy+=3;hp.push(['Чувство защищённости',3])}else if(def<th/2){happy-=5;hp.push(['Слабая оборона',-5])}
   delta.food-=P*.5;add('food','Жители едят',-P*.5);
   const starving=s.res.food+delta.food<0;
-  if(starving){happy-=25;hp.push(['Голод',-25])}
+  const shortage=!starving&&delta.food<0&&s.res.food<-delta.food*12;
+  if(starving){happy-=25;hp.push(['Голод',-25])}else if(shortage){happy-=8;hp.push(['Нехватка еды',-8])}
   if(cT&&P>=cT){happy-=4;hp.push(['Теснота',-4])}
   happy=Math.max(0,Math.min(100,happy));
   const rate={low:.25,normal:.5,high:.85}[s.tax];
@@ -1153,7 +1162,7 @@ function stats(){
   if(s.bSci){sci+=s.bSci;add('sci','Академии великих учёных',s.bSci)}if(s.bCult){cult+=s.bCult;add('cult','Школы великих художников',s.bCult)}
   const sm=MOD('sci'),cm=MOD('cult');if(sm!==1)add('sci','Бонусы',sci*(sm-1));if(cm!==1)add('cult','Бонусы',cult*(cm-1));sci*=sm;cult*=cm;
   rep+=(happy>=70?.15:0)-(happy<30?.2:0);
-  return{sci,cult,bdef,br,capT:cT,P,jobs,eff,delta,happy,rep,off,act,has,taxes,hp,starving,season:se,def:Math.round(def),threat:th};
+  return{sci,cult,bdef,br,capT:cT,P,jobs,eff,delta,happy,rep,off,act,has,taxes,hp,starving,shortage,season:se,def:Math.round(def),threat:th};
 }
 
 function tick(){
@@ -1163,8 +1172,8 @@ function tick(){
   s.rep=Math.max(0,Math.min(100,s.rep+st.rep));s.happy=st.happy;
   s.day++;
   s.lands.forEach(l=>{if(!(l.bt>0))return;l.bt--;if(l.bt>0)return;delete l.bt;
-    if(l.up){const was=B[l.b].n;l.b=l.up;delete l.up;log(`Улучшено: ${was} → ${B[l.b].n}.`,'good');REPORT.push([`Улучшено: ${B[l.b].n}`,`${was} перестроен. Постройка уже работает.`,'good'])}
-    else{log(`Достроено: ${B[l.b].n}.`,'good');REPORT.push([`Достроено: ${B[l.b].n}`,'Строители закончили работу. Постройка уже работает.','good'])}});
+    if(l.up){const was=B[l.b].n;l.b=l.up;delete l.up;log(`Улучшено: ${was} → ${B[l.b].n}.`,'good');REPORT0.push([`Улучшено: ${B[l.b].n}`,`${was} перестроен. Постройка уже работает.`,'good'])}
+    else{log(`Достроено: ${B[l.b].n}.`,'good');REPORT0.push([`Достроено: ${B[l.b].n}`,'Строители закончили работу. Постройка уже работает.','good'])}});
   if((s.day-1)%10===0)log(`Наступает ${season().n.toLowerCase()}.`,'arc');
   GODS.forEach(g=>{
     const before=lvl(g.id);let f=s.favor[g.id]||0;
@@ -1183,11 +1192,14 @@ function tick(){
     let k=0;if(rnd()<ch)k++;if(free>5&&rnd()<ch*.6)k++;k=Math.min(k,free);
     if(k){s.pop.p+=k;log(k>1?`В деревню переселились ${k} семьи.`:'В деревню переселилась семья.','good')}
   }
-  if((st.starving||st.happy<25)&&rnd()<.3)loseFamily(st.starving?'От голода':'От недовольства');
+  if(st.starving){let g=0;if(rnd()<.45&&loseFamily('От голода'))g++;
+    if(g)REPORT0.push(['Голод',`${g>1?g+' семьи ушли':'Одна семья ушла'} из деревни: амбары пусты. Постройте ферму или купите еду на рынке.`,'bad'])}
+  else if(st.shortage&&rnd()<.25){if(loseFamily('Еды не хватает:'))REPORT0.push(['Еды не хватает','Еды тратится больше, чем добывается, и запасы тают. Одна семья ушла искать сытую жизнь.','bad'])}
+  else if(st.happy<25&&rnd()<.3)loseFamily('От недовольства');
   if(s.pop.p>st.capT)s.pop.p=Math.max(mcount(),st.capT);
   while(s.rank<RANKS.length-1&&RANKS[s.rank+1].ok()){s.rank++;s.rep=Math.min(100,s.rep+5);sfx('good');log(`Деревня получает звание «${RANKS[s.rank].n}»! Слава +5.`,'arc');toast('Новое звание: '+RANKS[s.rank].n)}
   trainTurn();
-  REPORT=[];aiTurn();
+  REPORT=REPORT0;REPORT0=[];aiTurn();
   progTurn(st);greatTurn(st);checkQuests(true);tradeTurn();spyTurn();
 
   if(!s.won&&(s.rivals.every(r=>r.vassal)||s.rank>=RANKS.length-1||hasT('final')||hasC('golden'))){s.won=true;REPORT.push(['Победа!',s.rivals.every(r=>r.vassal)?'Военная победа: все народы признали вашу власть.':hasT('final')?'Научная победа: ваш народ совершил Великое открытие.':hasC('golden')?'Культурная победа: настал Золотой век.':'Ваша деревня стала Городом чудес.','good'])}
@@ -1532,30 +1544,61 @@ function lockReason(d){
   if((d.god||d.id==='wonder')&&s.lands.some(l=>l.b===d.id||l.up===d.id))return'Уже построено';
   const l=d.lock&&d.lock();return l||'';
 }
-function pickLand(d){
+function fitsLand(d,l){return !l.b&&(!d.land||d.land===l.t)}
+function pickLand(d,want){
+  if(want!=null&&s.lands[want]&&fitsLand(d,s.lands[want]))return want;
   const free=s.lands.map((l,i)=>({l,i})).filter(x=>!x.l.b);
   if(d.land){const f=free.find(x=>x.l.t===d.land);return f?f.i:-1}
   if(d.ley){const f=free.find(x=>x.l.t==='ley');if(f)return f.i}
   for(const t of['plain','edge','rock','ley']){const f=free.find(x=>x.l.t===t);if(f)return f.i}
   return-1;
 }
-function placeReason(d){return pickLand(d)<0?(d.land?`Нет свободного участка: ${LAND[d.land].n}`:'Нет свободных участков'):''}
-function openBuild(id){
-  const d=B[id];const lock=lockReason(d);const pl=lock?'':placeReason(d);const noCrew=crewsBusy()>=crews();const ok=!lock&&!pl&&!noCrew&&afford(d.cost);const bt=bTurns(d);const li=pickLand(d);
+function placeReason(d,want){return pickLand(d,want)<0?(d.land?`Нет свободного участка: ${LAND[d.land].n}`:'Нет свободных участков'):''}
+function openBuild(id,want){
+  const d=B[id];const lock=lockReason(d);const pl=lock?'':placeReason(d,want);const noCrew=crewsBusy()>=crews();const ok=!lock&&!pl&&!noCrew&&afford(d.cost);const bt=bTurns(d);const li=pickLand(d,want);
   openModal(`<div class="cv">${buildingCard(d,{cls:'big',cost:1,el:'div',land:li>=0?s.lands[li].t:null})}<div class="info">
     <h2>${d.n}</h2><p>${d.desc}</p><div class="small">${effText(d)} в день</div>
     ${d.land?`<div class="small muted">Только на участке «${LAND[d.land].n}».</div>`:''}
-    <div class="small"><i class="ico i-turns"></i> Строительство: <b>${bt} ход.</b> · бригады заняты ${crewsBusy()}/${crews()}</div>
+    ${advWhy(id)}<div class="small"><i class="ico i-turns"></i> Строительство: <b>${bt} ход.</b> · бригады заняты ${crewsBusy()}/${crews()}</div>
     ${noCrew&&!lock?'<div class="small" style="color:var(--bad)">Все строительные бригады заняты. Дождитесь окончания стройки или ускорьте её.</div>':''}
     ${lock?`<div class="small" style="color:var(--bad)">${lock}</div>`:pl?`<div class="small" style="color:var(--bad)">${pl}. Купите новый участок на столе.</div>`:`<div class="small muted">Ляжет на участок «${LAND[s.lands[li].t].n}».</div>`}
     <div class="row"><button class="btn" id="bb" ${ok?'':'disabled'}>Построить</button><button class="btn ghost" id="bx">Закрыть</button></div></div></div>`,true);
-  $('#bx').onclick=closeModal;$('#bb').onclick=()=>build(id);
+  $('#bx').onclick=()=>{closeModal();if(want!=null)openLand(want)};$('#bx').textContent=want!=null?'Назад':'Закрыть';$('#bb').onclick=()=>build(id,want);
 }
-function build(id){
-  const d=B[id];if(lockReason(d)||placeReason(d)||!afford(d.cost)||crewsBusy()>=crews())return;
-  const i=pickLand(d);pay(d.cost);s.lands[i].b=id;s.lands[i].bt=bTurns(d);JUST=i;setTimeout(()=>JUST=null,50);
-  sfx('build');log(`Заложено: ${d.n} (${s.lands[i].bt} ход.).`);toast(`${d.n}: стройка началась, ${s.lands[i].bt} ход.`);closeModal();checkQuests(false);save();render();
+function build(id,want){
+  const d=B[id];if(lockReason(d)||placeReason(d,want)||!afford(d.cost)||crewsBusy()>=crews())return;
+  const i=pickLand(d,want);pay(d.cost);s.lands[i].b=id;s.lands[i].bt=bTurns(d);JUST=i;setTimeout(()=>JUST=null,50);
+  sfx('build');log(`Заложено: ${d.n} (${s.lands[i].bt} ход.).`);toast(`${d.n}: стройка началась, ${s.lands[i].bt} ход.`);closeModal();checkQuests(false);save();JUST=i;go('h');render();
+  setTimeout(()=>{const c=document.querySelector(`#lands [data-l="${i}"]`);if(c)c.scrollIntoView({behavior:RM?'auto':'smooth',block:'center'})},120);setTimeout(()=>JUST=null,600);
 }
+/* ---------- советы ---------- */
+function advice(){const st=stats();const A=[];const P=pop();const ok=id=>B[id]&&!lockReason(B[id]);const free=s.lands.filter(l=>!l.b).length;
+  const fl=id=>s.lands.some(l=>fitsLand(B[id],l));
+  const building=id=>s.lands.some(l=>(l.b===id||l.up===id)&&l.bt>0);
+  const upOf=from=>s.lands.findIndex(l=>l.b===from&&!l.bt&&UPG[from]&&!lockReason(B[UPG[from]]));
+  if(st.starving||st.shortage||st.delta.food<0){if(ok('farm')&&fl('farm')&&!building('farm'))A.push({b:'farm',t:st.starving?'Амбары пусты, люди уходят. Нужна ферма.':'Еды тратится больше, чем добывается. Постройте ферму.',w:'Еды не хватает: жители начнут уходить.'});
+    else if(ok('hunter')&&fl('hunter')&&!building('hunter'))A.push({b:'hunter',t:'Еды не хватает. Охотничий домик на опушке даст дичь.',w:'Еды не хватает.'});
+    else A.push({go:'tr',t:'Еды не хватает. Купите зерно на рынке, пока люди не начали уходить.'})}
+  if(P>=st.capT-1&&!s.lands.some(l=>l.bt>0&&B[l.up||l.b].cap)){const u=upOf('hut');
+    if(u>=0)A.push({l:u,t:'Жилья почти не осталось. Улучшите хижину до дома.'});
+    else if(ok('hut')&&free)A.push({b:'hut',t:'Жилья почти не осталось. Новая хижина приведёт новые семьи.',w:'Жильё почти заполнено.'})}
+  if(st.def<st.threat&&!s.lands.some(l=>l.bt>0&&B[l.up||l.b].def)){const u=upOf('fence');
+    if(u>=0&&ok('palisade'))A.push({l:u,t:'Оборона слабее угрозы. Улучшите забор до частокола.'});
+    else if(ok('fence')&&!cnt('fence')&&free)A.push({b:'fence',t:'Оборона слабее угрозы. Хватит и плетёного забора.',w:'Оборона слабее угрозы.'});
+    else if(ok('watchtower')&&free)A.push({b:'watchtower',t:'Оборона слабее угрозы. Сторожевая башня поможет.',w:'Оборона слабее угрозы.'})}
+  if(st.happy<45){const c=['fountain','temple','tavern'].find(id=>ok(id)&&!building(id)&&(id!=='tavern'||here('tavern')));if(c&&free)A.push({b:c,t:`Жители недовольны (${Math.round(st.happy)}). ${B[c].n} поднимет настроение.`,w:'Жители недовольны.'})}
+  if(st.delta.wood<1&&s.res.wood<40&&ok('lumber')&&fl('lumber')&&!building('lumber'))A.push({b:'lumber',t:'Дерева мало, а оно нужно почти для всего. Лесопилка на опушке.',w:'Дерева мало.'});
+  if(st.delta.stone<.5&&s.res.stone<30&&ok('quarry')&&fl('quarry')&&!building('quarry'))A.push({b:'quarry',t:'Камня не хватает для стен и храма. Каменоломня на склоне.',w:'Камня мало.'});
+  if(st.delta.gold<1&&ok('market')&&!cnt('market')&&!building('market')&&free)A.push({b:'market',t:'Казна почти не растёт. Рынок даст золото и поднимет налоги.',w:'Казна почти не растёт.'});
+  if(!free&&A.some(a=>a.b))A.unshift({nl:1,t:'Свободных участков нет. Купите новый участок на столе.'});
+  if(crewsBusy()>=crews()&&A.length)A.unshift({t:'Все строительные бригады заняты: дождитесь окончания стройки.'});
+  return A.slice(0,2)}
+const advIds=()=>advice().filter(a=>a.b).map(a=>a.b);
+function advWhy(id){const a=advice().find(x=>x.b===id);return a?`<div class="small advwhy"><i class="ico i-spark"></i> Совет: ${a.w||a.t}</div>`:''}
+function adviceHTML(){const A=advice();if(!A.length)return'';
+  return`<div class="advice">${A.map((a,j)=>`<button class="adv" data-adv="${j}"><i class="ico i-spark"></i><span>${a.t}</span></button>`).join('')}</div>`}
+function bindAdvice(root){const A=advice();root.querySelectorAll('[data-adv]').forEach(b=>b.onclick=()=>{const a=A[+b.dataset.adv];
+  if(a.b){const li=s.lands.findIndex(l=>fitsLand(B[a.b],l));openBuild(a.b,li>=0?li:undefined)}else if(a.l!=null)openLand(a.l);else if(a.go)go(a.go);else if(a.nl)buyLand()})}
 function openLand(i){
   const l=s.lands[i];const st=stats();
   if(l.bt>0){
@@ -1589,9 +1632,13 @@ function openLand(i){
     const dm=$('#ld');if(dm)dm.onclick=()=>demolish(i);const ub=$('#lu');if(ub)ub.onclick=()=>window.__up();
   }else{
     openModal(`<div class="cv">${card({cls:'c-land big',name:LAND[l.t].n,artCls:`tex-${l.t}`,text:LAND[l.t].d,el:'div'})}<div class="info">
-      <h2>${LAND[l.t].n}</h2><p>${LAND[l.t].d}</p><p class="muted small">Свободный участок. Выберите карту в колоде построек, и она ляжет на подходящую землю.</p>
-      <div class="row"><button class="btn" id="lb">К постройкам</button><button class="btn ghost" id="lx">Закрыть</button></div></div></div>`,true);
+      <h2>${LAND[l.t].n}</h2><p>${LAND[l.t].d}</p><p class="muted small">Свободный участок. Ниже постройки, которые можно заложить именно здесь. Золотой рамкой отмечены те, что советуем сейчас.</p>
+      <div class="small muted">Бригады заняты ${crewsBusy()}/${crews()}</div>
+      <div class="row"><button class="btn ghost" id="lb">Все постройки</button><button class="btn ghost" id="lx">Закрыть</button></div></div></div>
+      ${(()=>{const rec=advIds();const L=BL.filter(d=>!d.noBuild&&!lockReason(d)&&fitsLand(d,l)).sort((a,b)=>(rec.includes(b.id)-rec.includes(a.id))||((b.land===l.t)-(a.land===l.t))||(afford(b.cost)-afford(a.cost)));
+        return L.length?`<div class="zone-h"><span>Можно построить здесь</span><span>${L.length}</span></div><div class="cards picker">${L.map(d=>buildingCard(d,{cls:(rec.includes(d.id)?'rec ':'')+(afford(d.cost)?'':'poor'),cost:1,land:l.t,attrs:`data-lb="${d.id}"`,tag:rec.includes(d.id)?'Советуем':'',tagCls:'gold'})).join('')}</div>`:'<p class="small muted">Пока здесь нечего строить: откройте новые постройки наукой и ростом деревни.</p>'})()}`,true);
     $('#lb').onclick=()=>{closeModal();buildCat='ready';go('b')};
+    document.querySelectorAll('[data-lb]').forEach(b=>b.onclick=()=>openBuild(b.dataset.lb,i));
   }
   $('#lx').onclick=closeModal;
 }
@@ -1840,10 +1887,12 @@ function renderTable(){
   $('#rivalsBar').querySelectorAll('[data-rv]').forEach(b=>b.onclick=()=>openRival(+b.dataset.rv));
   $('#questBox').innerHTML=`<div class="zone-h"><span>Поручения</span><span>выполнено ${s.qDone}</span></div>`+questsHTML();
   $('#questBox').querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>openQuest(+b.dataset.q));
+  $('#advice').innerHTML=adviceHTML();bindAdvice($('#advice'));
   $('#landCount').textContent=`${s.lands.filter(l=>l.b).length} из ${s.lands.length} заняты`;
   const c=landCost();
+  const REC=advIds();
   $('#lands').innerHTML=s.lands.map((l,i)=>{
-    if(!l.b)return card({cls:'c-land',name:LAND[l.t].n,artCls:`tex-${l.t}`,text:'Свободный участок',attrs:`data-l="${i}"`});
+    if(!l.b)return card({cls:'c-land'+(REC.some(id=>fitsLand(B[id],l)&&B[id].land===l.t)?' hint':''),name:LAND[l.t].n,artCls:`tex-${l.t}`,text:'Свободный участок',attrs:`data-l="${i}"`});
     const d=B[l.b];const why=st.off.get(i);
     if(l.bt>0){const tg=l.up?B[l.up]:d;return buildingCard(tg,{cls:'constr'+(l.up?' upg':'')+(JUST===i?' placed':''),land:l.t,tag:`${l.up?'Улучшение':'Стройка'}: ${l.bt} ход.`,tagCls:'arc',attrs:`data-l="${i}"`})}
     const canUp=UPG[l.b]&&!lockReason(B[UPG[l.b]]);
@@ -2123,11 +2172,12 @@ function renderPane(){
     const cats=[['ready','Можно строить',all.filter(ok).length],...Object.keys(CATS).map(c=>[c,CATS[c],all.filter(d=>d.cat===c).length])];
     const items=buildCat==='ready'?all.filter(ok).sort((a,b)=>afford(b.cost)-afford(a.cost)):all.filter(d=>d.cat===buildCat).sort((a,b)=>!!lockReason(a)-!!lockReason(b));
     const free=s.lands.filter(l=>!l.b).length;
-    p.innerHTML=chipRow(cats,buildCat,'bc')+`<div class="small muted" style="margin:0 0 10px">Свободных участков: ${free}. Строительные бригады: ${crewsBusy()}/${crews()}. ${buildCat==='ready'?'Здесь все постройки, которые уже открыты; сначала те, на которые хватает ресурсов.':''}</div><div class="cards">`+items.map(d=>{
-        const why=lockReason(d);return buildingCard(d,{cls:why?'locked':(!afford(d.cost)?'poor':''),cost:!why,why,attrs:`data-b="${d.id}"`});
+    const rec=advIds();
+    p.innerHTML=chipRow(cats,buildCat,'bc')+adviceHTML()+`<div class="small muted" style="margin:0 0 10px">Свободных участков: ${free}. Строительные бригады: ${crewsBusy()}/${crews()}. ${buildCat==='ready'?'Здесь все постройки, которые уже открыты; сначала те, на которые хватает ресурсов.':''}</div><div class="cards">`+items.map(d=>{
+        const why=lockReason(d);const rc=!why&&rec.includes(d.id);return buildingCard(d,{cls:(why?'locked':(!afford(d.cost)?'poor':''))+(rc?' rec':''),cost:!why,why,attrs:`data-b="${d.id}"`,tag:rc?'Советуем':'',tagCls:'gold'});
       }).join('')+`</div>${items.length?'':'<div class="small muted">Пока ничего. Загляните в другие категории.</div>'}`;
     p.querySelectorAll('[data-bc]').forEach(b=>b.onclick=()=>{buildCat=b.dataset.bc;renderPane();dealIn($('#pane'))});
-    p.querySelectorAll('[data-b]').forEach(b=>b.onclick=()=>openBuild(b.dataset.b));
+    p.querySelectorAll('[data-b]').forEach(b=>b.onclick=()=>openBuild(b.dataset.b));bindAdvice(p);
   }else if(tab==='a'){
     const q=s.queue.map((x,i)=>`<li>${U[x.u].n} — ${x.left===1?'готов в следующем ходу':`ещё ${x.left} ход.`}${i>= (cnt('barracks')&&here('barracks')?2:1)?' (ждёт очереди)':''}</li>`).join('');
     const up={};UNITS.forEach(u=>{const k=s.army[u.id]||0;for(const[r,n]of Object.entries(u.up))up[r]=(up[r]||0)+n*k*MOD('upkeep')});
