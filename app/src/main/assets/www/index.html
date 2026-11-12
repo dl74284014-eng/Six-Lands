@@ -371,6 +371,12 @@ body{overflow-x:hidden}
 .relbar{display:block;height:5px;border-radius:3px;background:linear-gradient(90deg,#b5483a,#8a7a5a 50%,#7fb35e);position:relative;opacity:.85}
 .relbar i{position:absolute;top:-3px;width:3px;height:11px;margin-left:-1px;background:#fff3d6;border-radius:2px;box-shadow:0 0 4px #000}
 #rivalsBar{display:none!important}
+.tasks{display:grid;gap:8px}
+.task{display:grid;grid-template-columns:1fr auto;gap:6px 10px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:rgba(0,0,0,.16)}
+.task .tt{display:grid;gap:2px;min-width:0}.task .bar{grid-column:1/-1}
+.task.ok{border-color:rgba(232,192,106,.7);background:rgba(232,192,106,.08);box-shadow:0 0 12px rgba(232,192,106,.2)}
+.task.dn{opacity:.55}
+#questBox,#scnBox{display:none!important}
 .lnk{background:none;border:0;padding:0;color:var(--brass);font:inherit;font-size:12px;text-decoration:underline dotted;cursor:pointer}
 .btn.sm{padding:6px 10px;font-size:13px}
 .cards.hand{grid-template-columns:repeat(3,minmax(0,1fr))}
@@ -465,7 +471,7 @@ body{overflow-x:hidden}
 <style id="imgcss"></style>
 
 <script>
-const BUILD_VER="13.11.2026 08:10";
+const BUILD_VER="13.11.2026 08:26";
 let SLOT=1;try{SLOT=+localStorage.getItem('sixlands-slot')||1}catch(e){}
 const SK_=n=>'sixlands-save-'+n;
 try{const old=localStorage.getItem('tiholesye-v3');if(old&&!localStorage.getItem(SK_(1))){localStorage.setItem(SK_(1),old);localStorage.removeItem('tiholesye-v3')}}catch(e){}
@@ -2390,8 +2396,8 @@ function tutPos(){if(!TUTD||TUTD.done)return;const o=$('#tut');if(!o)return;cons
 setInterval(()=>{try{tutPos()}catch(e){}},400);
 
 /* ---------- общий ход ---------- */
-function featTurn(st){ensureOrd();ensureHero();ensureGW();ensureMerc();gwTurn();mercTurn();ordTurn();expTurn();dipTurn();carTurn();scnTurn();histTurn();achCheck()}
-function ensureFeat(){ensureGW();ensureMerc();ensureOrd();ensureHero();ensureExp();if(!s.relics)s.relics=[];if(!s.car)s.car=[];if(!s.cnt)s.cnt={};if(!s.hist)s.hist=[];if(!s.chron)s.chron=[]}
+function featTurn(st){ensureTasks();tasksTurn();ensureOrd();ensureHero();ensureGW();ensureMerc();gwTurn();mercTurn();ordTurn();expTurn();dipTurn();carTurn();scnTurn();histTurn();achCheck()}
+function ensureFeat(){ensureTasks();ensureGW();ensureMerc();ensureOrd();ensureHero();ensureExp();if(!s.relics)s.relics=[];if(!s.car)s.car=[];if(!s.cnt)s.cnt={};if(!s.hist)s.hist=[];if(!s.chron)s.chron=[]}
 
 /* ---------- великие стройки ---------- */
 const GW=[
@@ -2474,9 +2480,47 @@ function renderDip(p){
    <div class="zone-h"><span>Города-государства</span><span></span></div><div class="diplist">${cs}</div>
    <div class="small muted" style="margin-top:8px">Караванов в пути: ${(s.car||[]).length}/${carMax()} · шпионов: ${(s.spies||[]).length}</div>`;
   p.querySelectorAll('[data-rv]').forEach(b=>b.onclick=()=>openRival(+b.dataset.rv));p.querySelectorAll('[data-cs]').forEach(b=>b.onclick=()=>go('tcs'))}
+/* ---------- задания ---------- */
+const TASKS=[
+ {id:'walls',n:'Первые стены',d:'Поставить забор, частокол или стену.',c:()=>cnt('fence')+cnt('palisade')+cnt('stonewall'),v:1,rew:{gold:40,wood:20}},
+ {id:'farms',n:'Сытая деревня',d:'Три фермы.',c:()=>cnt('farm'),v:3,rew:{gold:50,food:40}},
+ {id:'pop15',n:'Растущее село',d:'15 семей.',c:()=>pop(),v:15,rew:{gold:60,wood:40}},
+ {id:'m3',n:'Мастеровые',d:'3 мастера в деревне.',c:()=>mcount(),v:3,rew:{gold:80}},
+ {id:'temple',n:'Дом богов',d:'Построить храм.',c:()=>cnt('temple'),v:1,rew:{cult:40,rep:3}},
+ {id:'t5',n:'Первые знания',d:'5 технологий.',c:()=>s.tech.known.length,v:5,rew:{sci:60}},
+ {id:'exp1',n:'За горизонт',d:'Удачная экспедиция.',c:()=>cntOf('exps'),v:1,rew:{gold:100}},
+ {id:'army10',n:'Дружина',d:'Армия из 10 воинов.',c:()=>armySize(),v:10,rew:{gold:100,food:50}},
+ {id:'car',n:'Торговый путь',d:'Отправить караван.',c:()=>cntOf('caravans'),v:1,rew:{gold:80}},
+ {id:'treaty',n:'Слово и печать',d:'Договор о ненападении или союз.',c:()=>cntOf('treaties')+cntOf('allies'),v:1,rew:{gold:100,rep:3}},
+ {id:'pop30',n:'Большое село',d:'30 семей.',c:()=>pop(),v:30,rew:{gold:150,stone:80}},
+ {id:'hero4',n:'Опытный староста',d:'Староста 4-го уровня.',c:()=>s.hero?s.hero.lvl:0,v:4,rew:{gold:150}},
+ {id:'rel3',n:'Хранитель древностей',d:'3 реликвии.',c:()=>(s.relics||[]).length,v:3,rew:{gold:200,mana:40}},
+ {id:'m10',n:'Город мастеров',d:'10 мастеров.',c:()=>mcount(),v:10,rew:{gold:200,cult:60}},
+ {id:'t12',n:'Учёная деревня',d:'12 технологий.',c:()=>s.tech.known.length,v:12,rew:{sci:150}},
+ {id:'gw',n:'Чудо света',d:'Завершить великую стройку.',c:()=>s.gw?s.gw.built.length:0,v:1,rew:{gold:250,rep:5}},
+ {id:'boss',n:'Гроза чудовищ',d:'Победить босса.',c:()=>cntOf('bosses'),v:1,rew:{gold:300,rep:5}},
+ {id:'pop50',n:'Почти город',d:'50 семей.',c:()=>pop(),v:50,rew:{gold:300,stone:150}}
+];
+function ensureTasks(){if(!s.tasks)s.tasks={done:[],told:[]}}
+const taskReady=x=>!s.tasks.done.includes(x.id)&&x.c()>=x.v;
+function tasksTurn(){ensureTasks();TASKS.forEach(x=>{if(taskReady(x)&&!s.tasks.told.includes(x.id)){s.tasks.told.push(x.id);REPORT.push([`Задание выполнено: ${x.n}`,`Заберите награду во вкладке «Деревня → Поручения»: ${rewText(x.rew)}.`,'good'])}})}
+function renderQ(p){ensureTasks();const T=TASKS.slice().sort((a,b)=>(s.tasks.done.includes(a.id)-s.tasks.done.includes(b.id))||(taskReady(b)-taskReady(a)));
+  const rd=TASKS.filter(taskReady).length;
+  p.innerHTML=`${scnHTML()}
+   <div class="zone-h"><span>Поручения</span><span>выполнено ${s.qDone}</span></div>
+   <p class="small muted" style="margin:0 0 8px">Небольшие просьбы жителей и купцов. Награда приходит сразу, а на место выполненного поручения приходит новое.</p>${questsHTML()}
+   <div class="zone-h" style="margin-top:14px"><span>Задания</span><span>${s.tasks.done.length} из ${TASKS.length}${rd?` · готово ${rd}`:''}</span></div>
+   <p class="small muted" style="margin:0 0 8px">Большие цели на всю партию. Когда задание выполнено, заберите награду.</p>
+   <div class="tasks">${T.map(x=>{const dn=s.tasks.done.includes(x.id),ok=taskReady(x),c=Math.min(x.c(),x.v);
+     return`<div class="task ${dn?'dn':ok?'ok':''}"><div class="tt"><b>${x.n}</b><span class="small muted">${x.d}</span></div>
+      <div class="tr">${dn?'<span class="small up">Получено</span>':ok?`<button class="btn sm" data-tk="${x.id}">Забрать ${rewText(x.rew)}</button>`:`<span class="small">${c}/${x.v} · ${rewText(x.rew)}</span>`}</div>
+      ${dn?'':`<div class="bar"><i style="width:${Math.min(100,c/x.v*100)}%"></i></div>`}</div>`}).join('')}</div>`;
+  p.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>openQuest(+b.dataset.q));
+  {const sb=p.querySelector('#scnBar');if(sb)sb.onclick=()=>{const x=SCN.find(y=>y.id===s.scn.id);openModal(`<h2>Испытание: ${x.n}</h2><p>${x.d}</p><div class="small">${x.prog()} · осталось ${Math.max(0,s.scn.end-s.day)} ход.</div><button class="btn ghost" id="sbX">Закрыть</button>`,true);$('#sbX').onclick=closeModal}}
+  p.querySelectorAll('[data-tk]').forEach(b=>b.onclick=()=>{const x=TASKS.find(y=>y.id===b.dataset.tk);if(!taskReady(x))return;giveRew(x.rew);s.tasks.done.push(x.id);inc('tasks');sfx('coin');log(`Задание «${x.n}»: награда ${rewText(x.rew)}.`,'good');toast(`Награда: ${x.n}`);save();render()})}
 /* ---------- навигация ---------- */
 const NAV=[
- {id:'home',n:'Деревня',ic:'home',subs:[['h','Стол'],['dip','Дипломатия'],['v','Сводка'],['l','Летопись']]},
+ {id:'home',n:'Деревня',ic:'home',subs:[['h','Стол'],['dip','Дипломатия'],['v','Сводка'],['l','Летопись'],['q','Поручения']]},
  {id:'build',n:'Постройки',ic:'jobs',subs:[['b','Постройки'],['gw','Великие стройки']]},
  {id:'people',n:'Мастера',ic:'people',subs:[['m','Мастера']]},
  {id:'trade',n:'Торговля',ic:'trade',subs:[['tr','Рынок'],['tgd','Товары'],['tnb','Соседи'],['tcs','Города'],['tcv','Караваны']]},
@@ -2742,6 +2786,7 @@ function renderPane(){
   if(tab==='pir'){renderPirates(p);return}
   if(tab==='spy'){renderSpies(p);return}
   if(tab==='dip'){renderDip(p);return}
+  if(tab==='q'){renderQ(p);return}
   if(tab==='hero'){renderHero(p);return}
   if(tab==='gw'){renderGW(p);return}
   if(tab==='merc'){renderMerc(p);return}
