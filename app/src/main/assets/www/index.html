@@ -315,6 +315,13 @@ html.noanim *,html.noanim *::before,html.noanim *::after{animation:none!importan
  .title .tbg{animation:kb 30s ease-in-out infinite alternate}@keyframes kb{to{transform:scale(1.12) translate(-2%,-2%)}}
  .title.out{animation:tout .4s ease-in forwards}@keyframes tout{to{opacity:0;transform:scale(1.04)}}
 }
+.mkt{display:flex;flex-direction:column;gap:8px}
+.mrow,.deal{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;align-items:center;background:var(--drawer);border:1px solid var(--line);border-radius:10px;padding:10px}
+.mrow .mi .ico{width:36px;height:36px}.mrow .mn{display:flex;flex-direction:column;min-width:0}
+.mrow .mb{grid-column:1/-1;display:flex;gap:8px}.mrow .mb .btn{flex:1;padding:8px 6px;font-size:14px}
+.deal{grid-template-columns:1fr auto}.deal .dl{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0}.deal .dl .ico{width:26px;height:26px}
+.deal .dx{grid-column:1/2;font-size:14px}.deal .btn{grid-row:1/3;grid-column:2;align-self:center}
+.bnav button span{font-size:11px;white-space:nowrap}
 @media (min-width:900px){.bnav{max-width:720px;margin:0 auto}.dock .turnbar{max-width:1240px;margin:0 auto}}
 </style>
 
@@ -360,7 +367,7 @@ html.noanim *,html.noanim *::before,html.noanim *::after{animation:none!importan
 <style id="imgcss"></style>
 
 <script>
-const BUILD_VER="12.11.2026 09:11";
+const BUILD_VER="12.11.2026 09:44";
 const KEY='tiholesye-v3';
 const I=k=>`<i class="ico i-${k}"></i>`;
 
@@ -681,7 +688,7 @@ const BCIVIC={theater:'drama'};
 const UTECH={soldier:'bronze',unique:'bronze',archer:'archery',cavalry:'riding',siege:'math',mage:'arcana'};
 const SCI={hall:2,library:4,observatory:3,tower:2,mapper:1,workshop:2,alchemy:1,enchanter:1,runes:1,glass:1,infirmary:1,beacon:2};
 const CUL={hall:2,temple:3,theater:4,wonder:6,fountain:1,tavern:1,library:1,garden:2,grove:1,jeweler:1,potter:1,tailor:1,sh_harvest:1,sh_forge:1,sh_magic:1,sh_guard:1,sh_hearth:1,sh_trade:1};
-function ensureProg(){if(!s.gp)s.gp={sci:0,cult:0,war:0,nS:90,nC:70,nW:3};if(!s.quests)s.quests=[];if(s.qDone==null)s.qDone=0;if(!s.tech)s.tech={known:[],cur:null,p:0};if(!s.civ)s.civ={known:[],cur:null,p:0};if(s.cultTotal==null){s.cultTotal=0;s.borderAt=30}}
+function ensureProg(){ensureTrade();if(!s.gp)s.gp={sci:0,cult:0,war:0,nS:90,nC:70,nW:3};if(!s.quests)s.quests=[];if(s.qDone==null)s.qDone=0;if(!s.tech)s.tech={known:[],cur:null,p:0};if(!s.civ)s.civ={known:[],cur:null,p:0};if(s.cultTotal==null){s.cultTotal=0;s.borderAt=30}}
 const canT=t=>!hasT(t.id)&&t.req.every(hasT);
 const canC=t=>!hasC(t.id)&&t.req.every(hasC);
 
@@ -1028,8 +1035,9 @@ function stats(){
     if(CUL[d.id]){const v=CUL[d.id]*(d.id==='hall'?1:eff);cult+=v;add('cult',d.n,v)}
     if(d.def)def+=d.def*(d.jobs?Math.max(.5,eff):1);
   });
-  const bdef=(def+6*lvl('guard')+(buff('skin')?10:0)+(buff('horn')?20:0))*MOD('def');def=bdef+armyDef()*MOD('def');
+  const bdef=(def+csDef()+6*lvl('guard')+(buff('skin')?10:0)+(buff('horn')?20:0))*MOD('def');def=bdef+armyDef()*MOD('def');
   UNITS.forEach(u=>{const k=s.army[u.id]||0;if(k)for(const[r,n]of Object.entries(u.up)){delta[r]-=n*k*MOD('upkeep');add(r,'Содержание армии',-n*k*MOD('upkeep'))}});
+  CITIES.forEach(c=>{const b=csBonus(c);if(b.gold){delta.gold+=b.gold;add('gold',c.n,b.gold)}if(b.mana){delta.mana+=b.mana;add('mana',c.n,b.mana)}});
   s.rivals.forEach(r=>{if(r.vassal){const t=hasC('empire')?8:4;delta.gold+=t;add('gold','Дань вассалов',t)}if(r.trade&&!r.war){delta.gold+=3;add('gold','Торговые договоры',3)}});
   const th=threat();
   hp.push(['Постройки',happy-50]);
@@ -1052,6 +1060,7 @@ function stats(){
   if(happy>=70){cult+=1;add('cult','Счастливый народ',1)}
   if(here('library')){sci+=1;add('sci','Хранитель знаний',1)}
   if(here('theater')){cult+=1;add('cult','Актёр и бард',1)}
+  CITIES.forEach(c=>{const b=csBonus(c);if(b.sci){sci+=b.sci;add('sci',c.n,b.sci)}if(b.cult){cult+=b.cult;add('cult',c.n,b.cult)}});
   if(s.bSci){sci+=s.bSci;add('sci','Академии великих учёных',s.bSci)}if(s.bCult){cult+=s.bCult;add('cult','Школы великих художников',s.bCult)}
   const sm=MOD('sci'),cm=MOD('cult');if(sm!==1)add('sci','Бонусы',sci*(sm-1));if(cm!==1)add('cult','Бонусы',cult*(cm-1));sci*=sm;cult*=cm;
   rep+=(happy>=70?.15:0)-(happy<30?.2:0);
@@ -1087,13 +1096,14 @@ function tick(){
   while(s.rank<RANKS.length-1&&RANKS[s.rank+1].ok()){s.rank++;s.rep=Math.min(100,s.rep+5);sfx('good');log(`Деревня получает звание «${RANKS[s.rank].n}»! Слава +5.`,'arc');toast('Новое звание: '+RANKS[s.rank].n)}
   trainTurn();
   REPORT=[];aiTurn();
-  progTurn(st);greatTurn(st);checkQuests(true);
+  progTurn(st);greatTurn(st);checkQuests(true);tradeTurn();
 
   if(!s.won&&(s.rivals.every(r=>r.vassal)||s.rank>=RANKS.length-1||hasT('final')||hasC('golden'))){s.won=true;REPORT.push(['Победа!',s.rivals.every(r=>r.vassal)?'Военная победа: все народы признали вашу власть.':hasT('final')?'Научная победа: ваш народ совершил Великое открытие.':hasC('golden')?'Культурная победа: настал Золотой век.':'Ваша деревня стала Городом чудес.','good'])}
   if(s.trip&&s.day>=s.trip.at)persuade();
   else if(REPORT.length)showReport();
   else if(s.pendingGP&&s.pendingGP.length)greatModal();
   else if(PEACE)peaceOffer();
+  else if(s.pir.due)pirateModal();
   else if(s.day>4&&s.day-s.lastEv>3&&rnd()<.18){s.lastEv=s.day;event()}
   save();renderTop();renderRes();renderTable();if(tab!=='i')renderPane();
 }
@@ -1191,7 +1201,7 @@ function peaceOffer(){
 function showReport(){
   openModal(`<h2>Итоги хода ${s.day}</h2><div class="stack">${REPORT.map(([h,t,k,x])=>`<div class="m"><b class="${k==='good'?'up':'dn'}">${h}</b><span class="small">${t}</span>${x||''}</div>`).join('')}</div><button class="btn" id="rpx">Дальше</button>`);
   REPORT.forEach(([h,t,k])=>log(`${h} ${t}`,k));
-  $('#rpx').onclick=()=>{REPORT=[];closeModal();render();if(PEACE)peaceOffer();else if(s.pendingGP&&s.pendingGP.length)greatModal()};
+  $('#rpx').onclick=()=>{REPORT=[];closeModal();render();if(PEACE)peaceOffer();else if(s.pendingGP&&s.pendingGP.length)greatModal();else if(s.pir.due)pirateModal()};
 }
 function peaceChance(r){return Math.max(.05,Math.min(.9,.15+(hasC('diplomacy')?.15:0)+(myPower()/(r.army*2+1))*.35+r.warT*.01))}
 function openRival(i){
@@ -1502,12 +1512,12 @@ function brTable(r,st){const rows=Object.entries(st.br[r]).filter(([,v])=>Math.a
   return rows.length?`<table>${rows.map(([l,v])=>`<tr><td>${esc(l)}</td><td class="n ${v>0?'up':'dn'}">${sgn(v)}</td></tr>`).join('')}<tr><th>Итого за ход</th><th class="n ${st.delta[r]>=0?'up':'dn'}">${sgn(st.delta[r])}</th></tr></table>`:'<div class="small muted">Пока нет ни доходов, ни расходов.</div>'}
 
 const PRICE={wood:2,stone:3,food:2,mana:6};
-function tradePrices(k){const mk=cnt('market')>0;const b=Math.ceil(PRICE[k]*(mk?1:1.6)*10),sl=Math.floor(PRICE[k]*(mk?.6:.4)*10);return{buy:b,sell:sl,mk}}
+function tradePrices(k){const mk=cnt('market')>0;const m=(s.market&&s.market[k])||1;const am=csLevel(CITY.amber)>=2?.85:1;const b=Math.ceil(PRICE[k]*m*(mk?1:1.6)*am*10),sl=Math.max(1,Math.floor(PRICE[k]*m*(mk?.6:.4)/am*10));return{buy:b,sell:sl,mk}}
 function tradeHTML(k){const p=tradePrices(k);return`<div class="goal small"><b>Торговля${p.mk?' на рынке':' с бродячими купцами'}:</b> 10${RI[k]} — купить за ${p.buy}${RI.gold}, продать за ${p.sell}${RI.gold}.${p.mk?'':' С Рынком цены выгоднее.'}
   <div class="row" style="margin-top:6px"><button class="btn" id="tbuy" ${s.res.gold>=p.buy?'':'disabled'}>Купить 10</button><button class="btn ghost" id="tsell" ${s.res[k]>=10?'':'disabled'}>Продать 10</button></div></div>`}
 function bindTrade(k){const b=$('#tbuy'),sl=$('#tsell');if(!b)return;const p=tradePrices(k);
-  b.onclick=()=>{if(s.res.gold<p.buy)return;s.res.gold-=p.buy;s.res[k]+=10;sfx('coin');save();render();openInfo(k)};
-  sl.onclick=()=>{if(s.res[k]<10)return;s.res[k]-=10;s.res.gold+=p.sell;sfx('coin');save();render();openInfo(k)}}
+  b.onclick=()=>{if(mBuy(k))openInfo(k)};
+  sl.onclick=()=>{if(mSell(k))openInfo(k)}}
 function openInfo(k){
   const st=stats();
   if(RES.includes(k)){const[a,b,c]=RINFO[k];
@@ -1728,7 +1738,8 @@ const NAV=[
  {id:'home',n:'Деревня',ic:'home',subs:[['h','Стол'],['v','Сводка'],['l','Летопись']]},
  {id:'build',n:'Постройки',ic:'jobs',subs:[['b','Постройки']]},
  {id:'people',n:'Мастера',ic:'people',subs:[['m','Мастера']]},
- {id:'war',n:'Война',ic:'atk',subs:[['a','Войска'],['ab','Тактика'],['n','Народы']]},
+ {id:'trade',n:'Торговля',ic:'trade',subs:[['tr','Рынок'],['tgd','Товары'],['tnb','Соседи'],['tcs','Города']]},
+ {id:'war',n:'Война',ic:'atk',subs:[['a','Войска'],['ab','Тактика'],['n','Народы'],['pir','Пираты']]},
  {id:'prog',n:'Развитие',ic:'science',subs:[['t','Наука'],['tc','Культура'],['s','Магия'],['g','Боги']]}
 ];
 const navOf=t=>NAV.find(n=>n.subs.some(x=>x[0]===t))||NAV[0];
@@ -1739,7 +1750,7 @@ function renderNav(){
   const nv=navOf(tab);
   $('#bnav').innerHTML=NAV.map(n=>{let badge='';
     if(n.id==='prog'&&((!s.tech.cur&&TECHS.some(canT))||(!s.civ.cur&&CIVICS.some(canC))))badge='<b class="dot"></b>';
-    if(n.id==='war'&&s.rivals.some(r=>r.war))badge='<b class="dot"></b>';
+    if(n.id==='war'&&(s.rivals.some(r=>r.war)||(s.pir&&s.day>=s.pir.quiet&&s.pir.next-s.day<=3)))badge='<b class="dot"></b>';
     if(n.id==='people'&&ML.some(m=>!here(m.id)&&reqs(m).every(r=>r.ok)))badge='<b class="dot"></b>';
     return`<button class="${n===nv?'on':''}" data-nav="${n.id}">${I(n.ic)}<span>${n.n}</span>${badge}</button>`}).join('');
   $('#bnav').querySelectorAll('[data-nav]').forEach(b=>b.onclick=()=>{const n=NAV.find(x=>x.id===b.dataset.nav);go(lastSub[n.id]||n.subs[0][0])});
@@ -1749,11 +1760,144 @@ function renderNav(){
   $('#tableSec').hidden=tab!=='h';$('#panelSec').hidden=tab==='h';
 }
 function chipRow(items,cur,attr){return`<div class="filters" role="group">${items.map(([k,l,n])=>`<button class="${cur===k?'on':''}" data-${attr}="${k}">${l}${n!=null?` <span class="cnt">${n}</span>`:''}</button>`).join('')}</div>`}
+
+/* ---------- торговля, города-государства, пираты ---------- */
+function mBuy(k){const p=tradePrices(k);if(s.res.gold<p.buy)return false;s.res.gold-=p.buy;s.res[k]+=10;s.market[k]=Math.min(3,s.market[k]*1.06);sfx('coin');save();render();return true}
+function mSell(k){const p=tradePrices(k);if(s.res[k]<10)return false;s.res[k]-=10;s.res.gold+=p.sell;s.market[k]=Math.max(.4,s.market[k]*.95);sfx('coin');save();render();return true}
+const CITIES=[
+ {id:'amber',n:'Янтарная Гавань',ic:'trade',kind:'Торговый город',f:'+3 золота за ход',a:'+8 золота за ход, цены на рынке выгоднее на 15%',b1:{gold:3},b2:{gold:8},p:'a small wealthy harbor city-state with amber-colored sails, merchant ships and a lighthouse'},
+ {id:'sages',n:'Обитель Мудрецов',ic:'science',kind:'Город учёных',f:'+2 науки за ход',a:'+5 науки за ход',b1:{sci:2},b2:{sci:5},p:'a small hilltop city-state of scholars with domed libraries and observatory towers among clouds'},
+ {id:'forge',n:'Каменная Твердыня',ic:'tower',kind:'Город воинов',f:'+4 обороны',a:'+10 обороны и солдат в подарок раз в 12 ходов',b1:{def:4},b2:{def:10},p:'a small fortified mountain city-state carved into rock with forges glowing and stone walls'},
+ {id:'moon',n:'Лунный Приют',ic:'culture',kind:'Город искусств',f:'+2 культуры и +1 маны за ход',a:'+5 культуры и +2 маны за ход',b1:{cult:2,mana:1},b2:{cult:5,mana:2},p:'a small mystical city-state on a lake with silver towers, lanterns and moonlight reflections'}
+];
+const CITY=Object.fromEntries(CITIES.map(c=>[c.id,c]));
+const GOODS=[
+ {id:'silk',n:'Восточный шёлк',cost:55,d:'Праздник на 8 ходов: счастье +10.',fx:()=>{s.buffs.fest=Math.max(s.buffs.fest||0,s.day+8)},p:'bolts of shimmering oriental silk in vivid colors on a merchant table'},
+ {id:'scroll',n:'Древний свиток',cost:70,d:'+60 науки к исследованию.',fx:()=>{s.tech.p+=60},p:'an ancient glowing scroll with arcane diagrams unrolled on a desk'},
+ {id:'statue',n:'Статуэтка мастера',cost:65,d:'+45 культуры и +3 славы.',fx:()=>{s.civ.p+=45;s.cultTotal+=45;s.rep=Math.min(100,s.rep+3)},p:'an exquisite small marble and gold statuette of a dancer on a velvet pedestal'},
+ {id:'mercs',n:'Отряд наёмников',cost:130,d:'В армию сразу вступают 3 солдата.',fx:()=>{s.army.soldier=(s.army.soldier||0)+3},p:'a band of rugged mercenaries with mixed armor and weapons waiting for hire at a tavern'},
+ {id:'seeds',n:'Чудо-семена',cost:45,d:'+80 еды.',fx:()=>{s.res.food+=80},p:'a pouch of glowing magical seeds spilling onto rich soil with tiny sprouts'},
+ {id:'crystal',n:'Кристалл маны',cost:60,d:'+30 маны.',fx:()=>{s.res.mana+=30},p:'a large glowing teal mana crystal in an ornate brass holder'},
+ {id:'map',n:'Карта новых земель',cost:90,d:'Бесплатный участок земли.',fx:()=>{if(s.lands.length<48)s.lands.push({t:drawLandType(),b:null})},p:'an old treasure map of unexplored lands with a compass and a quill'},
+ {id:'relic',n:'Священная реликвия',cost:80,d:'+25 милости богу, которого вы чтите больше всех.',fx:()=>{const g0=GODS.slice().sort((a,b)=>(s.favor[b.id]||0)-(s.favor[a.id]||0))[0];s.favor[g0.id]=Math.min(100,(s.favor[g0.id]||0)+25)},p:'a holy golden reliquary glowing with divine light on an altar'}
+];
+const GOOD=Object.fromEntries(GOODS.map(x=>[x.id,x]));
+function ensureTrade(){
+  if(!s.market)s.market={wood:1,stone:1,food:1,mana:1};
+  if(!s.cs)s.cs=Object.fromEntries(CITIES.map(c=>[c.id,{inf:0,war:false,own:false,gift:0}]));
+  if(!s.goods)s.goods={list:[],at:0};
+  if(!s.deals)s.deals={list:[],at:0};
+  if(!s.pir)s.pir={next:38+((rnd()*12)|0),raids:0,quiet:0,due:false,wins:0};
+}
+const csLevel=c=>{const x=s.cs&&s.cs[c.id];if(!x)return 0;if(x.own)return 3;if(x.war)return-1;return x.inf>=60?2:x.inf>=30?1:0};
+function csBonus(c){const l=csLevel(c);if(l<=0)return{};const b=l===1?c.b1:c.b2;if(l===3){const o={};for(const k in b)o[k]=Math.round(b[k]*1.5);return o}return b}
+const csDef=()=>CITIES.reduce((a,c)=>a+(csBonus(c).def||0),0);
+const csGiftCost=()=>Math.round(40+s.day*.35);
+function goodsCost(x){return Math.round(x.cost*(1+s.day/200))}
+function refreshTrade(){
+  if(s.day>=s.goods.at){const pool=GOODS.slice().sort(()=>rnd()-.5);s.goods={list:pool.slice(0,3).map(x=>x.id),at:s.day+6}}
+  if(s.day>=s.deals.at){const L=[];s.rivals.forEach((r,i)=>{if(r.war)return;for(let n=0;n<2;n++){const R=['gold','wood','stone','food','mana'];const give=R[(rnd()*5)|0];let get=R[(rnd()*5)|0];if(get===give)get=give==='gold'?'food':'gold';
+      const val=30+((rnd()*30)|0)+s.day*.15;const rate=Math.max(.6,Math.min(1.5,(r.vassal?1.35:1)*(1+r.rel/250)));
+      const pv=k=>k==='gold'?1:PRICE[k];L.push({r:i,give,ga:Math.round(val/pv(give)*rate),get,gb:Math.round(val/pv(get))})}});s.deals={list:L,at:s.day+6}}
+}
+function tradeTurn(){
+  for(const k in s.market)s.market[k]+=(1-s.market[k])*.08;
+  CITIES.forEach(c=>{const x=s.cs[c.id];if(!x.own&&!x.war&&x.inf>0)x.inf=Math.max(0,x.inf-.6);if(c.id==='forge'&&csLevel(c)>=2&&s.day%12===0){s.army.soldier=(s.army.soldier||0)+1;log(`${c.n} прислала солдата в вашу армию.`,'good')}});
+  refreshTrade();
+  if(!s.pir.due&&s.day>=s.pir.next&&s.day>=s.pir.quiet){s.pir.due=true}
+}
+function pirStrength(){return 3+s.day*.055+s.pir.raids*.8}
+const PIR_U={soldier:{n:'Абордажник',ic:I('inf'),atk:5,def:5,melee:1},archer:{n:'Арбалетчик',ic:I('arch'),atk:5,def:3,bow:1}};
+function pirSide(home){const n=pirStrength()*(home?1.3:1);return mkSide('Пираты',{soldier:n*.6,archer:n*.4},id=>PIR_U[id],u=>u.atk,{garrison:home?4+s.day*.03:0,wall:home?15+s.day*.08:0,tac:['rush','flank','shield'][(rnd()*3)|0],home})}
+function pirateModal(){
+  const pay=Math.round(30+s.day*.45);s.pir.due=false;
+  openModal(`<div class="cv">${card({cls:'c-fate big flip',name:'Пираты у берега',artCls:'cat',art:artOfRaw('ev_pirates',I('war')),text:`Сила ~${Math.round(pirStrength())} бойцов`,el:'div'})}<div class="info">
+    <h2>Пираты у берега!</h2><p>Чёрные паруса показались у побережья. Капитан требует ${pay}${RI.gold} за то, чтобы уйти без боя.</p>
+    <p class="small muted">Ваша армия: ${armySize()} воинов, оборона ${Math.round(stats().def)}. Разведчики насчитали около ${Math.round(pirStrength())} пиратов.</p></div></div>
+    <div class="stack"><button class="opt" id="prPay" ${s.res.gold>=pay?'':'disabled'}><span><b>Заплатить ${pay}${RI.gold}</b><br><span class="small muted">Пираты уйдут и вернутся не скоро.</span></span></button>
+    <button class="opt" id="prFight"><span><b>Дать бой</b><br><span class="small muted">Тактика обороны: ${TACT[s.tactic||'shield'].n}. Победа принесёт добычу и славу.</span></span></button></div>`);
+  $('#prPay').onclick=()=>{s.res.gold-=pay;s.pir.next=s.day+20+((rnd()*10)|0);log(`Откупились от пиратов: ${pay} золота.`);closeModal();save();render()};
+  $('#prFight').onclick=()=>{
+    const A=pirSide(false),D=mySide({home:true});const res=battle(A,D);applyMyLosses(D);s.pir.raids++;let msg;
+    if(!res.win){const loot=Math.round(25+s.day*.5);s.res.gold+=loot;s.rep=Math.min(100,s.rep+3);s.wins=(s.wins||0)+1;s.gp.war++;s.pir.wins++;msg=`<b class="up">Пираты разбиты!</b> Трофеи: ${loot}${RI.gold}, слава +3.`;sfx('good');s.pir.next=s.day+22+((rnd()*10)|0)}
+    else{const g0=Math.round(s.res.gold*.2),f=Math.round(s.res.food*.2);s.res.gold-=g0;s.res.food-=f;loseFamily('После пиратского набега');msg=`<b class="dn">Пираты прорвались.</b> Унесено ${g0}${RI.gold} и ${f}${RI.food}, одна семья ушла.`;sfx('bad');s.pir.next=s.day+16+((rnd()*10)|0)}
+    log(`Набег пиратов: ${res.win?'поражение':'победа'}.`,res.win?'bad':'good');
+    openModal(`<h2>Бой с пиратами</h2><p>${msg}</p>${battleHTML(res,false)}<button class="btn" id="prx">Дальше</button>`);$('#prx').onclick=()=>{closeModal();save();render()}};
+}
+function attackCove(){
+  if(!armySize())return;
+  const A=mySide({tac:s.tactic==='shield'?'rush':s.tactic||'rush'}),D=pirSide(true);const res=battle(A,D);applyMyLosses(A);let msg;
+  if(res.win){const loot=Math.round(120+s.day*1.2);s.res.gold+=loot;s.rep=Math.min(100,s.rep+5);s.pir.quiet=s.day+50;s.pir.next=Math.max(s.pir.next,s.pir.quiet);s.pir.due=false;s.wins=(s.wins||0)+1;s.gp.war++;msg=`<b class="up">Бухта взята!</b> Сокровища пиратов: ${loot}${RI.gold}, слава +5. Пираты не появятся ближайшие 50 ходов.`;sfx('good')}
+  else{msg=`<b class="dn">Штурм провалился.</b> Пираты удержали бухту.`;sfx('bad')}
+  log(`Штурм пиратской бухты: ${res.win?'победа':'поражение'}.`,res.win?'good':'bad');
+  openModal(`<h2>Пиратская бухта</h2><p>${msg}</p>${battleHTML(res,true)}<button class="btn" id="cvx">Дальше</button>`);$('#cvx').onclick=()=>{closeModal();save();render()};
+}
+function citySide(c){const n=4+s.day*.05;return mkSide(c.n,{soldier:n*.5,archer:n*.35,cavalry:n*.15},id=>U[id],u=>u.atk,{garrison:3+s.day*.03,wall:12+s.day*.12,tac:['rush','flank','shield'][(rnd()*3)|0],home:true})}
+function openCity(id){
+  const c=CITY[id],x=s.cs[id],l=csLevel(c),cost=csGiftCost();
+  const st=['Нейтралитет','Друг','Союзник','Ваш город'][Math.max(0,l)];
+  openModal(`<div class="cv">${cityCard(c,{cls:'big',el:'div'})}<div class="info"><h2>${c.n}</h2><div class="muted">${c.kind} · ${x.war?'<span class="dn">война</span>':st}</div>
+    ${x.own?'':`<div class="small">Влияние: ${Math.round(x.inf)}/100</div><div class="bar"><i style="width:${x.inf}%"></i></div>`}
+    <div class="small"><b>Друг</b> (влияние 30): ${c.f}.</div><div class="small"><b>Союзник</b> (влияние 60): ${c.a}.</div>
+    <div class="small"><b>Захват:</b> союзная выгода в полтора раза больше и навсегда, но другие города и соседи будут недовольны.</div>
+    <div class="stack">${x.own?'<div class="small up">Город под вашей властью и приносит полную выгоду.</div>':`
+      <button class="btn" id="cyG" ${!x.war&&s.res.gold>=cost?'':'disabled'}>${I('gift')} Дар: ${cost}${RI.gold} → влияние +15</button>
+      ${x.war?`<button class="btn" id="cyA" ${armySize()?'':'disabled'}>${I('atk')} Штурмовать город</button><button class="btn ghost" id="cyP">${I('peace')} Заключить мир</button>`:`<button class="btn ghost" id="cyW">${I('war')} Объявить войну и захватить</button>`}`}
+      <button class="btn ghost" id="cyX">Закрыть</button></div>
+    <p class="small muted">Влияние понемногу тает, если не поддерживать дружбу дарами.</p></div></div>`,true);
+  const on=(q,f)=>{const b=$(q);if(b)b.onclick=f};
+  on('#cyX',closeModal);
+  on('#cyG',()=>{s.res.gold-=cost;x.inf=Math.min(100,x.inf+15);sfx('coin');log(`Дар городу ${c.n}: влияние ${Math.round(x.inf)}.`);save();render();openCity(id)});
+  on('#cyW',()=>confirmBox(`Война с городом ${c.n}?`,'Влияние упадёт до нуля, другие города-государства станут хуже к вам относиться.','Объявить войну',()=>{x.war=true;x.inf=0;CITIES.forEach(o=>{if(o!==c&&!s.cs[o.id].own)s.cs[o.id].inf=Math.max(0,s.cs[o.id].inf-10)});sfx('war');log(`Объявлена война городу ${c.n}.`,'bad');save();render();openCity(id)}));
+  on('#cyP',()=>{x.war=false;x.inf=0;log(`Мир с городом ${c.n}.`);save();render();openCity(id)});
+  on('#cyA',()=>{const A=mySide({tac:s.tactic==='shield'?'rush':s.tactic||'rush'}),D=citySide(c);const res=battle(A,D);applyMyLosses(A);let msg;
+    if(res.win){x.own=true;x.war=false;CITIES.forEach(o=>{if(o!==c&&!s.cs[o.id].own)s.cs[o.id].inf=Math.max(0,s.cs[o.id].inf-20)});s.rivals.forEach(r=>{if(!r.vassal)r.rel-=5});s.rep=Math.min(100,s.rep+4);s.wins=(s.wins||0)+1;s.gp.war++;msg=`<b class="up">${c.n} захвачен!</b> Теперь город приносит: ${c.a}, в полтора раза больше.`;sfx('good')}
+    else{msg=`<b class="dn">Штурм отбит.</b> Стены города выстояли.`;sfx('bad')}
+    log(`Штурм города ${c.n}: ${res.win?'победа':'поражение'}.`,res.win?'good':'bad');
+    openModal(`<h2>${c.n}</h2><p>${msg}</p>${battleHTML(res,true)}<button class="btn" id="cyR">Дальше</button>`);$('#cyR').onclick=()=>{closeModal();save();render()}});
+}
+function cityCard(c,o={}){const l=csLevel(c),x=s.cs[c.id];const tag=x.war?'Война':['','Друг','Союзник','Ваш город'][Math.max(0,l)];
+  return card({cls:`c-rival ${o.cls||''}`,name:c.n,artCls:'cat',art:artOfRaw('cs_'+c.id,I(c.ic)),text:o.cls==='big'?c.kind:(x.own?c.kind:`Влияние ${Math.round(x.inf)}`),tag,tagCls:x.war?'bad':l>=2?'ok':l===1?'arc':'',attrs:o.attrs||'',el:o.el})}
+function goodCard(x,o={}){const c=goodsCost(x);return card({cls:`c-shop ${s.res.gold<c?'poor':''} ${o.cls||''}`,name:x.n,artCls:'cat',art:artOfRaw('gd_'+x.id,I('gift')),cost:o.big?'':`<span class="${s.res.gold<c?'lack':''}">${c}${RI.gold}</span>`,text:x.d,attrs:o.attrs||'',el:o.el})}
+function renderTrade(p){
+  ensureTrade();refreshTrade();
+  if(tab==='tr'){
+    p.innerHTML=`<p class="small muted" style="margin:0 0 10px">${cnt('market')?'Цены вашего рынка.':'Без Рынка торгуют бродячие купцы, и цены хуже. Постройте Рынок.'} Когда вы много покупаете, цена растёт, когда продаёте — падает, и со временем возвращается.${csLevel(CITY.amber)>=2?' Янтарная Гавань даёт скидку 15%.':''}</p>
+     <div class="mkt">${['wood','stone','food','mana'].map(k=>{const pr=tradePrices(k);const m=s.market[k];return`<div class="mrow"><span class="mi">${RI[k]}</span><span class="mn"><b>${RN[k]}</b><span class="small muted">есть ${fmt(s.res[k])} · цена ${m>1.08?'<span class="dn">высокая</span>':m<.92?'<span class="up">низкая</span>':'обычная'}</span></span>
+       <span class="mb"><button class="btn" data-mb="${k}" ${s.res.gold>=pr.buy?'':'disabled'}>+10 за ${pr.buy}${RI.gold}</button><button class="btn ghost" data-ms="${k}" ${s.res[k]>=10?'':'disabled'}>−10 за ${pr.sell}${RI.gold}</button></span></div>`}).join('')}</div>`;
+    p.querySelectorAll('[data-mb]').forEach(b=>b.onclick=()=>mBuy(b.dataset.mb));p.querySelectorAll('[data-ms]').forEach(b=>b.onclick=()=>mSell(b.dataset.ms));
+  }else if(tab==='tgd'){
+    p.innerHTML=`<p class="small muted" style="margin:0 0 10px">Заезжие купцы привезли редкие товары. Новый привоз через ${s.goods.at-s.day} ход.</p><div class="cards">${s.goods.list.map(id=>goodCard(GOOD[id],{attrs:`data-gd="${id}"`})).join('')}</div>${s.goods.list.length?'':'<div class="small muted">Всё раскуплено. Ждите новый привоз.</div>'}`;
+    p.querySelectorAll('[data-gd]').forEach(b=>b.onclick=()=>{const x=GOOD[b.dataset.gd],c=goodsCost(x);
+      openModal(`<div class="cv">${goodCard(x,{cls:'big',el:'div',big:1})}<div class="info"><h2>${x.n}</h2><p>${x.d}</p><div class="row"><button class="btn" id="gdB" ${s.res.gold>=c?'':'disabled'}>Купить за ${c}${RI.gold}</button><button class="btn ghost" id="gdX">Закрыть</button></div></div></div>`,true);
+      $('#gdX').onclick=closeModal;$('#gdB').onclick=()=>{s.res.gold-=c;x.fx();s.goods.list=s.goods.list.filter(i=>i!==x.id);sfx('coin');log(`Куплено: ${x.n}.`,'good');toast(`${x.n}: куплено`);closeModal();save();render()}});
+  }else if(tab==='tnb'){
+    const L=s.deals.list.map((d,i)=>({...d,i})).filter(d=>!s.rivals[d.r].war);
+    p.innerHTML=`<p class="small muted" style="margin:0 0 10px">Соседи предлагают обмен. Чем лучше отношения, тем выгоднее курс, а каждая сделка улучшает отношения. Новые предложения через ${s.deals.at-s.day} ход.</p>
+      <div class="stack">${L.map(d=>{const r=s.rivals[d.r];const ok=s.res[d.get]>=d.gb;return`<div class="deal"><span class="dl">${CULTURES[r.c].ic}<b>${CULTURES[r.c].n}</b><span class="small muted">${relText(r)}</span></span>
+        <span class="dx">Дают ${d.ga}${RI[d.give]} · просят ${d.gb}${RI[d.get]}</span><button class="btn" data-dl="${d.i}" ${ok?'':'disabled'}>Обменять</button></div>`}).join('')||'<div class="small muted">Сейчас предложений нет: со всеми соседями война.</div>'}</div>`;
+    p.querySelectorAll('[data-dl]').forEach(b=>b.onclick=()=>{const d=s.deals.list[+b.dataset.dl];if(s.res[d.get]<d.gb)return;s.res[d.get]-=d.gb;s.res[d.give]+=d.ga;const r=s.rivals[d.r];r.rel=Math.min(100,r.rel+3);s.deals.list.splice(+b.dataset.dl,1);sfx('coin');log(`Сделка с народом «${CULTURES[r.c].n}»: +${d.ga} ${RN[d.give].toLowerCase()}.`,'good');save();render()});
+  }else if(tab==='tcs'){
+    p.innerHTML=`<p class="small muted" style="margin:0 0 10px">Маленькие независимые города. Дарите им золото, чтобы стать другом и союзником, или захватите силой.</p><div class="cards">${CITIES.map(c=>cityCard(c,{attrs:`data-cy="${c.id}"`})).join('')}</div>`;
+    p.querySelectorAll('[data-cy]').forEach(b=>b.onclick=()=>openCity(b.dataset.cy));
+  }
+}
+function renderPirates(p){
+  ensureTrade();const left=Math.max(0,Math.max(s.pir.next,s.pir.quiet)-s.day);
+  p.innerHTML=`<div class="cv">${card({cls:'c-fate big',name:'Пиратская бухта',artCls:'cat',art:artOfRaw('cs_pirates',I('war')),text:s.day<s.pir.quiet?'Затихли':'Набеги',el:'div'})}<div class="info">
+    <h2>Пираты</h2><div class="small">Сила пиратов: ~${Math.round(pirStrength())} бойцов. ${s.day<s.pir.quiet?`После разгрома бухты пираты затихли ещё на ${s.pir.quiet-s.day} ход.`:left<=3?'<span class="dn">Набег совсем скоро!</span>':`Следующий набег примерно через ${left} ход.`}</div>
+    <div class="small muted">Пираты нападают с моря. Можно откупиться золотом или встретить их армией и стенами. Набегов было: ${s.pir.raids}, отбито: ${s.pir.wins}.</div>
+    <div class="small">Штурм пиратской бухты прекратит набеги на 50 ходов и принесёт их сокровища, но бухта хорошо укреплена: стены ~${Math.round(15+s.day*.08)}.</div>
+    <button class="btn" id="cvA" ${armySize()?'':'disabled'}>${I('atk')} Штурмовать бухту</button></div></div>`;
+  $('#cvA').onclick=()=>confirmBox('Штурмовать пиратскую бухту?',`Ваша армия: ${armySize()} воинов против примерно ${Math.round(pirStrength()*1.3)} пиратов за стенами.`,'В атаку',attackCove,false);
+}
 function renderPane(){
   renderNav();
   const p=$('#pane');
   if(tab==='h'){p.innerHTML='';return}
   if(tab==='t'||tab==='tc'){progTab=tab==='t'?'t':'c';renderProg(p);return}
+  if(['tr','tgd','tnb','tcs'].includes(tab)){renderTrade(p);return}
+  if(tab==='pir'){renderPirates(p);return}
   if(tab==='b'){
     const all=BL.filter(d=>!d.noBuild);const ok=d=>!lockReason(d);
     const cats=[['ready','Можно строить',all.filter(ok).length],...Object.keys(CATS).map(c=>[c,CATS[c],all.filter(d=>d.cat===c).length])];
@@ -2043,6 +2187,7 @@ function howTo(){
    <p><b>Мастера.</b> Выполните условия мастера и поезжайте его уговаривать. Каждый мастер открывает свою лавку.</p>
    <p><b>Наука и культура.</b> Выбирайте технологии и институты в разделе «Развитие». Без выбора ход не наступит.</p>
    <p><b>Война.</b> Пехота бьёт конницу, конница бьёт стрелков и магов, стрелки и маги бьют пехоту, осадные машины ломают стены. Выбирайте тактику: Стена щитов бьёт Натиск, Натиск бьёт Обход, Обход бьёт Стену щитов.</p>
+   <p><b>Торговля.</b> На рынке покупайте и продавайте ресурсы, у заезжих купцов — редкие товары, с соседями меняйтесь. Города-государства дают бонусы друзьям и союзникам, их можно и захватить. Берегитесь пиратов с моря.</p>
    <p><b>Подсказка.</b> Нажмите на любой ресурс, фишку на столе или карту, чтобы узнать подробности. Не хватает дерева или камня, купите их, нажав на ресурс.</p></div>
    <button class="btn" id="hwOk">Понятно</button>`,true);
   $('#hwOk').onclick=closeModal;
