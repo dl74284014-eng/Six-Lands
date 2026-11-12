@@ -340,6 +340,13 @@ html.noanim *,html.noanim *::before,html.noanim *::after{animation:none!importan
 @keyframes swl{from{opacity:.2;transform:translateX(40px)}}@keyframes swr{from{opacity:.2;transform:translateX(-40px)}}
 .bump-l{animation:bpl .3s ease}.bump-r{animation:bpr .3s ease}@keyframes bpl{40%{transform:translateX(-14px)}}@keyframes bpr{40%{transform:translateX(14px)}}
 body{overflow-x:hidden}
+.diffbox{display:grid;gap:8px;padding:12px;border:1px solid rgba(232,192,106,.3);border-radius:12px;background:rgba(0,0,0,.18)}
+.diffbox .dlab{font-family:var(--title);color:var(--brass);font-size:16px}
+.dseg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.dbtn{padding:9px 4px;border-radius:9px;border:1px solid rgba(232,192,106,.3);background:rgba(28,20,10,.5);color:#d8c9a8;font:inherit;font-size:13px;cursor:pointer;transition:all .2s}
+.dbtn.on{color:#1d140a;font-weight:700;border-color:transparent;box-shadow:0 2px 10px rgba(0,0,0,.35)}
+.dbtn.on.d-easy{background:linear-gradient(#a8d58a,#6fa553)}.dbtn.on.d-normal{background:linear-gradient(#f2d48a,#c99a3e)}
+.dbtn.on.d-hard{background:linear-gradient(#f0a46a,#c4662f)}.dbtn.on.d-legend{background:linear-gradient(#e47a7a,#a02f3a);color:#fff3e6}
 .sarr{position:fixed;top:50%;z-index:14;width:18px;height:46px;padding:0;border:1px solid rgba(232,192,106,.28);background:rgba(28,20,10,.55);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;transform:translateY(-50%);cursor:pointer;opacity:.6;transition:opacity .2s}
 .sarr.l{left:0;border-left:0;border-radius:0 9px 9px 0;padding-left:max(0px,env(safe-area-inset-left,0px))}
 .sarr.r{right:0;border-right:0;border-radius:9px 0 0 9px;padding-right:max(0px,env(safe-area-inset-right,0px))}
@@ -398,7 +405,7 @@ body{overflow-x:hidden}
 <style id="imgcss"></style>
 
 <script>
-const BUILD_VER="12.11.2026 10:54";
+const BUILD_VER="12.11.2026 11:15";
 const KEY='tiholesye-v3';
 const I=k=>`<i class="ico i-${k}"></i>`;
 
@@ -994,18 +1001,30 @@ function rivalCard(r,o={}){const cu=CULTURES[r.c];
   return card({cls:`c-rival ${o.cls||''}`,name:cu.n,artCls:'cat',art:artOfRaw(r.c+'__emblem',cu.ic),text:`Семей ${Math.round(r.pop)} · армия ~${Math.round(r.army)}`,tag:relText(r),tagCls:r.war?'bad':r.vassal?'gold':r.rel>=10?'ok':'',attrs:o.attrs||'',el:o.el});
 }
 
+/* ---------- уровни сложности ---------- */
+const DIFF={
+ easy:{n:'Мирный',d:'Для знакомства с игрой. Больше запасов на старте, соседи миролюбивее, армии и пираты слабее.',res:1.6,am:.7,ag:.55,pir:.7,inc:1.1},
+ normal:{n:'Обычный',d:'Задуманный баланс: соседи иногда нападают, пираты приходят регулярно.',res:1,am:1,ag:1,pir:1,inc:1},
+ hard:{n:'Суровый',d:'Меньше запасов, соседи агрессивнее и держат большие армии, пираты сильнее.',res:.8,am:1.25,ag:1.35,pir:1.25,inc:1},
+ legend:{n:'Легенда',d:'Испытание для опытных: скудный старт, частые войны, сильные враги и доход ниже на 10%.',res:.6,am:1.5,ag:1.7,pir:1.5,inc:.9}};
+const DK=Object.keys(DIFF);
+const DF=()=>DIFF[s.diff]||DIFF.normal;
+
 /* ---------- новая игра и выбор народа ---------- */
-function newGame(culture){
-  s={v:3,culture,name:'Тихолесье',day:1,res:{gold:100,wood:60,stone:25,food:30,mana:culture==='magi'?15:0},rep:5,happy:55,pop:{p:5},
+function newGame(culture,diff='normal'){
+  const dm=DIFF[diff]||DIFF.normal;
+  s={v:3,culture,diff,name:'Тихолесье',day:1,res:{gold:100,wood:60,stone:25,food:30,mana:culture==='magi'?15:0},rep:5,happy:55,pop:{p:5},
      lands:[{t:'plain',b:'hall'},{t:'plain',b:'hut'},{t:'plain',b:'hut'},{t:'plain',b:'farm'},{t:'edge',b:null},{t:'rock',b:null},{t:'ley',b:null}],
      masters:{},cool:{},bonus:{},trip:null,tax:'normal',rank:0,lastEv:0,speed:1,log:[],favor:{},buffs:{},cd:{},defBonus:0,dream:0,pending:[],
      army:{militia:2},queue:[],peaceCd:{},won:false,tech:{known:[],cur:'agri',p:0},civ:{known:[],cur:'code',p:0},cultTotal:0,borderAt:30,
-     rivals:CK.filter(c=>c!==culture).map(c=>({c,pop:5+rnd()*2,army:3+rnd()*2,wall:2,gold:40,rel:Math.round(rnd()*24-6),war:false,vassal:false,trade:false,warT:0,hits:0}))};
+     rivals:CK.filter(c=>c!==culture).map(c=>({c,pop:5+rnd()*2,army:(3+rnd()*2)*dm.am,wall:2,gold:40,rel:Math.round(rnd()*24-6),war:false,vassal:false,trade:false,warT:0,hits:0}))};
+  for(const k in s.res)s.res[k]=Math.round(s.res[k]*dm.res);
   applyCulture();
+  log(`Сложность: ${dm.n}.`);
   log(`Вы стали старостой деревни народа «${C().full}». Рядом поселились пять других народов. Стройте, торгуйте, воюйте — каждый ход на счету.`,'arc');
 }
 function chooseCulture(first){
-  let pick=first?null:s.culture;
+  let pick=first?null:s.culture;let dif=(s&&s.diff)||'normal';
   const draw=()=>{
     const cu=pick&&CULTURES[pick];
     $('#modal').innerHTML=`<div class="small muted" style="letter-spacing:.12em;text-transform:uppercase">Шесть Земель</div><h2 style="color:var(--brass);font-size:26px;font-family:var(--title);font-weight:400">Выберите народ</h2>
@@ -1017,10 +1036,12 @@ function chooseCulture(first){
       <div class="small"><b>Чудо народа:</b> ${cu.wonder.n}. ${cu.wonder.desc}</div>
         <div class="small"><b>Особое заклинание:</b> ${cu.spell.n}. ${cu.spell.d}</div>
         <div class="small"><b>Боги:</b> ${GODS.map(g=>cu.gods[g.id][0]).join(', ')}</div>
+        <div class="diffbox"><div class="dlab">Уровень сложности</div><div class="dseg">${DK.map(k=>`<button class="dbtn ${k===dif?'on':''} d-${k}" data-df="${k}">${DIFF[k].n}</button>`).join('')}</div><div class="small muted">${DIFF[dif].d}</div></div>
         <div class="row"><button class="btn" id="cuGo">Основать деревню</button>${first&&!titleOn()?'':'<button class="btn ghost" id="cuX">Назад</button>'}</div>
         ${first?'':'<div class="small" style="color:var(--bad)">Текущая деревня будет потеряна.</div>'}</div>`:'<p class="small muted">Нажмите на народ, чтобы узнать о нём.</p>'}`;
     $('#modal').querySelectorAll('[data-cu]').forEach(b=>b.onclick=()=>{pick=b.dataset.cu;sfx('card');draw()});
-    const go=$('#cuGo');if(go)go.onclick=()=>{newGame(pick);save();modalOpen=false;$('#modalBg').hidden=true;render();startTimer();toast(`${CULTURES[pick].full}: деревня основана`);hideTitle();PREV=null;tab='h';renderPane()};
+    $('#modal').querySelectorAll('[data-df]').forEach(b=>b.onclick=()=>{dif=b.dataset.df;sfx('card');const y=$('#modal').scrollTop;draw();$('#modal').scrollTop=y});
+    const go=$('#cuGo');if(go)go.onclick=()=>{newGame(pick,dif);save();modalOpen=false;$('#modalBg').hidden=true;render();startTimer();toast(`${CULTURES[pick].full}: деревня основана · ${DIFF[dif].n}`);hideTitle();PREV=null;tab='h';renderPane()};
     const x=$('#cuX');if(x)x.onclick=()=>{modalOpen=false;closeModal()};
     if(!$('#cuX')&&titleOn()){}
   };
@@ -1085,7 +1106,7 @@ function stats(){
   if(cT&&P>=cT){happy-=4;hp.push(['Теснота',-4])}
   happy=Math.max(0,Math.min(100,happy));
   const rate={low:.25,normal:.5,high:.85}[s.tax];
-  const taxes=P*rate*(.5+happy/100)*(1+.15*act.filter(x=>x.d.id==='market').length)*MOD('tax')*(1+.2*lvl('trade'));
+  const taxes=P*rate*(.5+happy/100)*(1+.15*act.filter(x=>x.d.id==='market').length)*MOD('tax')*(1+.2*lvl('trade'))*DF().inc;
   delta.gold+=taxes;add('gold','Налоги',taxes);
   const ps=P*.2;sci+=ps;add('sci','Жители',ps);const pc=P*.1;cult+=pc;add('cult','Жители',pc);
   if(happy>=70){cult+=1;add('cult','Счастливый народ',1)}
@@ -1174,17 +1195,17 @@ function aiTurn(){
     if(r.vassal)return;
     const ag=CULTURES[r.c].aggr;
     const pT=Math.min(85,8+s.day*.13+pop()*.25);r.pop=Math.max(2,r.pop+(pT-r.pop)*.03+(rnd()-.4)*.3);
-    const target=(r.pop*.12+s.day*.025)*ag+armySize()*.3;r.army=Math.max(0,r.army+(target-r.army)*.08+(rnd()-.4)*.3);
+    const dA=DF().ag;const target=((r.pop*.12+s.day*.025)*ag+armySize()*.3)*DF().am;r.army=Math.max(0,r.army+(target-r.army)*.08+(rnd()-.4)*.3);
     r.wall+=.03;r.gold+=1+r.pop*.08;
     if(r.war){
       r.warT++;
-      if(r.army>3&&!(r.raidCd>s.day)&&rnd()<.14*ag){enemyAttack(r);r.raidCd=s.day+5}
+      if(r.army>3&&!(r.raidCd>s.day)&&rnd()<.14*ag*dA){enemyAttack(r);r.raidCd=s.day+5}
       if(!PEACE&&((r.army*2<myPower()*.6&&rnd()<.25)||(r.warT>12&&rnd()<.15)))PEACE=r;
     }else{
       const base=-(ag-1)*70-(s.lands.length>12?(s.lands.length-12)*1.5:0)+(r.trade?25:0);
       r.rel+=(base-r.rel)*.03;
-      if(s.day>15&&rnd()<.012*ag){r.rel-=12+rnd()*10;log(`Стычка на границе с народом «${rivalName(r)}». Отношения портятся.`,'bad')}
-      if(s.day>40&&pop()>=12&&!s.rivals.some(o=>o.war)&&r.rel<-25&&r.army>armySize()*.6&&rnd()<.05*ag){r.war=true;r.warT=0;r.trade=false;r.rel=-100;REPORT.push([`Народ «${rivalName(r)}» объявляет войну!`,'Их армия выступила в поход. Готовьте оборону.','bad']);sfx('war')}
+      if(s.day>15&&rnd()<.012*ag*dA){r.rel-=12+rnd()*10;log(`Стычка на границе с народом «${rivalName(r)}». Отношения портятся.`,'bad')}
+      if(s.day>40&&pop()>=12&&!s.rivals.some(o=>o.war)&&r.rel<-25&&r.army>armySize()*.6&&rnd()<.05*ag*dA){r.war=true;r.warT=0;r.trade=false;r.rel=-100;REPORT.push([`Народ «${rivalName(r)}» объявляет войну!`,'Их армия выступила в поход. Готовьте оборону.','bad']);sfx('war')}
     }
   });
 }
@@ -1840,7 +1861,7 @@ function tradeTurn(){
   refreshTrade();
   if(!s.pir.due&&s.day>=s.pir.next&&s.day>=s.pir.quiet){s.pir.due=true}
 }
-function pirStrength(){return 3+s.day*.055+s.pir.raids*.8}
+function pirStrength(){return (3+s.day*.055+s.pir.raids*.8)*DF().pir}
 const PIR_U={soldier:{n:'Абордажник',ic:I('inf'),atk:5,def:5,melee:1},archer:{n:'Арбалетчик',ic:I('arch'),atk:5,def:3,bow:1}};
 function pirSide(home){const n=pirStrength()*(home?1.3:1);return mkSide('Пираты',{soldier:n*.6,archer:n*.4},id=>PIR_U[id],u=>u.atk,{garrison:home?4+s.day*.03:0,wall:home?15+s.day*.08:0,tac:['rush','flank','shield'][(rnd()*3)|0],home})}
 function pirateModal(){
@@ -2257,7 +2278,7 @@ function showTitle(){
     <h1>Шесть Земель</h1>
     <p class="tsub">Пошаговая стратегия о волшебной деревне,<br>мастерах, богах и шести народах</p>
     <div class="tbtns">
-      ${sv?`<button class="btn tbig" id="tCont">Продолжить<small>${C().n} · ход ${s.day} · ${RANKS[s.rank].n}</small></button>`:''}
+      ${sv?`<button class="btn tbig" id="tCont">Продолжить<small>${C().n} · ${DF().n} · ход ${s.day}</small></button>`:''}
       <button class="btn ${sv?'ghost':'tbig'}" id="tNew">Новая игра</button>
       <button class="btn ghost" id="tHow">Как играть</button>
       <button class="btn ghost" id="tSet">Настройки</button>
@@ -2277,7 +2298,7 @@ function confirmBox(title,text,okText,ok,danger=true){
 }
 function confirmExit(){confirmBox('Выйти из игры?','Прогресс сохраняется автоматически, вы сможете продолжить с того же хода.','Выйти',()=>{save();if(window.AndroidApp)AndroidApp.exit()})}
 function openPause(){
-  openModal(`<div class="pause"><h2>Пауза</h2><div class="small muted">${C().full} · ход ${s.day} · ${RANKS[s.rank].n}</div>
+  openModal(`<div class="pause"><h2>Пауза</h2><div class="small muted">${C().full} · сложность: ${DF().n} · ход ${s.day}</div>
     <button class="btn" id="pRes">Продолжить</button><button class="btn ghost" id="pSet">Настройки</button><button class="btn ghost" id="pHow">Как играть</button>
     <button class="btn ghost" id="pMain">Главное меню</button>${IS_APP?'<button class="btn ghost" id="pExit">Выйти из игры</button>':''}
     <div class="small muted">Игра сохраняется сама после каждого действия.</div></div>`,true);
