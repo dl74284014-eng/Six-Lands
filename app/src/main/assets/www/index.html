@@ -457,7 +457,7 @@ body{overflow-x:hidden}
 <style id="imgcss"></style>
 
 <script>
-const BUILD_VER="12.11.2026 22:18";
+const BUILD_VER="12.11.2026 22:19";
 let SLOT=1;try{SLOT=+localStorage.getItem('sixlands-slot')||1}catch(e){}
 const SK_=n=>'sixlands-save-'+n;
 try{const old=localStorage.getItem('tiholesye-v3');if(old&&!localStorage.getItem(SK_(1))){localStorage.setItem(SK_(1),old);localStorage.removeItem('tiholesye-v3')}}catch(e){}
@@ -2267,8 +2267,8 @@ function openAch(back){const n=Object.keys(ACHS).length;
 const SCN=[
  {id:'winter',n:'Долгая зима',cu:'north',diff:'normal',lim:40,d:'Зима пришла раньше срока, а амбары почти пусты. Продержитесь 40 ходов, и чтобы в деревне жило не меньше 12 семей.',
   setup:()=>{s.day=31;s.res.food=25;s.res.wood=40},goal:()=>s.day>=s.scn.end&&pop()>=12,fail:()=>s.day>=s.scn.end&&pop()<12,prog:()=>`семей ${pop()}/12`,p:'a small nordic village buried in deep snow during a long harsh winter, smoke from chimneys'},
- {id:'siege',n:'Осада',cu:'europe',diff:'hard',lim:35,d:'Два соседа объявили вам войну с первого хода. Выстойте 35 ходов и не потеряйте ни одной постройки.',
-  setup:()=>{s.res.gold+=80;s.res.wood+=60;s.res.stone+=40;s.army.militia=4;s.rivals.slice(0,2).forEach(r=>{r.war=true;r.warT=0;r.rel=-100});s.scnB=s.lands.filter(l=>l.b).length},goal:()=>s.day>=s.scn.end,fail:()=>s.lands.filter(l=>l.b).length<s.scnB-0&&s.lands.filter(l=>l.b).length<3,prog:()=>`ход ${s.day}/${s.scn.end}`,p:'a medieval village under siege with enemy armies and siege towers outside wooden walls'},
+ {id:'siege',n:'Осада',cu:'europe',diff:'hard',lim:35,d:'Два соседа объявили вам войну с первого хода. Выстойте 35 ходов и не дайте врагу сровнять деревню с землёй: должно уцелеть хотя бы 3 постройки.',
+  setup:()=>{s.res.gold+=80;s.res.wood+=60;s.res.stone+=40;s.army.militia=4;s.rivals.slice(0,2).forEach(r=>{r.war=true;r.warT=0;r.rel=-100});s.scnB=s.lands.filter(l=>l.b).length},goal:()=>s.day>=s.scn.end,fail:()=>s.lands.filter(l=>l.b).length<3,prog:()=>`ход ${s.day}/${s.scn.end}`,p:'a medieval village under siege with enemy armies and siege towers outside wooden walls'},
  {id:'merchant',n:'Торговый принц',cu:'desert',diff:'normal',lim:70,d:'Станьте богатейшим домом пустыни: соберите 2000 золота за 70 ходов.',
   setup:()=>{},goal:()=>s.res.gold>=2000,fail:()=>s.day>=s.scn.end,prog:()=>`золото ${Math.round(s.res.gold)}/2000`,p:'a rich desert merchant prince in a bazaar surrounded by chests of gold and silk'},
  {id:'sage',n:'Путь мудреца',cu:'magi',diff:'normal',lim:60,d:'Откройте 7 технологий за 60 ходов.',
