@@ -472,7 +472,7 @@ body{overflow-x:hidden}
 <style id="imgcss"></style>
 
 <script>
-const BUILD_VER="13.11.2026 08:30";
+const BUILD_VER="13.11.2026 08:43";
 let SLOT=1;try{SLOT=+localStorage.getItem('sixlands-slot')||1}catch(e){}
 const SK_=n=>'sixlands-save-'+n;
 try{const old=localStorage.getItem('tiholesye-v3');if(old&&!localStorage.getItem(SK_(1))){localStorage.setItem(SK_(1),old);localStorage.removeItem('tiholesye-v3')}}catch(e){}
@@ -1966,6 +1966,7 @@ function renderTable(){
   $('#pTrip').innerHTML=s.trip?`<span class="pi">${pk('prop_trip')||'<i class="ico i-cav"></i>'}</span><span><b>В дороге</b><span class="s">${mName(M[s.trip.m])}: встреча на ${s.trip.at}-й день</span></span>`
     :`<span class="pi">${pk('prop_home')||'<i class="ico i-home"></i>'}</span><span><b>Староста дома</b><span class="s">Мастера ждут во вкладке «Мастера»</span></span>`;
   $('#pFate').innerHTML=`<span class="pi">${src('fate')?`<span class="pic im-fate" style="width:100%;height:100%;background-size:cover;display:block"></span>`:'<i class="ico i-spark"></i>'}</span><span><b>Колода судьбы</b><span class="s">${EVENTS.length} карт: беды, удача, гости</span></span>`;
+  $('#pTrip').hidden=!s.trip;$('#pFate').hidden=true;
   const chips=[];
   for(const k in s.buffs)if(buff(k)&&BUFFN[k])chips.push(`<button class="chip ${k==='scare'?'b':''}" data-info="buff:${k}">${BUFFN[k]}: ${s.buffs[k]-s.day} ход.</button>`);
   GODS.forEach(g=>{if(lvl(g.id))chips.push(`<button class="chip g" data-god="${g.id}">${g.ic} ${gN(g.id)} ${'I'.repeat(lvl(g.id))}</button>`)});
@@ -2832,8 +2833,8 @@ function renderPane(){
     const st=m=>here(m.id)?'here':reqs(m).every(r=>r.ok)?'ready':'wait';
     const L={ready:ML.filter(m=>st(m)==='ready'),wait:ML.filter(m=>st(m)==='wait'),here:ML.filter(m=>st(m)==='here')};
     if(!mFilter||(!L[mFilter]&&mFilter!=='all'))mFilter=L.ready.length?'ready':'wait';const list=mFilter==='all'?ML:L[mFilter];
-    p.innerHTML=chipRow([['ready','Можно позвать',L.ready.length],['wait','Нужны условия',L.wait.length],['here','В деревне',L.here.length],['all','Все',ML.length]],mFilter,'mf')+`<p class="small muted" style="margin:0 0 12px">${mcount()} из ${ML.length} мастеров живут в деревне. Выполните условия мастера, приготовьте свободное место в доме и отправляйтесь уговаривать.</p><div class="cards">${list.map(m=>masterCard(m,{attrs:`data-m="${m.id}"`})).join('')}</div>${list.length?'':'<div class="small muted">Здесь пока пусто.</div>'}`;
-    p.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>openMaster(b.dataset.m));
+    p.innerHTML=(s.trip?`<button class="prop" id="mTrip" style="width:100%;margin-bottom:10px;text-align:left;font:inherit;color:inherit"><span class="pi">${src('prop_trip')?'<span class="pic im-prop_trip" style="width:100%;height:100%;background-size:cover;display:block"></span>':'<i class="ico i-cav"></i>'}</span><span><b>Староста в дороге</b><span class="s">${mName(M[s.trip.m])}: встреча на ${s.trip.at}-м ходу</span></span></button>`:'')+chipRow([['ready','Можно позвать',L.ready.length],['wait','Нужны условия',L.wait.length],['here','В деревне',L.here.length],['all','Все',ML.length]],mFilter,'mf')+`<p class="small muted" style="margin:0 0 12px">${mcount()} из ${ML.length} мастеров живут в деревне. Выполните условия мастера, приготовьте свободное место в доме и отправляйтесь уговаривать.</p><div class="cards">${list.map(m=>masterCard(m,{attrs:`data-m="${m.id}"`})).join('')}</div>${list.length?'':'<div class="small muted">Здесь пока пусто.</div>'}`;
+    p.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>openMaster(b.dataset.m));{const mt=p.querySelector('#mTrip');if(mt)mt.onclick=()=>openInfo('trip')}
     p.querySelectorAll('[data-mf]').forEach(b=>b.onclick=()=>{mFilter=b.dataset.mf;renderPane();dealIn($('#pane'))});
   }else if(tab==='s'){
     p.innerHTML=`<p class="small muted" style="margin:0 0 12px">Книга заклинаний старосты. Первое — особое заклинание вашего народа. Сильные чары открывают маг, друид, алхимик и звездочёт.</p><div class="cards">${SPELLS.map(x=>spellCard(x,{attrs:`data-sp="${x.id}"`})).join('')}</div>`;
@@ -2873,7 +2874,8 @@ function renderPane(){
   }else if(tab==='i'){
     renderImages(p);
   }else{
-    p.innerHTML=`<ul class="log">${s.log.map(l=>`<li><span class="day">День ${l.d}</span><span class="${l.k}">${l.t}</span></li>`).join('')}</ul>`;
+    p.innerHTML=`<button class="prop deck" id="lFate" style="width:100%;margin-bottom:12px;text-align:left;font:inherit;color:inherit"><span class="pi">${src('fate')?`<span class="pic im-fate" style="width:100%;height:100%;background-size:cover;display:block"></span>`:'<i class="ico i-spark"></i>'}</span><span><b>Колода судьбы</b><span class="s">${EVENTS.length} карт: беды, удача, гости. После каждого хода может выпасть событие.</span></span></button><ul class="log">${s.log.map(l=>`<li><span class="day">День ${l.d}</span><span class="${l.k}">${l.t}</span></li>`).join('')}</ul>`;
+    {const lf=p.querySelector('#lFate');if(lf)lf.onclick=()=>openInfo('fate')}
   }
 }
 function renderImages(p){
