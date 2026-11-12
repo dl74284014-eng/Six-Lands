@@ -457,7 +457,7 @@ body{overflow-x:hidden}
 <style id="imgcss"></style>
 
 <script>
-const BUILD_VER="12.11.2026 22:30";
+const BUILD_VER="12.11.2026 22:49";
 let SLOT=1;try{SLOT=+localStorage.getItem('sixlands-slot')||1}catch(e){}
 const SK_=n=>'sixlands-save-'+n;
 try{const old=localStorage.getItem('tiholesye-v3');if(old&&!localStorage.getItem(SK_(1))){localStorage.setItem(SK_(1),old);localStorage.removeItem('tiholesye-v3')}}catch(e){}
@@ -2123,19 +2123,19 @@ const SITES={
  nest:{n:'Гнездо грифонов',pow:16,t:'cav',turns:4,loot:{gold:80},rel:.35,d:'Грифоны тащат в гнездо всё блестящее.',p:'a griffin nest on a high cliff full of shiny treasures with griffins circling'},
  camp:{n:'Лагерь разбойников',pow:10,t:'arch',turns:3,loot:{gold:90,food:30},rel:.15,d:'Шайка грабит караваны на дороге.',p:'a bandit camp in a dark forest clearing with tents, campfire and stolen loot'},
  barrow:{n:'Курган',pow:12,t:'inf',turns:3,loot:{gold:50,sci:30},rel:.4,d:'Древний вождь не любит гостей.',p:'an ancient burial mound with standing stones and a ghostly warrior at night'},
- dragon:{n:'Логово дракона',pow:30,t:'mage',turns:5,loot:{gold:300},boss:'heart',d:'Дракон проснулся. Если его не остановить, он сожжёт деревню.',p:'a huge red dragon sleeping on mountains of gold inside a volcanic cavern'},
- giant:{n:'Зимний великан',pow:28,t:'inf',turns:5,loot:{gold:250,stone:100},boss:'icecrown',d:'Великан идёт с гор, и за ним приходит вечная зима.',p:'a colossal frost giant with an ice club walking through a snowstorm towards a village'},
- lich:{n:'Король-лич',pow:32,t:'mage',turns:5,loot:{gold:250,sci:120},boss:'staff',d:'Мёртвые поднимаются из курганов по его зову.',p:'an undead lich king on a bone throne with green magic fire in a dark crypt'}
+ dragon:{n:'Логово дракона',pow:24,t:'mage',turns:5,loot:{gold:300},boss:'heart',d:'Дракон проснулся. Если его не остановить, он сожжёт деревню.',p:'a huge red dragon sleeping on mountains of gold inside a volcanic cavern'},
+ giant:{n:'Зимний великан',pow:22,t:'inf',turns:5,loot:{gold:250,stone:100},boss:'icecrown',d:'Великан идёт с гор, и за ним приходит вечная зима.',p:'a colossal frost giant with an ice club walking through a snowstorm towards a village'},
+ lich:{n:'Король-лич',pow:26,t:'mage',turns:5,loot:{gold:250,sci:120},boss:'staff',d:'Мёртвые поднимаются из курганов по его зову.',p:'an undead lich king on a bone throne with green magic fire in a dark crypt'}
 };
 const SK=['ruins','cave','temple','nest','camp','barrow'],BOSSK=['dragon','giant','lich'];
-function ensureExp(){if(!s.exp)s.exp={sites:[],id:1,party:null,next:s.day+6,boss:41}}
-const sitePow=x=>Math.round(SITES[x.k].pow*(1+s.day/65)*DF().am);
+function ensureExp(){if(!s.exp)s.exp={sites:[],id:1,party:null,next:s.day+6,boss:45,bdone:[]}}
+const sitePow=x=>Math.round(SITES[x.k].pow*(1+s.day/(SITES[x.k].boss?120:90))*DF().am);
 function newSite(force){ensureExp();if(s.exp.sites.filter(x=>!SITES[x.k].boss).length>=3&&!force)return;const k=SK[(rnd()*SK.length)|0];s.exp.sites.push({id:s.exp.id++,k,until:s.day+30});
   log(`Разведчики нашли место для экспедиции: «${SITES[k].n}».`,'arc')}
 function expTurn(){ensureExp();ensureHero();const E=s.exp;
   if(s.day>=E.next){newSite();E.next=s.day+9+((rnd()*5)|0)}
   E.sites=E.sites.filter(x=>SITES[x.k].boss||x.until>s.day||(E.party&&E.party.site===x.id));
-  if(s.day>=E.boss&&!E.sites.some(x=>SITES[x.k].boss)){const k=BOSSK.filter(b=>!hasRel(SITES[b].boss))[0]||BOSSK[(rnd()*3)|0];E.sites.push({id:E.id++,k,until:s.day+18});E.boss=s.day+40;
+  if(!E.bdone)E.bdone=[];if(s.day>=E.boss&&E.bdone.length<3&&!E.sites.some(x=>SITES[x.k].boss)){const k=BOSSK.filter(b=>!E.bdone.includes(b))[0];E.bdone.push(k);E.sites.push({id:E.id++,k,until:s.day+18});E.boss=s.day+45;
     REPORT.push([`Босс: ${SITES[k].n}`,`${SITES[k].d} У вас 18 ходов, чтобы отправить экспедицию. Иначе он нападёт на деревню.`,'bad']);sfx('war')}
   E.sites.filter(x=>SITES[x.k].boss&&x.until<=s.day&&!(E.party&&E.party.site===x.id)).forEach(x=>{bossAttack(x);E.sites=E.sites.filter(y=>y!==x)});
   if(E.party&&s.day>=E.party.end)expResolve()}
@@ -2174,7 +2174,7 @@ function bossAttack(x){const S=SITES[x.k];const A=monsterSide(x);A.g[0].atk*=1.1
 function siteCard(x,o={}){const S=SITES[x.k];const P=s.exp.party&&s.exp.party.site===x.id;
   return card({cls:`${S.boss?'c-rival':'c-spell'} ${o.cls||''}`,name:S.n,artCls:'cat',art:artOfRaw('ex_'+x.k,I('threat')),text:`Сила ${sitePow(x)} · ${S.turns} ход.`,tag:P?`Экспедиция: ${Math.max(0,s.exp.party.end-s.day)} ход.`:S.boss?`Нападёт через ${Math.max(0,x.until-s.day)}`:'',tagCls:P?'arc':'bad',attrs:o.attrs||'',el:o.el})}
 function renderExp(p){ensureExp();ensureHero();const E=s.exp;
-  p.innerHTML=`<div class="two" style="margin-bottom:12px"><div class="stack"><h3>Экспедиции</h3><div class="small muted">Староста с отрядом отправляется к опасным местам за золотом и реликвиями. Новые места разведчики находят раз в 9–13 ходов. Раз в 40 ходов (с 41-го) приходит босс.</div>
+  p.innerHTML=`<div class="two" style="margin-bottom:12px"><div class="stack"><h3>Экспедиции</h3><div class="small muted">Староста с отрядом отправляется к опасным местам за золотом и реликвиями. Новые места разведчики находят раз в 9–13 ходов. С 45-го хода раз в 45 ходов приходит один из трёх боссов: дракон, великан и лич.</div>
    ${E.party?`<div class="small">В пути: «${SITES[(E.sites.find(y=>y.id===E.party.site)||{k:'ruins'}).k].n}», вернётся через ${Math.max(0,E.party.end-s.day)} ход.</div>`:''}</div>
    </div>
    <div class="cards">${heroCard({attrs:'data-hero="1"'})}${E.sites.map(x=>siteCard(x,{attrs:`data-site="${x.id}"`})).join('')||'<div class="small muted">Пока мест нет. Разведчики ищут.</div>'}</div>`;
@@ -2318,8 +2318,8 @@ function openEnc(back){const T=[['b','Постройки'],['u','Войска'],
   let L='';
   if(ENCT==='b')L=BL.filter(d=>!d.noBuild).map(d=>row(artOf(d.id,d.ic),d.n,`${effText(d)} · ${costSpans(d.cost)} · ${bTurns(d)} ход. ${d.desc||''}`)).join('');
   else if(ENCT==='u')L=UNITS.map(u=>row(artOf('u_'+u.id,u.ic),u.n,`${TY[uType(u)].n} · атака ${u.atk} · защита ${u.def} · ${costSpans(u.cost)}`)).join('');
-  else if(ENCT==='t')L=TECHS.map(x=>row(artOfRaw('t_'+x.id,I('science')),x.n,`${x.d} · ${x.cost} науки${hasT(x.id)?' · открыто':''}`)).join('');
-  else if(ENCT==='c')L=CIVICS.map(x=>row(artOfRaw('c_'+x.id,I('culture')),x.n,`${x.d} · ${x.cost} культуры${hasC(x.id)?' · принят':''}`)).join('');
+  else if(ENCT==='t')L=TECHS.map(x=>row(artOfRaw('tech_'+x.id,I('science')),x.n,`${x.d} · ${x.cost} науки${hasT(x.id)?' · открыто':''}`)).join('');
+  else if(ENCT==='c')L=CIVICS.map(x=>row(artOfRaw('civ_'+x.id,I('culture')),x.n,`${x.d} · ${x.cost} культуры${hasC(x.id)?' · принят':''}`)).join('');
   else if(ENCT==='m')L=ML.map(m=>row(artOf('m_'+m.id,I('people')),mName(m),`${m.trade}${B[m.id]?' · '+B[m.id].n:''}`)).join('');
   else if(ENCT==='g')L=GODS.map(g=>row(artOf('g_'+g.id,g.ic),gN(g.id),gT(g.id))).join('');
   else if(ENCT==='o')L=ORD.map(o=>row(artOfRaw('o_'+o.id,I('rank')),o.n,o.d)).join('');
