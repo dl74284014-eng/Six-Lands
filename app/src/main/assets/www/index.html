@@ -340,6 +340,19 @@ html.noanim *,html.noanim *::before,html.noanim *::after{animation:none!importan
 @keyframes swl{from{opacity:.2;transform:translateX(40px)}}@keyframes swr{from{opacity:.2;transform:translateX(-40px)}}
 .bump-l{animation:bpl .3s ease}.bump-r{animation:bpr .3s ease}@keyframes bpl{40%{transform:translateX(-14px)}}@keyframes bpr{40%{transform:translateX(14px)}}
 body{overflow-x:hidden}
+.sarr{position:fixed;top:50%;z-index:14;width:34px;height:64px;padding:0;border:1px solid rgba(232,192,106,.55);background:linear-gradient(180deg,rgba(60,42,18,.92),rgba(28,20,10,.92));box-shadow:0 4px 14px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,231,163,.25);display:flex;align-items:center;justify-content:center;transform:translateY(-50%);cursor:pointer;opacity:.82;transition:opacity .2s,width .2s}
+.sarr.l{left:0;border-left:0;border-radius:0 14px 14px 0;padding-left:max(0px,env(safe-area-inset-left,0px))}
+.sarr.r{right:0;border-right:0;border-radius:14px 0 0 14px;padding-right:max(0px,env(safe-area-inset-right,0px))}
+.sarr i{width:12px;height:12px;border-top:3px solid #e9b955;border-left:3px solid #e9b955;filter:drop-shadow(0 0 4px rgba(232,192,106,.7))}
+.sarr.l i{transform:rotate(-45deg);margin-left:6px}.sarr.r i{transform:rotate(135deg);margin-right:6px}
+.sarr span{position:absolute;top:calc(100% + 6px);white-space:nowrap;font-family:var(--display);font-size:11px;color:var(--brass);background:rgba(19,17,14,.88);border:1px solid var(--line);border-radius:6px;padding:1px 6px;opacity:0;transition:opacity .2s;pointer-events:none}
+.sarr.l span{left:4px}.sarr.r span{right:4px}
+.sarr:hover,.sarr:focus-visible{opacity:1}.sarr:hover span,.sarr:focus-visible span{opacity:1}
+.sarr:active{transform:translateY(-50%) scale(.94)}
+@media (hover:none){.sarr span{opacity:.85}}
+@media (prefers-reduced-motion:no-preference){.sarr.r i{animation:nudr 2.6s ease-in-out infinite}.sarr.l i{animation:nudl 2.6s ease-in-out infinite}
+ @keyframes nudr{0%,70%,100%{translate:0}80%{translate:3px}}@keyframes nudl{0%,70%,100%{translate:0}80%{translate:-3px}}}
+@media (min-width:900px){.sarr{width:42px;height:80px}}
 @media (min-width:900px){.bnav{max-width:720px;margin:0 auto}.dock .turnbar{max-width:1240px;margin:0 auto}}
 </style>
 
@@ -376,6 +389,7 @@ body{overflow-x:hidden}
     <div id="pane"></div>
   </section>
 </div>
+<button class="sarr l" id="arrL" aria-label="Предыдущий раздел" hidden><i></i><span></span></button><button class="sarr r" id="arrR" aria-label="Следующий раздел" hidden><i></i><span></span></button>
 <div class="title" id="title" hidden></div>
 <div class="modal-bg" id="modalBg" hidden><div class="modal" id="modal" role="dialog" aria-modal="true"></div></div>
 <div class="toast" id="toast" hidden></div>
@@ -385,7 +399,7 @@ body{overflow-x:hidden}
 <style id="imgcss"></style>
 
 <script>
-const BUILD_VER="12.11.2026 10:13";
+const BUILD_VER="12.11.2026 10:20";
 const KEY='tiholesye-v3';
 const I=k=>`<i class="ico i-${k}"></i>`;
 
@@ -1776,6 +1790,9 @@ function renderNav(){
   if(nv.subs.length>1){sn.hidden=false;sn.innerHTML=nv.subs.map(([k,l])=>`<button class="${tab===k?'on':''}" data-sub="${k}">${l}</button>`).join('');sn.querySelectorAll('[data-sub]').forEach(b=>b.onclick=()=>go(b.dataset.sub))}
   else{sn.hidden=true;sn.innerHTML=''}
   $('#tableSec').hidden=tab!=='h';$('#panelSec').hidden=tab==='h';
+  {const L=SWIPE_ORDER(),i=L.indexOf(tab);const lab=t=>{const n=navOf(t),x=n.subs.find(z=>z[0]===t);return n.subs.length>1?x[1]:n.n};
+   const pa=$('#arrL'),na=$('#arrR');pa.hidden=i<=0;na.hidden=i<0||i>=L.length-1;
+   if(!pa.hidden)pa.querySelector('span').textContent=lab(L[i-1]);if(!na.hidden)na.querySelector('span').textContent=lab(L[i+1]);}
 }
 function chipRow(items,cur,attr){return`<div class="filters" role="group">${items.map(([k,l,n])=>`<button class="${cur===k?'on':''}" data-${attr}="${k}">${l}${n!=null?` <span class="cnt">${n}</span>`:''}</button>`).join('')}</div>`}
 
@@ -2141,7 +2158,7 @@ function applySettings(){
 {const _ms=musicStart;musicStart=function(){_ms();if(AU.ctx&&AU.mus){AU.mus.gain.cancelScheduledValues(AU.ctx.currentTime);AU.mus.gain.setTargetAtTime(SET.music,AU.ctx.currentTime,.8)}}}
 const hasSave=()=>{try{const j=localStorage.getItem(KEY);return!!(j&&JSON.parse(j).lands.length)}catch(e){return false}};
 const titleOn=()=>!$('#title').hidden;
-function hideTitle(){const t=$('#title');t.classList.add('out');setTimeout(()=>{t.hidden=true;t.classList.remove('out')},RM?0:400)}
+function hideTitle(){const t=$('#title');setTimeout(()=>{try{renderNav()}catch(e){}},0);t.classList.add('out');setTimeout(()=>{t.hidden=true;t.classList.remove('out')},RM?0:400)}
 function showTitle(){
   closeModal();modalOpen=false;const t=$('#title');const sv=hasSave()&&s.lands.length;
   t.innerHTML=`<div class="tbg"></div><div class="tin">
@@ -2157,7 +2174,7 @@ function showTitle(){
     </div>
     <div class="tem">${CK.map(c=>`<i class="ico em i-em-${c}" title="${CULTURES[c].n}"></i>`).join('')}</div>
     <div class="tver">версия ${BUILD_VER}${appStatus()?`<br>${appStatus()}`:''}</div></div>`;
-  t.hidden=false;
+  t.hidden=false;$('#arrL').hidden=$('#arrR').hidden=true;
   const on=(id,f)=>{const b=$('#'+id);if(b)b.onclick=()=>{sfx('card');f()}};
   on('tCont',()=>{hideTitle();render();if(AU.musicOn&&!AU.playing)musicStart()});
   on('tNew',()=>{if(sv)confirmBox('Начать новую игру?','Текущая деревня будет потеряна навсегда.','Начать заново',()=>chooseCulture(true));else chooseCulture(true)});
@@ -2238,6 +2255,7 @@ function bump(dir){if(RM)return;const el=tab==='h'?$('#tableSec'):$('#panelSec')
   document.addEventListener('touchend',e=>{if(!ok)return;ok=false;const t=e.changedTouches[0];const dx=t.clientX-sx,dy=t.clientY-sy;
     if(Date.now()-st<700&&Math.abs(dx)>70&&Math.abs(dx)>Math.abs(dy)*1.8)swipeGo(dx<0?1:-1)},{passive:true});
 })();
+$('#arrL').onclick=()=>{sfx('card');swipeGo(-1)};$('#arrR').onclick=()=>{sfx('card');swipeGo(1)};
 $('#menuBtn').onclick=()=>{sfx('card');openPause()};
 applySettings();
 
