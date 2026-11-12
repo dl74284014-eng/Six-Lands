@@ -361,6 +361,7 @@ body{overflow-x:hidden}
 .card.rec{box-shadow:0 0 0 2px rgba(232,192,106,.85),0 0 14px rgba(232,192,106,.35)}
 .card.c-land.hint{box-shadow:0 0 0 1.5px rgba(232,192,106,.6);animation:hintp 2.6s ease-in-out infinite}
 @keyframes hintp{50%{box-shadow:0 0 0 1.5px rgba(232,192,106,.95),0 0 16px rgba(232,192,106,.35)}}
+#wxc{position:fixed;inset:0;width:100%;height:100%;z-index:11;pointer-events:none;display:none}
 .diffbox{display:grid;gap:8px;padding:12px;border:1px solid rgba(232,192,106,.3);border-radius:12px;background:rgba(0,0,0,.18)}
 .diffbox .dlab{font-family:var(--title);color:var(--brass);font-size:16px}
 .dseg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
@@ -427,7 +428,7 @@ body{overflow-x:hidden}
 <style id="imgcss"></style>
 
 <script>
-const BUILD_VER="12.11.2026 21:14";
+const BUILD_VER="12.11.2026 21:35";
 const KEY='tiholesye-v3';
 const I=k=>`<i class="ico i-${k}"></i>`;
 
@@ -748,7 +749,7 @@ const BCIVIC={theater:'drama'};
 const UTECH={soldier:'bronze',unique:'bronze',archer:'archery',cavalry:'riding',siege:'math',mage:'arcana'};
 const SCI={hall:2,library:4,observatory:3,tower:2,mapper:1,workshop:2,alchemy:1,enchanter:1,runes:1,glass:1,infirmary:1,beacon:2};
 const CUL={hall:2,temple:3,theater:4,wonder:6,fountain:1,tavern:1,library:1,garden:2,grove:1,jeweler:1,potter:1,tailor:1,sh_harvest:1,sh_forge:1,sh_magic:1,sh_guard:1,sh_hearth:1,sh_trade:1};
-function ensureProg(){if(!s.vet)s.vet={};if(!s.spies){s.spies=[];s.intel={};s.spyId=1}ensureTrade();if(!s.gp)s.gp={sci:0,cult:0,war:0,nS:90,nC:70,nW:3};if(!s.quests)s.quests=[];if(s.qDone==null)s.qDone=0;if(!s.tech)s.tech={known:[],cur:null,p:0};if(!s.civ)s.civ={known:[],cur:null,p:0};if(s.cultTotal==null){s.cultTotal=0;s.borderAt=30}}
+function ensureProg(){if(!s.wx)wxRoll(true);if(!s.vet)s.vet={};if(!s.spies){s.spies=[];s.intel={};s.spyId=1}ensureTrade();if(!s.gp)s.gp={sci:0,cult:0,war:0,nS:90,nC:70,nW:3};if(!s.quests)s.quests=[];if(s.qDone==null)s.qDone=0;if(!s.tech)s.tech={known:[],cur:null,p:0};if(!s.civ)s.civ={known:[],cur:null,p:0};if(s.cultTotal==null){s.cultTotal=0;s.borderAt=30}}
 const canT=t=>!hasT(t.id)&&t.req.every(hasT);
 const canC=t=>!hasC(t.id)&&t.req.every(hasC);
 
@@ -888,6 +889,28 @@ const buff=k=>s.buffs[k]&&s.buffs[k]>s.day;
 function capT(){return s.lands.reduce((a,l)=>a+((l.b&&!busy(l)&&B[l.b].cap)||0),0)}
 function afford(c){return Object.entries(c).every(([r,n])=>s.res[r]>=n)}
 function pay(c){for(const[r,n]of Object.entries(c))s.res[r]-=n}
+/* ---------- погода ---------- */
+const WX={
+ clear:{n:'Ясно',d:'Тёплое солнце. Счастье +2.',happy:2},
+ rain:{n:'Дождь',d:'Поля напоены водой: фермы +10%.',farm:1.1},
+ fog:{n:'Туман',d:'Туман скрывает лазутчиков: шпионы успешнее на 10%.',spy:.1},
+ heat:{n:'Зной',d:'Жара сушит поля: фермы −15%, счастье −2.',farm:.85,happy:-2},
+ storm:{n:'Гроза',d:'Ливень и молнии: фермы +5%, счастье −2.',farm:1.05,happy:-2},
+ wind:{n:'Листопад',d:'Ветер срывает листья. Шпионы успешнее на 5%.',spy:.05},
+ snow:{n:'Снегопад',d:'Тихий снег укрывает деревню.'},
+ frost:{n:'Мороз',d:'Ясно и морозно. Еды тратится больше: −0.5 за ход на 10 жителей.',eat:.05},
+ blizzard:{n:'Метель',d:'Дороги замело: набеги соседей вдвое реже, но счастье −3.',raid:.5,happy:-3}
+};
+const WXS=[[['clear',.45],['rain',.35],['fog',.2]],[['clear',.5],['heat',.25],['storm',.25]],[['clear',.25],['rain',.3],['fog',.2],['wind',.25]],[['snow',.45],['frost',.3],['blizzard',.25]]];
+const wxNow=()=>(s&&s.wx&&WX[s.wx.k])?s.wx.k:(s?(season().i===3?'snow':'clear'):'clear');
+const WXo=()=>WX[wxNow()];
+function wxRoll(force){if(!s)return;const si=season().i;
+  if(!force&&s.wx&&s.wx.until>s.day&&s.wx.si===si)return;
+  const L=WXS[si];let r=rnd(),a=0,k=L[0][0];for(const[x,p]of L){a+=p;if(r<a){k=x;break}}
+  const was=s.wx&&s.wx.k;s.wx={k,si,until:s.day+2+((rnd()*3)|0)};
+  if(was&&was!==k)log(`Погода: ${WX[k].n.toLowerCase()}. ${WX[k].d}`);ambUpdate();}
+
+
 function season(){const i=Math.floor(((s.day-1)%40)/10);return{i,n:SEASONS[i][0],farm:SEASONS[i][1],ic:SEASONS[i][2]}}
 function landCost(){const k=Math.max(0,s.lands.length-7);return{gold:15+8*k,wood:5+3*k}}
 function drawLandType(){let r=rnd(),acc=0;for(const k in LAND){acc+=LAND[k].w;if(r<acc)return k}return'plain'}
@@ -1063,7 +1086,7 @@ function newGame(culture,diff='normal'){
      army:{militia:2},queue:[],peaceCd:{},won:false,tech:{known:[],cur:'agri',p:0},civ:{known:[],cur:'code',p:0},cultTotal:0,borderAt:30,
      rivals:CK.filter(c=>c!==culture).map(c=>({c,pop:5+rnd()*2,army:(3+rnd()*2)*dm.am,wall:2,gold:40,rel:Math.round(rnd()*24-6),war:false,vassal:false,trade:false,warT:0,hits:0}))};
   for(const k in s.res)s.res[k]=Math.round(s.res[k]*dm.res);
-  applyCulture();
+  applyCulture();wxRoll(true);
   log(`Сложность: ${dm.n}.`);
   log(`Вы стали старостой деревни народа «${C().full}». Рядом поселились пять других народов. Стройте, торгуйте, воюйте — каждый ход на счету.`,'arc');
 }
@@ -1113,7 +1136,7 @@ function stats(){
   const jobs=act.reduce((a,x)=>a+(x.d.jobs||0),0);
   const eff=jobs?Math.min(1,P/jobs):1;
   const tools=has('smithy')?1.25:1;
-  let farmSeason=se.farm;if(se.i===3)farmSeason=MOD('winter')!==1?MOD('winter'):se.farm;if(buff('ward'))farmSeason=Math.max(1,farmSeason);
+  let farmSeason=se.farm;if(se.i===3)farmSeason=MOD('winter')!==1?MOD('winter'):se.farm;if(buff('ward'))farmSeason=Math.max(1,farmSeason);farmSeason*=WXo().farm||1;
   const farmM=farmSeason*MOD('farm')*(1+.3*lvl('harvest'))*(has('mill')?1.2:1)*(buff('bloom')?2:1);
   const forge=1+.25*lvl('forge'),manaM=(1+.4*lvl('magic'))*MOD('mana');
   const delta={gold:0,wood:0,stone:0,food:0,mana:0};const br={gold:{},wood:{},stone:{},food:{},mana:{},sci:{},cult:{}};let sci=0,cult=0;const add=(r,l,n)=>{br[r][l]=(br[r][l]||0)+n};
@@ -1146,6 +1169,8 @@ function stats(){
   if(buff('scare')){happy-=8;hp.push(['Страх после набега',-8])}
   if(def>=th){happy+=3;hp.push(['Чувство защищённости',3])}else if(def<th/2){happy-=5;hp.push(['Слабая оборона',-5])}
   delta.food-=P*.5;add('food','Жители едят',-P*.5);
+  if(WXo().eat){delta.food-=P*WXo().eat;add('food','Мороз',-P*WXo().eat)}
+  if(WXo().happy){happy+=WXo().happy;hp.push(['Погода: '+WXo().n,WXo().happy])}
   const starving=s.res.food+delta.food<0;
   const shortage=!starving&&delta.food<0&&s.res.food<-delta.food*12;
   if(starving){happy-=25;hp.push(['Голод',-25])}else if(shortage){happy-=8;hp.push(['Нехватка еды',-8])}
@@ -1171,6 +1196,7 @@ function tick(){
   for(const r of RES)s.res[r]=Math.max(0,s.res[r]+st.delta[r]);
   s.rep=Math.max(0,Math.min(100,s.rep+st.rep));s.happy=st.happy;
   s.day++;
+  wxRoll();
   s.lands.forEach(l=>{if(!(l.bt>0))return;l.bt--;if(l.bt>0)return;delete l.bt;
     if(l.up){const was=B[l.b].n;l.b=l.up;delete l.up;log(`Улучшено: ${was} → ${B[l.b].n}.`,'good');REPORT0.push([`Улучшено: ${B[l.b].n}`,`${was} перестроен. Постройка уже работает.`,'good'])}
     else{log(`Достроено: ${B[l.b].n}.`,'good');REPORT0.push([`Достроено: ${B[l.b].n}`,'Строители закончили работу. Постройка уже работает.','good'])}});
@@ -1253,7 +1279,7 @@ function aiTurn(){
     r.wall+=.03;r.gold+=1+r.pop*.08;
     if(r.war){
       r.warT++;
-      if(r.army>3&&!(r.raidCd>s.day)&&rnd()<.14*ag*dA){enemyAttack(r);r.raidCd=s.day+5}
+      if(r.army>3&&!(r.raidCd>s.day)&&rnd()<.14*ag*dA*(WXo().raid||1)){enemyAttack(r);r.raidCd=s.day+5}
       if(!PEACE&&((r.army*2<myPower()*.6&&rnd()<.25)||(r.warT>12&&rnd()<.15)))PEACE=r;
     }else{
       const base=-(ag-1)*70-(s.lands.length>12?(s.lands.length-12)*1.5:0)+(r.trade?25:0);
@@ -1708,6 +1734,8 @@ function openInfo(k){
   if(k==='season'){const se=st.season;const left=10-((s.day-1)%10);
     return infoModal('Сезон: '+se.n,picOr(['season_spring','season_summer','season_autumn','season_winter'][se.i],se.ic),`<div class="small">Год длится 40 ходов, каждый сезон — 10. До смены сезона: ${left} ход.</div>
       <table>${SEASONS.map((x,i)=>`<tr><td>${x[2]} ${x[0]}${i===se.i?' (сейчас)':''}</td><td class="n">урожай ×${i===3&&MOD('winter')!==1?MOD('winter'):x[1]}</td></tr>`).join('')}</table>
+      <h3>Погода: ${WXo().n}</h3><div class="small">${WXo().d} Продлится ещё ${Math.max(1,(s.wx?s.wx.until:s.day)-s.day)} ход.</div>
+      <div class="small muted">Погода меняется каждые 2–4 хода и зависит от сезона: весной дожди и туманы, летом зной и грозы, осенью листопад, зимой снег, мороз и метели.</div>
       <div class="small muted">Погодный оберег спасает урожай зимой. Северные кланы переносят зиму легче.</div>`)}
   if(k==='def'){const bl=st.act.filter(x=>x.d.def).map(x=>x.d.n);const cntB={};bl.forEach(n=>cntB[n]=(cntB[n]||0)+1);
     return infoModal('Оборона',picOr('prop_defense','<i class="ico i-def"></i>'),`<div><b style="font-size:20px">${st.def}</b> · угроза чудищ ${st.threat}</div>
@@ -1871,7 +1899,7 @@ function renderTable(){
   const st=stats();const se=season();
   const pk=k=>src(k)?`<span class="pic im-${k}"></span>`:null;
   const winter=se.i===3&&MOD('winter')!==1?MOD('winter'):se.farm;
-  $('#pSeason').innerHTML=`<span class="pi">${pk(['season_spring','season_summer','season_autumn','season_winter'][se.i])||se.ic}</span><span><b>${se.n}</b><span class="s">Урожай ферм ×${buff('ward')?Math.max(1,winter):winter}</span></span>`;
+  $('#pSeason').innerHTML=`<span class="pi">${pk(['season_spring','season_summer','season_autumn','season_winter'][se.i])||se.ic}</span><span><b>${se.n}</b><span class="s">${WXo().n} · урожай ×${Math.round((buff('ward')?Math.max(1,winter):winter)*(WXo().farm||1)*100)/100}</span></span>`;
   const r=Math.min(1,st.def/Math.max(1,st.threat*1.5));
   $('#pDef').innerHTML=`<span class="pi">${pk('prop_defense')||'<i class="ico i-def"></i>'}</span><span style="flex:1;min-width:0"><b>Оборона ${st.def} · <i class="ico i-atk"></i> ${Math.round(armyAtk())}</b><span class="s"><i class="ico i-threat"></i> Угроза чудищ: ${st.threat}</span><span class="meter"><i class="${st.def<st.threat?'weak':''}" style="width:${r*100}%"></i></span></span>`;
   $('#pTrip').innerHTML=s.trip?`<span class="pi">${pk('prop_trip')||'<i class="ico i-cav"></i>'}</span><span><b>В дороге</b><span class="s">${mName(M[s.trip.m])}: встреча на ${s.trip.at}-й день</span></span>`
@@ -2076,7 +2104,7 @@ const SLV=['Новичок','Агент','Мастер','Тень','Легенд
 const SXP=[0,2,5,9,14];
 const SPERK=['—','+7% к успеху','реже попадается при провале','задания на 1 ход короче','добыча и эффект заданий ×1.5'];
 function spyXp(sp){sp.xp++;if(sp.lvl<4&&sp.xp>=SXP[sp.lvl+1]){sp.lvl++;const m=`${sp.name} получает звание «${SLV[sp.lvl]}»: ${SPERK[sp.lvl]}.`;log(m,'good');return' '+m}return''}
-const spyCh=(sp,m)=>m.base+.07*sp.lvl+(s.culture==='east'?.15:0);
+const spyCh=(sp,m)=>m.base+.07*sp.lvl+(s.culture==='east'?.15:0)+(WXo().spy||0);
 const MS={
  scout:{n:'Разведка',t:'rival',turns:2,base:.85,d:'Узнать точный состав армии соседа. 15 ходов вы видите их силы, а их набеги на вас слабее на 15%.',p:'a spy hiding in tall grass watching an enemy army camp through a small spyglass at dusk'},
  steal:{n:'Кража знаний',t:'rival',turns:4,base:.5,d:'Выкрасть чертежи и свитки: половина стоимости текущего исследования.',p:'a spy secretly copying glowing blueprints and scrolls by candlelight in an enemy library'},
@@ -2381,17 +2409,161 @@ renderAudio();
 /* ---------- меню, настройки, главный экран ---------- */
 const IS_APP=!!window.AndroidApp;
 const appStatus=()=>{try{return window.AndroidApp&&AndroidApp.status?AndroidApp.status():''}catch(e){return''}};
-const SET={music:.6,sfx:.6,anim:true,big:false};
+const SET={music:.6,sfx:.6,anim:true,big:false,amb:.5,weather:true};
 try{Object.assign(SET,JSON.parse(localStorage.getItem('sixlands-settings')||'{}'))}catch(e){}
 function setSave(){try{localStorage.setItem('sixlands-settings',JSON.stringify(SET))}catch(e){}}
 function applySettings(){
   document.documentElement.classList.toggle('noanim',!SET.anim);
   document.documentElement.classList.toggle('bigtext',!!SET.big);
   RM=matchMedia('(prefers-reduced-motion: reduce)').matches||!SET.anim;
+  if(AU.ctx&&AU.amb&&AU.ambOn)AU.amb.gain.setTargetAtTime(SET.amb,AU.ctx.currentTime,.3);
   if(AU.ctx){AU.sfx.gain.value=SET.sfx;if(AU.playing)AU.mus.gain.setTargetAtTime(SET.music,AU.ctx.currentTime,.3)}
 }
 {const _ai=auInit;auInit=function(){const r=_ai();if(r&&AU.sfx)AU.sfx.gain.value=SET.sfx;return r}}
 {const _ms=musicStart;musicStart=function(){_ms();if(AU.ctx&&AU.mus){AU.mus.gain.cancelScheduledValues(AU.ctx.currentTime);AU.mus.gain.setTargetAtTime(SET.music,AU.ctx.currentTime,.8)}}}
+/* ---------- музыка народов ---------- */
+const GS={
+ menu:null,
+ east:{bpm:66,root:50,scale:[0,1,5,7,8],ch:[[0,7],[5,12],[-4,3],[-2,5]],acc:'koto',lead:'shaku',arp:[0,-1,2,-1,1,-1,2,-1],perc:'taiko',dens:.32},
+ europe:{bpm:90,root:50,scale:[0,2,3,5,7,9,10],ch:[[0,3,7],[-2,2,5],[-4,0,3],[-5,-1,2]],acc:'lute',lead:'flute',arp:[0,1,2,1,0,2,1,2],perc:'tamb',dens:.42},
+ elves:{bpm:72,root:53,scale:[0,2,4,6,7,9,11],ch:[[0,4,7,11],[2,6,9,14],[-3,0,4,7],[-1,2,6,9]],acc:'harp',lead:'flute',arp:[0,1,2,3,2,1,3,2],perc:null,dens:.3},
+ magi:{bpm:58,root:48,scale:[0,2,3,6,7,8,11],ch:[[0,3,7],[1,5,8],[-1,3,6],[0,3,8]],acc:'bell',lead:'glass',arp:[0,2,1,-1,2,0,-1,1],perc:null,dens:.26},
+ north:{bpm:76,root:45,scale:[0,2,3,5,7,8,10],ch:[[0,7],[-2,5],[-4,3],[-5,2]],acc:'lyre',lead:'horn',arp:[0,-1,1,-1,0,-1,1,-1],perc:'frame',dens:.24},
+ desert:{bpm:96,root:50,scale:[0,1,4,5,7,8,10],ch:[[0,4,7],[1,5,8],[0,4,7],[-2,1,5]],acc:'oud',lead:'ney',arp:[0,-1,1,0,2,-1,1,0],perc:'darbuka',dens:.4}
+};
+const PERC={taiko:[1,0,0,0,0,0,2,0,1,0,0,0,2,0,2,0],tamb:[0,0,3,0,0,0,3,0,0,0,3,0,0,3,3,0],frame:[1,0,0,0,1,0,0,0,1,0,0,0,1,0,1,0],darbuka:[1,0,3,0,3,1,3,0,1,0,3,0,3,3,1,0]};
+function auNoise(){if(AU.nb)return AU.nb;const c=AU.ctx,len=c.sampleRate*2,b=c.createBuffer(1,len,c.sampleRate),d=b.getChannelData(0);let l=0;
+  for(let i=0;i<len;i++){const w=Math.random()*2-1;l=(l+.02*w)/1.02;d[i]=w*.5+l*3}AU.nb=b;return b}
+function nburst(dest,t,dur,freq,q,vol,type='bandpass'){const c=AU.ctx,n=c.createBufferSource(),f=c.createBiquadFilter(),g=c.createGain();n.buffer=auNoise();
+  f.type=type;f.frequency.value=freq;f.Q.value=q;g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0005,t+dur);n.connect(f);f.connect(g);g.connect(dest);n.start(t,Math.random()*1.5);n.stop(t+dur+.05)}
+function bellN(dest,m,t,dur=2.6,vol=.06,ratio=3.5){const c=AU.ctx,o=c.createOscillator(),md=c.createOscillator(),mg=c.createGain(),g=c.createGain();
+  o.frequency.value=HZ(m);md.frequency.value=HZ(m)*ratio;mg.gain.setValueAtTime(HZ(m)*1.6,t);mg.gain.exponentialRampToValueAtTime(1,t+dur);md.connect(mg);mg.connect(o.frequency);
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.004);g.gain.exponentialRampToValueAtTime(.0005,t+dur);o.connect(g);g.connect(dest);o.start(t);md.start(t);o.stop(t+dur+.05);md.stop(t+dur+.05)}
+function hornN(dest,m,t,dur,vol=.05){const c=AU.ctx,o=c.createOscillator(),o2=c.createOscillator(),f=c.createBiquadFilter(),g=c.createGain();
+  o.type='sawtooth';o2.type='sawtooth';o.frequency.value=HZ(m);o2.frequency.value=HZ(m)*1.005;f.type='lowpass';f.frequency.setValueAtTime(300,t);f.frequency.linearRampToValueAtTime(900,t+.35);
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.3);g.gain.setValueAtTime(vol,t+Math.max(.32,dur-.2));g.gain.linearRampToValueAtTime(0,t+dur+.3);
+  o.connect(f);o2.connect(f);f.connect(g);g.connect(dest);o.start(t);o2.start(t);o.stop(t+dur+.35);o2.stop(t+dur+.35)}
+function padN(dest,ms,t,dur,vol=.022){const c=AU.ctx,g=c.createGain(),f=c.createBiquadFilter();f.type='lowpass';f.frequency.value=1200;
+  ms.forEach(m=>[1,1.004].forEach(k=>{const o=c.createOscillator();o.type='triangle';o.frequency.value=HZ(m)*k;o.connect(f);o.start(t);o.stop(t+dur+1.6)}));
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+1.2);g.gain.setValueAtTime(vol,t+dur);g.gain.linearRampToValueAtTime(0,t+dur+1.5);f.connect(g);g.connect(dest)}
+function accN(kind,dest,m,t,vol){
+  if(kind==='koto')pluck(dest,m,t,1.6,vol*1.1,4200);
+  else if(kind==='harp')pluck(dest,m,t,2.6,vol*.9,3000);
+  else if(kind==='oud')pluck(dest,m-12,t,.9,vol*1.3,1500);
+  else if(kind==='lyre')pluck(dest,m-12,t,2,vol*1.1,1800);
+  else if(kind==='bell')bellN(dest,m+12,t,2.2,vol*.5,2.01);
+  else pluck(dest,m,t,1.4,vol,2600)}
+function leadN(kind,dest,m,t,dur){
+  if(kind==='horn')hornN(dest,m-12,t,dur,.045);
+  else if(kind==='glass')bellN(dest,m+12,t,dur+1.5,.035,3.5);
+  else{flute(dest,m,t,dur,kind==='flute'?.05:.045);if(kind==='shaku'||kind==='ney')nburst(dest,t,.35,HZ(m)*2,2,.02)}}
+function percN(kind,dest,t,v){if(!v)return;
+  if(kind==='taiko'){drum(dest,t,v===1?.5:.25)}
+  else if(kind==='frame'){drum(dest,t,v===1?.32:.2)}
+  else if(kind==='tamb'){nburst(dest,t,.12,7000,1.5,.05)}
+  else if(kind==='darbuka'){if(v===1)drum(dest,t,.32);else nburst(dest,t,.07,3200,3,.09)}}
+function genTick(){
+  const c=AU.ctx;if(!c)return;const G=GS[AU.key]||GS.europe;const e=60/G.bpm/2;
+  if(AU.nextT<c.currentTime)AU.nextT=c.currentTime+.05;
+  while(AU.nextT<c.currentTime+.45){
+    const t0=AU.nextT,st=AU.step,beat=st%8,bar=Math.floor(st/8),ch=G.ch[Math.floor(bar/2)%G.ch.length];
+    if(beat===0&&bar%2===0){if(G.acc==='bell'||G.acc==='harp')padN(AU.mus,ch.map(x=>G.root+12+x),t0,e*16,.018);else drone(AU.mus,G.root+ch[0]-12,t0,e*16,G.lead==='horn'?.034:.024)}
+    const ai=G.arp[beat];if(ai>=0&&Math.random()<.92)accN(G.acc,AU.mus,G.root+12+ch[ai%ch.length]+(ai>=ch.length?12:0),t0,beat===0?.12:.075);
+    if(G.perc&&!(season().i===3&&AU.key!=='north'&&beat%4))percN(G.perc,AU.mus,t0,PERC[G.perc][st%16]);
+    if(beat%2===0&&Math.random()<G.dens){const sc=G.scale,n=sc.length*2;AU.mel=Math.max(0,Math.min(n-1,(AU.mel||5)+[-2,-1,-1,0,1,1,2][(Math.random()*7)|0]));
+      const m=G.root+24+sc[AU.mel%sc.length]+12*Math.floor(AU.mel/sc.length)-12;leadN(G.lead,AU.mus,m,t0,e*(Math.random()<.5?2:3))}
+    AU.nextT+=e;AU.step++;
+  }
+}
+AU.tr={};AU.key=null;
+function musicKey(){const t=$('#title');return(!s||(t&&!t.hidden))?'menu':s.culture}
+function loadTrack(){const k=AU.key,T=AU.tr[k]||(AU.tr[k]={st:'idle'});if(T.st!=='idle')return;T.st='loading';
+  fetch(k==='menu'?'audio/theme.mp3':`audio/theme_${k}.mp3`).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()}).then(b=>new Promise((res,rej)=>AU.ctx.decodeAudioData(b,res,rej)))
+    .then(buf=>{T.buf=buf;T.st='ready';if(AU.playing&&AU.key===k)playTrack()})
+    .catch(()=>{T.st='failed';if(AU.playing&&AU.key===k)startGen()})}
+function playTrack(){if(AU.src)return;const T=AU.tr[AU.key];if(!T||!T.buf)return;const c=AU.ctx;AU.src=c.createBufferSource();AU.src.buffer=T.buf;AU.src.loop=true;
+  const g=c.createGain();g.gain.value=.85;AU.src.connect(g);g.connect(AU.mus);AU.src.start(c.currentTime+.05,(T.off||0)%T.buf.duration);AU.startedAt=c.currentTime-(T.off||0);AU.srcKey=AU.key}
+function startGen(){clearInterval(AU.timer);AU.nextT=AU.ctx.currentTime+.1;AU.step=0;AU.timer=setInterval(genTick,120)}
+function stopSrc(){clearInterval(AU.timer);AU.timer=null;if(AU.src){const n=AU.src,T=AU.tr[AU.srcKey];if(T&&T.buf)T.off=(AU.ctx.currentTime-AU.startedAt)%T.buf.duration;try{n.stop(AU.ctx.currentTime+.6)}catch(e){}AU.src=null}}
+function musicRoute(){if(!AU.ctx||!AU.playing)return;const k=musicKey();if(k===AU.key&&(AU.src||AU.timer))return;
+  stopSrc();AU.key=k;const T=AU.tr[k];if(T&&T.st==='ready')playTrack();else if(T&&T.st==='failed')startGen();else loadTrack()}
+function musicStart(){if(!auInit())return;AU.ctx.resume();AU.playing=true;
+  AU.mus.gain.cancelScheduledValues(AU.ctx.currentTime);AU.mus.gain.setTargetAtTime(.6,AU.ctx.currentTime,.8);AU.key=null;musicRoute();ambStart()}
+function musicStop(){AU.playing=false;if(!AU.ctx)return;AU.mus.gain.setTargetAtTime(0,AU.ctx.currentTime,.3);setTimeout(()=>{if(!AU.playing)stopSrc()},700);AU.key=null}
+setInterval(()=>{try{musicRoute()}catch(e){}},1500);
+
+/* ---------- звуки окружения ---------- */
+AU.ambOn=true;try{const a=JSON.parse(localStorage.getItem('sixlands-amb')||'{}');if(a.on===false)AU.ambOn=false}catch(e){}
+function ambSave(){try{localStorage.setItem('sixlands-amb',JSON.stringify({on:AU.ambOn}))}catch(e){}}
+function ambStart(){if(!AU.ambOn||!auInit())return;const c=AU.ctx;if(c.state!=='running')c.resume();
+  if(!AU.amb){AU.amb=c.createGain();AU.amb.gain.value=0;AU.amb.connect(AU.out);
+    const mk=(type,freq,q)=>{const n=c.createBufferSource();n.buffer=auNoise();n.loop=true;const f=c.createBiquadFilter();f.type=type;f.frequency.value=freq;f.Q.value=q;const g=c.createGain();g.gain.value=0;n.connect(f);f.connect(g);g.connect(AU.amb);n.start();return{f,g}};
+    AU.wind=mk('bandpass',420,.8);AU.rain=mk('highpass',1800,.3);AU.surf=mk('lowpass',300,.5);
+    const l=c.createOscillator(),lg=c.createGain();l.frequency.value=.09;lg.gain.value=260;l.connect(lg);lg.connect(AU.wind.f.frequency);l.start();
+    AU.ambT=setInterval(ambEvents,260)}
+  AU.amb.gain.setTargetAtTime(SET.amb!=null?SET.amb:.5,c.currentTime,1.2);ambUpdate()}
+function ambStop(){if(AU.amb)AU.amb.gain.setTargetAtTime(0,AU.ctx.currentTime,.4)}
+function ambUpdate(){if(!AU.amb||!s)return;const c=AU.ctx,k=wxNow(),cu=s.culture,t=c.currentTime;
+  const w={clear:.05,rain:.1,fog:.03,heat:.06,storm:.3,wind:.26,snow:.08,frost:.12,blizzard:.55}[k]*(cu==='desert'||cu==='north'?1.4:1);
+  AU.wind.g.gain.setTargetAtTime(w,t,2);AU.rain.g.gain.setTargetAtTime(k==='rain'?.09:k==='storm'?.16:0,t,2);
+  AU.surf.g.gain.setTargetAtTime(cu==='north'||cu==='east'?.05:0,t,3)}
+function chirp(t,f0,n){const c=AU.ctx;for(let i=0;i<n;i++){const o=c.createOscillator(),g=c.createGain(),tt=t+i*.09;o.type='sine';o.frequency.setValueAtTime(f0*(1+Math.random()*.2),tt);o.frequency.exponentialRampToValueAtTime(f0*1.6,tt+.05);
+  g.gain.setValueAtTime(0,tt);g.gain.linearRampToValueAtTime(.025,tt+.01);g.gain.exponentialRampToValueAtTime(.0005,tt+.07);o.connect(g);g.connect(AU.amb);o.start(tt);o.stop(tt+.09)}}
+function ambEvents(){if(!AU.amb||!s||!AU.ambOn||document.hidden)return;const c=AU.ctx,t=c.currentTime+.05,k=wxNow(),si=season().i,cu=s.culture,R=Math.random;
+  if((k==='clear'||k==='fog')&&si<3&&R()<(cu==='elves'?.11:.06))chirp(t,2600+R()*1800,2+((R()*4)|0));
+  if(si===1&&k!=='storm'&&R()<.08){for(let i=0;i<6;i++)nburst(AU.amb,t+i*.05,.03,4800,12,.012)}
+  if((k==='rain'||k==='storm')&&R()<.3)nburst(AU.amb,t,.05,2400+R()*2000,6,.03);
+  if(k==='storm'&&R()<.012){nburst(AU.amb,t+.3,3.2,90,.7,.5,'lowpass');WXFX.flash=1}
+  if(si===3&&R()<.08)nburst(AU.amb,t,.04,1800+R()*1500,4,.025);
+  if(cu==='east'&&R()<.018)[0,.12,.27].forEach((d,i)=>bellN(AU.amb,88+[0,3,7][i],t+d,1.8,.012,2.01));
+  if(cu==='europe'&&R()<.006)bellN(AU.amb,55,t,4,.025,1.41);
+  if(cu==='magi'&&R()<.03)bellN(AU.amb,96+((R()*5)|0),t,1.2,.008,3.5);
+  if(cu==='north'&&si===3&&R()<.006){const o=c.createOscillator(),g=c.createGain();o.frequency.setValueAtTime(420,t);o.frequency.linearRampToValueAtTime(620,t+.8);o.frequency.linearRampToValueAtTime(480,t+2.4);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.015,t+.5);g.gain.linearRampToValueAtTime(0,t+2.5);o.connect(g);g.connect(AU.amb);o.start(t);o.stop(t+2.6)}
+  if(cu==='desert'&&R()<.008)bellN(AU.amb,64,t,2.4,.014,2.76);
+}
+
+/* ---------- погода на столе ---------- */
+const WXFX={P:[],flash:0,k:null,cv:null,last:0};
+function wxCanvas(){if(WXFX.cv)return WXFX.cv;const cv=document.createElement('canvas');cv.id='wxc';document.body.appendChild(cv);WXFX.cv=cv;WXFX.ctx=cv.getContext('2d');return cv}
+function wxSpawn(k,W,H,init){const R=Math.random;const p={x:R()*W,y:init?R()*H:-20,s:R()};
+  if(k==='rain'||k==='storm'){p.vy=900+R()*400;p.vx=-120;p.l=12+R()*10}
+  else if(k==='snow'||k==='frost'){p.vy=25+R()*35;p.vx=0;p.r=1+R()*2.2;p.ph=R()*6}
+  else if(k==='blizzard'){p.vy=140+R()*120;p.vx=-260-R()*120;p.r=1+R()*2}
+  else if(k==='wind'||k==='leaf'){p.vy=40+R()*40;p.vx=-50-R()*60;p.r=4+R()*4;p.ph=R()*6;p.rot=R()*6;p.c=['#c9762d','#a8461f','#d9a23a','#8a5a22'][(R()*4)|0]}
+  else if(k==='petal'){p.vy=22+R()*20;p.vx=-15-R()*20;p.r=2.5+R()*2.5;p.ph=R()*6;p.rot=R()*6}
+  else{p.vy=-6-R()*8;p.vx=R()*6-3;p.r=1+R()*1.6;p.ph=R()*6;if(!init)p.y=H+10}
+  return p}
+function wxMode(){const k=wxNow(),si=season().i;if(k==='clear'||k==='heat'||k==='fog')return si===0?'petal':si===2?'leaf':si===3?'snow':'mote';return k}
+function wxLoop(ts){requestAnimationFrame(wxLoop);
+  const show=s&&tab==='h'&&!document.hidden&&$('#title')&&$('#title').hidden&&SET.weather!==false;const cv=wxCanvas();
+  if(!show||RM){if(cv.style.display!=='none'){cv.style.display='none';WXFX.P=[]}document.documentElement.dataset.wx=show?wxNow():'';return}
+  if(ts-WXFX.last<30)return;const dt=Math.min(.05,(ts-(WXFX.last||ts))/1000);WXFX.last=ts;
+  cv.style.display='block';const W=innerWidth,H=innerHeight,dpr=Math.min(2,devicePixelRatio||1);
+  if(cv.width!==W*dpr||cv.height!==H*dpr){cv.width=W*dpr;cv.height=H*dpr}
+  const x=WXFX.ctx;x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,W,H);
+  const tt=ts/1000;const k=wxMode(),wk=wxNow();document.documentElement.dataset.wx=wk;
+  const tint={rain:'rgba(20,32,55,.14)',storm:'rgba(14,20,40,.22)',heat:'rgba(255,160,60,.07)',blizzard:'rgba(210,225,255,.1)',frost:'rgba(180,210,255,.06)',snow:'rgba(200,215,240,.05)'}[wk];
+  if(tint){x.fillStyle=tint;x.fillRect(0,0,W,H)}
+  if(wk==='fog'){for(let j=0;j<4;j++){const cx=((tt*12*(j+1)+j*W*.4)%(W+600))-300,cy=H*(.25+.18*j);const g=x.createRadialGradient(cx,cy,10,cx,cy,W*.55);g.addColorStop(0,'rgba(215,215,205,.16)');g.addColorStop(1,'rgba(215,215,205,0)');x.fillStyle=g;x.fillRect(0,0,W,H)}}
+  if(WXFX.k!==k){WXFX.k=k;WXFX.P=[];WXFX.started=0}
+  const N={rain:90,storm:140,snow:70,frost:45,blizzard:160,wind:30,leaf:20,petal:20,mote:22}[k]*(W<500?.7:1);
+  while(WXFX.P.length<N)WXFX.P.push(wxSpawn(k,W,H,WXFX.P.length<N*.8&&!WXFX.started));WXFX.started=1;
+  WXFX.P.forEach((p,i)=>{p.x+=(p.vx+(p.ph!=null?Math.sin(tt*1.3+p.ph)*18:0))*dt;p.y+=p.vy*dt;
+    if(p.y>H+30||p.x<-40||p.x>W+40||p.y<-40){WXFX.P[i]=wxSpawn(k==='leaf'||k==='wind'?'leaf':k,W,H,false);const q=WXFX.P[i];if(q.vx<-30&&Math.random()<.5){q.x=W+20;q.y=Math.random()*H*.7}return}
+    if(k==='rain'||k==='storm'){x.strokeStyle='rgba(190,210,235,.28)';x.lineWidth=1;x.beginPath();x.moveTo(p.x,p.y);x.lineTo(p.x+p.vx*.012,p.y+p.l);x.stroke()}
+    else if(k==='snow'||k==='frost'||k==='blizzard'){x.fillStyle=`rgba(255,255,255,${.45+p.s*.4})`;x.beginPath();x.arc(p.x,p.y,p.r,0,7);x.fill()}
+    else if(k==='wind'||k==='leaf'){p.rot+=dt*2;x.save();x.translate(p.x,p.y);x.rotate(p.rot);x.fillStyle=p.c;x.globalAlpha=.75;x.beginPath();x.ellipse(0,0,p.r,p.r*.5,0,0,7);x.fill();x.restore()}
+    else if(k==='petal'){p.rot+=dt*1.5;x.save();x.translate(p.x,p.y);x.rotate(p.rot);x.fillStyle='rgba(255,196,214,.75)';x.beginPath();x.ellipse(0,0,p.r,p.r*.55,0,0,7);x.fill();x.restore()}
+    else{const a=.25+.35*Math.abs(Math.sin(tt*1.7+p.ph));x.fillStyle=`rgba(255,228,150,${a})`;x.shadowColor='rgba(255,220,140,.9)';x.shadowBlur=8;x.beginPath();x.arc(p.x,p.y,p.r,0,7);x.fill();x.shadowBlur=0}
+  });
+  if(wxNow()==='storm'&&Math.random()<.002)WXFX.flash=1;
+  if(WXFX.flash>0){x.fillStyle=`rgba(235,240,255,${WXFX.flash*.35})`;x.fillRect(0,0,W,H);WXFX.flash=Math.max(0,WXFX.flash-dt*2.2)}
+}
+requestAnimationFrame(wxLoop);
+
+document.addEventListener('pointerdown',()=>{if(AU.ambOn&&(!AU.amb||AU.amb.gain.value<.01))ambStart()},{passive:true});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)ambStop();else if(AU.ambOn&&AU.amb)ambStart()});
+
 const hasSave=()=>{try{const j=localStorage.getItem(KEY);return!!(j&&JSON.parse(j).lands.length)}catch(e){return false}};
 const titleOn=()=>!$('#title').hidden;
 function hideTitle(){const t=$('#title');setTimeout(()=>{try{renderNav()}catch(e){}},0);t.classList.add('out');setTimeout(()=>{t.hidden=true;t.classList.remove('out')},RM?0:400)}
@@ -2433,8 +2605,8 @@ function openSettings(){
   const sl=(id,l,v)=>`<label class="setrow"><span>${l}</span><input type="range" id="${id}" min="0" max="100" value="${Math.round(v*100)}"></label>`;
   const tg=(id,l,v,d)=>`<label class="setrow"><span>${l}${d?`<small>${d}</small>`:''}</span><input type="checkbox" class="sw" id="${id}" ${v?'checked':''}></label>`;
   openModal(`<h2>Настройки</h2>
-    <div class="setgrp"><h3>Звук</h3>${tg('stMusOn','Музыка',AU.musicOn)}${sl('stMus','Громкость музыки',SET.music)}${tg('stSfxOn','Звуки',AU.sfxOn)}${sl('stSfx','Громкость звуков',SET.sfx)}</div>
-    <div class="setgrp"><h3>Экран</h3>${tg('stAnim','Анимации',SET.anim,'Раздача карт, вспышки, смена сезона')}${tg('stBig','Крупный текст',SET.big)}</div>
+    <div class="setgrp"><h3>Звук</h3>${tg('stMusOn','Музыка',AU.musicOn)}${sl('stMus','Громкость музыки',SET.music)}${tg('stSfxOn','Звуки',AU.sfxOn)}${sl('stSfx','Громкость звуков',SET.sfx)}${tg('stAmbOn','Звуки окружения',AU.ambOn,'Ветер, дождь, птицы, колокола народа')}${sl('stAmb','Громкость окружения',SET.amb)}</div>
+    <div class="setgrp"><h3>Экран</h3>${tg('stAnim','Анимации',SET.anim,'Раздача карт, вспышки, смена сезона')}${tg('stBig','Крупный текст',SET.big)}${tg('stWx','Погода на столе',SET.weather!==false,'Снег, дождь, листопад, туман поверх стола')}</div>
     <div class="setgrp"><h3>Игра</h3><div class="row"><button class="btn ghost" id="stRename">Переименовать деревню</button><button class="btn ghost danger-t" id="stReset">Удалить сохранение</button>${IS_APP&&window.AndroidApp.checkNow?'<button class="btn ghost" id="stUpd">Проверить обновления</button>':''}</div></div>
     <div class="small muted">Шесть Земель · версия ${BUILD_VER}${IS_APP?` · ${appStatus()||'обновления приходят сами при запуске с интернетом'}`:''}</div>
     <button class="btn" id="stOk">Готово</button>`,true);
@@ -2444,6 +2616,9 @@ function openSettings(){
   v('stMus').oninput=e=>{SET.music=e.target.value/100;setSave();applySettings()};
   v('stSfx').oninput=e=>{SET.sfx=e.target.value/100;setSave();applySettings()};
   v('stSfx').onchange=()=>sfx('coin');
+  v('stAmbOn').onchange=e=>{AU.ambOn=e.target.checked;ambSave();AU.ambOn?ambStart():ambStop()};
+  v('stAmb').oninput=e=>{SET.amb=e.target.value/100;setSave();applySettings()};
+  v('stWx').onchange=e=>{SET.weather=e.target.checked;setSave()};
   v('stAnim').onchange=e=>{SET.anim=e.target.checked;setSave();applySettings()};
   v('stBig').onchange=e=>{SET.big=e.target.checked;setSave();applySettings()};
   v('stRename').onclick=()=>{openModal(`<h2>Название деревни</h2><input type="text" id="rnI" maxlength="28" value="${esc(s.name||'')}"><div class="row"><button class="btn" id="rnOk">Сохранить</button><button class="btn ghost" id="rnX">Отмена</button></div>`,true);
