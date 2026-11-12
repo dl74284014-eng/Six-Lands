@@ -457,7 +457,7 @@ body{overflow-x:hidden}
 <style id="imgcss"></style>
 
 <script>
-const BUILD_VER="12.11.2026 22:49";
+const BUILD_VER="12.11.2026 23:01";
 let SLOT=1;try{SLOT=+localStorage.getItem('sixlands-slot')||1}catch(e){}
 const SK_=n=>'sixlands-save-'+n;
 try{const old=localStorage.getItem('tiholesye-v3');if(old&&!localStorage.getItem(SK_(1))){localStorage.setItem(SK_(1),old);localStorage.removeItem('tiholesye-v3')}}catch(e){}
@@ -755,7 +755,7 @@ const TECHS=[
  {id:'alchemy',n:'Алхимия',era:4,cost:210,req:['philosophy','currency'],fx:{},d:'Открывает Лавку алхимика и Лавку зачарований.',p:'an alchemist laboratory with bubbling flasks and a glowing transmutation circle'},
  {id:'astronomy',n:'Астрономия',era:4,cost:235,req:['philosophy','math'],fx:{},d:'Открывает Портал странников и Лей-маяк.',p:'an astronomer mapping constellations with a brass astrolabe on a tower at night'},
  {id:'dragons',n:'Драконоведение',era:4,cost:290,req:['arcana','iron'],fx:{},d:'Открывает Драконий двор.',p:'a scholar studying a giant dragon egg in a nest of glowing embers'},
- {id:'final',n:'Великое открытие',era:5,cost:1100,req:['arcana','alchemy','astronomy','dragons','engineering'],fx:{},d:'Научная победа: ваш народ разгадал тайну мира.',p:'a radiant magical discovery, a great orb of light revealing the map of the whole world above a crowd of amazed scholars'}
+ {id:'final',n:'Великое открытие',era:5,cost:1200,req:['arcana','alchemy','astronomy','dragons','engineering'],fx:{},d:'Научная победа: ваш народ разгадал тайну мира.',p:'a radiant magical discovery, a great orb of light revealing the map of the whole world above a crowd of amazed scholars'}
 ];
 const CIVICS=[
  {id:'code',n:'Свод законов',era:1,cost:40,req:[],fx:{tax:1.1},d:'Налоги +10%.',p:'a village elder reading a scroll of laws to gathered villagers'},
@@ -769,7 +769,7 @@ const CIVICS=[
  {id:'theology',n:'Теология',era:3,cost:160,req:['myth','drama'],fx:{happy:3,favor:1.2},d:'Счастье +3, милость богов +20%.',p:'monks copying holy books in a candlelit temple scriptorium'},
  {id:'humanism',n:'Гуманизм',era:3,cost:210,req:['drama','hospitality'],fx:{happy:4,settle:.05},d:'Счастье +4, новые семьи приходят чаще.',p:'a painter and a poet in a sunny courtyard full of art and books'},
  {id:'empire',n:'Имперская власть',era:3,cost:210,req:['feudal','diplomacy'],fx:{},d:'Вассалы платят вдвое больше дани.',p:'a ruler on a throne receiving tribute from envoys of many peoples'},
- {id:'golden',n:'Золотой век',era:4,cost:850,req:['theology','humanism','empire'],fx:{},d:'Культурная победа: ваш народ стал светом для всех земель.',p:'a magnificent golden age festival in a glowing city, banners of all peoples, fireworks and music'}
+ {id:'golden',n:'Золотой век',era:4,cost:600,req:['theology','humanism','empire'],fx:{},d:'Культурная победа: ваш народ стал светом для всех земель.',p:'a magnificent golden age festival in a glowing city, banners of all peoples, fireworks and music'}
 ];
 const TECH=Object.fromEntries(TECHS.map(t=>[t.id,t])),CIVIC=Object.fromEntries(CIVICS.map(t=>[t.id,t]));
 const ERA=['','Древность','Классика','Средневековье','Эпоха магии','Вершина'];
@@ -1209,6 +1209,8 @@ function stats(){
   if(def>=th){happy+=3;hp.push(['Чувство защищённости',3])}else if(def<th/2){happy-=5;hp.push(['Слабая оборона',-5])}
   delta.food-=P*.5;add('food','Жители едят',-P*.5);
   if(WXo().eat){delta.food-=P*WXo().eat;add('food','Мороз',-P*WXo().eat)}
+  if(s.gw&&s.gw.built.length){const h=gwSum('happy');if(h){happy+=h;hp.push(['Великие стройки',h])}for(const k of ['food','gold']){const v=gwSum(k);if(v){delta[k]+=v;add(k,'Великие стройки',v)}}const a=gwSum('sci'),b=gwSum('cult');if(a){sci+=a;add('sci','Великие стройки',a)}if(b){cult+=b;add('cult','Великие стройки',b)}}
+  {const mu=mercUp();if(mu){delta.gold-=mu;add('gold','Наёмники',-mu)}}
   if(relicSum('happy')){happy+=relicSum('happy');hp.push(['Реликвии',relicSum('happy')])}
   if(WXo().happy){happy+=WXo().happy;hp.push(['Погода: '+WXo().n,WXo().happy])}
   const starving=s.res.food+delta.food<0;
@@ -2068,7 +2070,7 @@ const HPM=Object.fromEntries(HP.map(p=>[p.id,p]));
 const HXP=[0,4,10,18,28,40,55,72,92,115];
 const heroPerk=id=>!!(s&&s.hero&&s.hero.perks.includes(id));
 function ensureHero(){if(!s.hero){const L=HNAMES[s.culture]||HNAMES.europe;s.hero={name:L[(rnd()*L.length)|0],lvl:1,xp:0,perks:[],at:'home',hurt:0,lead:true,pick:null}}}
-function heroPow(){const h=s.hero;if(!h)return 0;return 6+3*h.lvl+(heroPerk('champion')?5:0)+relicSum('hero')}
+function heroPow(){const h=s.hero;if(!h)return 0;return 6+3*h.lvl+(heroPerk('champion')?5:0)+relicSum('hero')+gwSum('hero')}
 const heroFree=()=>s.hero&&s.hero.at==='home'&&!(s.hero.hurt>s.day);
 function heroXp(n,why){const h=s.hero;if(!h)return;h.xp+=n;while(h.lvl<HXP.length&&h.xp>=HXP[h.lvl]){h.lvl++;const pool=HP.filter(p=>!h.perks.includes(p.id)).sort(()=>rnd()-.5).slice(0,3).map(p=>p.id);h.pick=pool.length?pool:null;
   const m=`${h.name} достигает ${h.lvl}-го уровня${h.pick?'. Выберите новое умение во вкладке «Староста».':'.'}`;log(m,'good');REPORT.push(['Староста растёт',m,'good']);inc('hlvl')}}
@@ -2107,8 +2109,8 @@ const RELICS=[
 const RELM=Object.fromEntries(RELICS.map(r=>[r.id,r]));
 const hasRel=id=>!!(s&&s.relics&&s.relics.includes(id));
 const relicSum=k=>s&&s.relics?s.relics.reduce((a,id)=>a+(RELM[id][k]||0),0):0;
-function extraFx(){const L=[];if(!s)return L;if(s.relics)s.relics.forEach(id=>{if(RELM[id].fx)L.push(RELM[id].fx)});if(s.hero)s.hero.perks.forEach(id=>{if(HPM[id].fx)L.push(HPM[id].fx)});return L}
-function extraDef(){return relicSum('def')+(heroPerk('guard')?6:0)+(buff('watch')?8:0)}
+function extraFx(){const L=[];if(!s)return L;if(s.gw)s.gw.built.forEach(id=>{if(GWM[id].fx)L.push(GWM[id].fx)});if(s.relics)s.relics.forEach(id=>{if(RELM[id].fx)L.push(RELM[id].fx)});if(s.hero)s.hero.perks.forEach(id=>{if(HPM[id].fx)L.push(HPM[id].fx)});return L}
+function extraDef(){return relicSum('def')+gwSum('def')+(heroPerk('guard')?6:0)+(buff('watch')?8:0)}
 function gainRelic(pool){if(!s.relics)s.relics=[];const L=(pool||RELICS.filter(r=>!r.boss)).filter(r=>!hasRel(r.id));if(!L.length)return null;const r=L[(rnd()*L.length)|0];s.relics.push(r.id);inc('relics');log(`Найдена реликвия: «${r.n}».`,'arc');return r}
 function relicCard(r,x={}){const own=hasRel(r.id);return card({cls:`c-god ${own?'':'locked'} ${x.cls||''}`,name:own||x.show?r.n:'???',artCls:'cat',art:own||x.show?artOfRaw('rl_'+r.id,I('spark')):I('lock'),text:own||x.show?r.d:(r.boss?'Трофей босса':'Ищите в экспедициях'),attrs:x.attrs||'',el:x.el,tag:r.boss&&own?'Трофей':'',tagCls:'gold'})}
 function renderRelics(p){p.innerHTML=`<div class="small muted" style="margin-bottom:10px">Собрано ${s.relics?s.relics.length:0} из ${RELICS.length}. Реликвии действуют всю партию. Обычные находят в экспедициях, три особые — трофеи боссов.</div>
@@ -2212,8 +2214,8 @@ const carCost=()=>({gold:40+10*(s.car||[]).length,food:20});
 function carName(to){return to[0]==='r'?rivalName(s.rivals[+to.slice(1)]):CITY[to.slice(1)].n}
 function carTurn(){if(!s.car)s.car=[];s.car.slice().forEach(c=>{const tg=c.to[0]==='r'?s.rivals[+c.to.slice(1)]:s.cs[c.to.slice(1)];
   if(!tg||tg.war){s.car=s.car.filter(x=>x!==c);REPORT.push([`Караван захвачен`,`Караван в ${carName(c.to)} разграблен: между вами война.`,'bad']);return}
-  if(s.pir&&rnd()<.02&&!(s.pir.quiet>s.day)){s.car=s.car.filter(x=>x!==c);REPORT.push(['Пираты ограбили караван',`Караван в ${carName(c.to)} пропал. Разгромите пиратскую бухту, чтобы дороги стали безопаснее.`,'bad']);return}
-  const v=c.inc*(1+.1*cnt('market'));s.res.gold+=v;c.total=(c.total||0)+v;if(c.to[0]==='r')tg.rel=Math.min(100,tg.rel+.15);else tg.inf=Math.min(100,tg.inf+.3);inc('carGold',v)})}
+  if(s.pir&&!hasGW('lighthouse')&&rnd()<.02&&!(s.pir.quiet>s.day)){s.car=s.car.filter(x=>x!==c);REPORT.push(['Пираты ограбили караван',`Караван в ${carName(c.to)} пропал. Разгромите пиратскую бухту, чтобы дороги стали безопаснее.`,'bad']);return}
+  const v=c.inc*(1+.1*cnt('market'))*(hasGW('lighthouse')?1.5:1);s.res.gold+=v;c.total=(c.total||0)+v;if(c.to[0]==='r')tg.rel=Math.min(100,tg.rel+.15);else tg.inf=Math.min(100,tg.inf+.3);inc('carGold',v)})}
 function renderCar(p){if(!s.car)s.car=[];const T=carTargets();const cc=carCost();const free=s.car.length<carMax();
   p.innerHTML=`<div class="small muted" style="margin-bottom:10px">Караван каждый ход приносит золото и улучшает отношения (с городами растёт влияние). Караванов можно держать ${carMax()}: больше дают рынки, таверна и чеканка монет. Война с целью или пираты могут погубить караван.</div>
    <h3>В пути: ${s.car.length}/${carMax()}</h3>
@@ -2249,6 +2251,9 @@ const ACH=[
  {id:'spy',n:'Мастер шпионажа',d:'Шпион со званием «Легенда».',ok:()=>s.spies&&s.spies.some(x=>x.lvl>=4)},
  {id:'elite',n:'Элитная гвардия',d:'Отряд со званием «Элита».',ok:()=>UNITS.some(u=>vr(u.id)>=3&&s.army[u.id])},
  {id:'adj',n:'Хозяйственный',d:'5 бонусов соседства одновременно.',ok:()=>{let n=0;s.lands.forEach((l,i)=>n+=adjOf(i).length);return n>=5}},
+ {id:'gw1',n:'Строитель чудес',d:'Завершить великую стройку.',ok:()=>s.gw&&s.gw.built.length>=1},
+ {id:'gw4',n:'Эпоха чудес',d:'Завершить 4 великие стройки.',ok:()=>s.gw&&s.gw.built.length>=4},
+ {id:'merc',n:'Золотой меч',d:'Нанять наёмников.',ok:()=>cntOf('mercs')>0},
  {id:'won',n:'Победа!',d:'Победить любым путём.',ok:()=>s.won},
  {id:'legend',n:'Легендарный староста',d:'Победить на сложности «Легенда».',ok:()=>s.won&&s.diff==='legend'},
  {id:'scn',n:'Испытатель',d:'Пройти любое испытание.',ok:()=>false},
@@ -2313,7 +2318,7 @@ function openSummary(){const H=s.hist||[];
 
 /* ---------- энциклопедия ---------- */
 let ENCT='b';
-function openEnc(back){const T=[['b','Постройки'],['u','Войска'],['t','Технологии'],['c','Институты'],['m','Мастера'],['g','Боги'],['o','Приказы'],['r','Реликвии'],['x','Экспедиции'],['a','Соседство'],['w','Погода'],['n','Народы'],['h','Умения старосты']];
+function openEnc(back){const T=[['b','Постройки'],['u','Войска'],['t','Технологии'],['c','Институты'],['m','Мастера'],['g','Боги'],['o','Приказы'],['r','Реликвии'],['x','Экспедиции'],['a','Соседство'],['gw','Великие стройки'],['mc','Наёмники'],['w','Погода'],['n','Народы'],['h','Умения старосты']];
   const row=(art,n,d)=>`<div class="encrow"><div class="encart">${art}</div><div><b>${n}</b><div class="small muted">${d}</div></div></div>`;
   let L='';
   if(ENCT==='b')L=BL.filter(d=>!d.noBuild).map(d=>row(artOf(d.id,d.ic),d.n,`${effText(d)} · ${costSpans(d.cost)} · ${bTurns(d)} ход. ${d.desc||''}`)).join('');
@@ -2326,6 +2331,8 @@ function openEnc(back){const T=[['b','Постройки'],['u','Войска'],
   else if(ENCT==='r')L=RELICS.map(r=>row(artOfRaw('rl_'+r.id,I('spark')),r.n,r.d+(r.boss?' Трофей босса.':''))).join('');
   else if(ENCT==='x')L=Object.entries(SITES).map(([k,x])=>row(artOfRaw('ex_'+k,I('threat')),x.n,`${x.d} Сила ${x.pow}+, ${x.turns} ход.${x.boss?' Босс.':''}`)).join('');
   else if(ENCT==='a')L=ADJ.filter(x=>B[x[0]]&&B[x[1]]).map(([a,b,fx,t])=>row(artOf(a,''),`${B[a].n} + ${B[b].n}`,`${adjText(fx)} — ${t}`)).join('');
+  else if(ENCT==='gw')L=GW.map(g=>row(artOfRaw('gw_'+g.id,I('tower')),g.n,`${g.d} ${costSpans(g.cost)} · ${g.t} ход. Нужна ${gwReqText(g)}.`)).join('');
+  else if(ENCT==='mc')L=MERC.map(m=>row(artOfRaw('mc_'+m.id,I('atk')),m.n,`${m.d} ${m.k} × ${U[m.u].n}, от ${m.price} золота.`)).join('');
   else if(ENCT==='w')L=Object.values(WX).map(w=>row(I('s_spring'),w.n,w.d)).join('');
   else if(ENCT==='n')L=CK.map(c=>row(`<i class="ico em i-em-${c}"></i>`,CULTURES[c].full,`Сильные стороны: ${CULTURES[c].bonus.join('; ')}. Слабые: ${CULTURES[c].minus.join('; ')}.`)).join('');
   else if(ENCT==='h')L=HP.map(p=>row(I('rank'),p.n,p.d)).join('');
@@ -2375,16 +2382,85 @@ function tutPos(){if(!TUTD||TUTD.done)return;const o=$('#tut');if(!o)return;cons
 setInterval(()=>{try{tutPos()}catch(e){}},400);
 
 /* ---------- общий ход ---------- */
-function featTurn(st){ensureOrd();ensureHero();ordTurn();expTurn();dipTurn();carTurn();scnTurn();histTurn();achCheck()}
-function ensureFeat(){ensureOrd();ensureHero();ensureExp();if(!s.relics)s.relics=[];if(!s.car)s.car=[];if(!s.cnt)s.cnt={};if(!s.hist)s.hist=[];if(!s.chron)s.chron=[]}
+function featTurn(st){ensureOrd();ensureHero();ensureGW();ensureMerc();gwTurn();mercTurn();ordTurn();expTurn();dipTurn();carTurn();scnTurn();histTurn();achCheck()}
+function ensureFeat(){ensureGW();ensureMerc();ensureOrd();ensureHero();ensureExp();if(!s.relics)s.relics=[];if(!s.car)s.car=[];if(!s.cnt)s.cnt={};if(!s.hist)s.hist=[];if(!s.chron)s.chron=[]}
+
+/* ---------- великие стройки ---------- */
+const GW=[
+ {id:'lighthouse',n:'Великий маяк',cost:{gold:900,stone:200,wood:100},t:8,req:['t','currency'],d:'Караваны приносят на 50% больше, пираты их не трогают. +3 золота за ход.',gold:3,p:'a colossal ancient lighthouse on a rocky coast with a great fire at its top guiding merchant ships'},
+ {id:'mint',n:'Королевский монетный двор',cost:{gold:800,stone:150},t:8,req:['t','math'],d:'Налоги +25%.',fx:{tax:1.25},p:'a grand royal mint with furnaces, coin presses and piles of freshly struck gold coins'},
+ {id:'gardens',n:'Висячие сады',cost:{gold:1000,wood:150,mana:50},t:9,req:['t','mysticism'],d:'+15 еды за ход, счастье +5.',food:15,happy:5,p:'magnificent terraced hanging gardens with waterfalls, flowers and fruit trees on a tall stone ziggurat'},
+ {id:'library',n:'Великая библиотека',cost:{gold:1200,wood:150,stone:100},t:10,req:['t','philosophy'],d:'Наука +20%, +3 науки за ход.',fx:{sci:1.2},sci:3,p:'an enormous domed library hall with endless shelves of books, scrolls and scholars under golden light'},
+ {id:'colosseum',n:'Колизей',cost:{gold:1200,stone:250},t:10,req:['c','drama'],d:'Счастье +10, +3 культуры за ход.',happy:10,cult:3,p:'a huge stone arena colosseum full of cheering crowds watching a grand tournament'},
+ {id:'academy',n:'Академия героев',cost:{gold:1300,wood:100,stone:150},t:10,req:['c','warcode'],d:'Армия +15% к атаке, сила старосты +5.',fx:{atk:1.15},hero:5,p:'a heroic military academy courtyard with knights training, banners and statues of legendary heroes'},
+ {id:'wall',n:'Великая стена',cost:{gold:1400,stone:400},t:12,req:['t','engineering'],d:'Оборона +40.',def:40,p:'an immense great wall winding across mountains with watchtowers and banners'},
+ {id:'cathedral',n:'Небесный собор',cost:{gold:2000,stone:300,mana:100},t:14,req:['c','theology'],d:'Культура +25%, счастье +4.',fx:{cult:1.25},happy:4,p:'a breathtaking celestial cathedral with tall spires, stained glass and beams of heavenly light'}
+];
+const GWM=Object.fromEntries(GW.map(g=>[g.id,g]));
+function ensureGW(){if(!s.gw)s.gw={built:[],cur:null}}
+const hasGW=id=>!!(s&&s.gw&&s.gw.built.includes(id));
+const gwSum=k=>s&&s.gw?s.gw.built.reduce((a,id)=>a+(GWM[id][k]||0),0):0;
+function gwReqOk(g){return g.req[0]==='t'?hasT(g.req[1]):hasC(g.req[1])}
+function gwReqText(g){return g.req[0]==='t'?`технология «${TECH[g.req[1]].n}»`:`институт «${CIVIC[g.req[1]].n}»`}
+function gwTurn(){ensureGW();const c=s.gw.cur;if(!c)return;c.left--;if(c.left>0)return;s.gw.built.push(c.id);s.gw.cur=null;inc('gw');const g=GWM[c.id];
+  REPORT.push([`Великая стройка завершена: ${g.n}`,`${g.d} О вашей деревне говорят во всех шести землях. Слава +10.`,'good']);s.rep=Math.min(100,s.rep+10);sfx('good')}
+function gwCard(g,o={}){const b=hasGW(g.id),cur=s.gw.cur&&s.gw.cur.id===g.id;
+  return card({cls:`c-wonder ${!b&&!cur&&!gwReqOk(g)?'locked':''} ${o.cls||''}`,name:g.n,artCls:'cat',art:artOfRaw('gw_'+g.id,I('tower')),cost:o.cost&&!b&&!cur?costSpans(g.cost)+` ${g.t}<i class="ico i-turns"></i>`:'',text:g.d,tag:b?'Построено':cur?`Стройка: ${s.gw.cur.left} ход.`:'',tagCls:b?'gold':'arc',attrs:o.attrs||'',el:o.el})}
+function renderGW(p){ensureGW();
+  p.innerHTML=`<div class="small muted" style="margin-bottom:10px">Великие стройки — дорогие проекты на много ходов, дающие сильные бонусы на всю партию. Строятся отдельно от участков, одна за раз. ${s.gw.cur?`Сейчас строится: <b>${GWM[s.gw.cur.id].n}</b>, ещё ${s.gw.cur.left} ход.`:''} Построено ${s.gw.built.length} из ${GW.length}.</div>
+   <div class="cards">${GW.map(g=>gwCard(g,{cost:1,attrs:`data-gw="${g.id}"`})).join('')}</div>`;
+  p.querySelectorAll('[data-gw]').forEach(b=>b.onclick=()=>openGW(b.dataset.gw))}
+function openGW(id){const g=GWM[id];const b=hasGW(id),cur=s.gw.cur&&s.gw.cur.id===id;const ok=!b&&!s.gw.cur&&gwReqOk(g)&&afford(g.cost);
+  openModal(`<div class="cv">${gwCard(g,{cls:'big',el:'div'})}<div class="info"><h2>${g.n}</h2><p>${g.d}</p>
+   ${b?'<div class="small up">Построено.</div>':cur?`<div class="small">Строится: ещё ${s.gw.cur.left} ход.</div>`:`<div class="small">Цена: ${costSpans(g.cost)} · ${g.t} ход.</div><div class="small ${gwReqOk(g)?'up':'dn'}">Нужна ${gwReqText(g)}</div>${s.gw.cur?'<div class="small dn">Уже идёт другая великая стройка.</div>':''}`}
+   <div class="row">${!b&&!cur?`<button class="btn" id="gwGo" ${ok?'':'disabled'}>Начать стройку</button>`:''}${cur?`<button class="btn ghost" id="gwStop">Отменить (вернётся половина)</button>`:''}<button class="btn ghost" id="gwX">Закрыть</button></div></div></div>`,true);
+  $('#gwX').onclick=closeModal;
+  const go=$('#gwGo');if(go)go.onclick=()=>{if(!ok)return;pay(g.cost);s.gw.cur={id,left:g.t};sfx('build');log(`Начата великая стройка: ${g.n} (${g.t} ход.).`,'arc');closeModal();save();render()};
+  const st=$('#gwStop');if(st)st.onclick=()=>confirmBox('Отменить великую стройку?','Вернётся половина затраченных ресурсов.','Отменить',()=>{for(const[r,n]of Object.entries(g.cost))s.res[r]+=Math.floor(n/2);s.gw.cur=null;save();render()})}
+
+/* ---------- наёмники ---------- */
+const MERC=[
+ {id:'rabble',n:'Наёмная шайка',u:'militia',k:8,xp:0,price:90,d:'Дешёвые и многочисленные.',p:'a ragtag band of mercenary militia with mismatched armor and spears around a campfire'},
+ {id:'pikes',n:'Вольные копейщики',u:'soldier',k:5,xp:2,price:190,d:'Надёжная пехота, уже бывавшая в боях.',p:'a disciplined company of mercenary pikemen in steel helmets marching with long pikes'},
+ {id:'axes',n:'Северные секироносцы',u:'soldier',k:4,xp:5,price:230,d:'Ветераны северных войн.',p:'fierce northern mercenary axe warriors with braided beards, furs and round shields'},
+ {id:'bows',n:'Лесные стрелки',u:'archer',k:5,xp:5,price:230,d:'Меткие стрелки-ветераны.',p:'elite mercenary forest archers in green hoods drawing longbows in a misty forest'},
+ {id:'riders',n:'Пустынные всадники',u:'cavalry',k:4,xp:2,price:260,d:'Быстрая конница с юга.',p:'desert mercenary horsemen with curved swords and flowing scarves galloping across dunes'},
+ {id:'mages',n:'Маги-изгнанники',u:'mage',k:3,xp:2,price:280,d:'Боевые маги без родины.',p:'exiled battle mages in tattered robes casting fire and lightning spells together'},
+ {id:'siege',n:'Гномьи осадные мастера',u:'siege',k:2,xp:0,price:240,d:'Ломают любые стены.',p:'dwarven mercenary engineers pushing a large siege catapult with gears and ropes'}
+];
+const MERCM=Object.fromEntries(MERC.map(m=>[m.id,m]));
+const MERC_T=25;
+function ensureMerc(){if(!s.merc)s.merc={offers:[],at:0,bands:[]}}
+const mercPrice=m=>Math.round(m.price*(1+s.day/150));
+const mercUp=()=>s.merc?s.merc.bands.reduce((a,b)=>a+Math.min(b.n,s.army[b.u]||0),0):0;
+function mercTurn(){ensureMerc();const M=s.merc;
+  if(s.day>=M.at){M.offers=MERC.slice().sort(()=>rnd()-.5).slice(0,3).map(m=>m.id);M.at=s.day+10}
+  M.bands.slice().forEach(b=>{if(b.until>s.day)return;const k=Math.min(b.n,s.army[b.u]||0);s.army[b.u]=(s.army[b.u]||0)-k;M.bands=M.bands.filter(x=>x!==b);
+    REPORT.push([`Контракт истёк: ${MERCM[b.id].n}`,k?`${k} наёмн. покинули армию.`:'Отряд погиб в боях раньше срока.','bad'])})}
+function hireMerc(id){ensureMerc();const m=MERCM[id];const pr=mercPrice(m);if(s.res.gold<pr)return;s.res.gold-=pr;
+  const k0=s.army[m.u]||0;if(!s.vet)s.vet={};s.vet[m.u]=(vxp(m.u)*k0+m.xp*m.k)/(k0+m.k);s.army[m.u]=k0+m.k;
+  s.merc.bands.push({id,u:m.u,n:m.k,until:s.day+MERC_T});s.merc.offers=s.merc.offers.filter(x=>x!==id);inc('mercs');sfx('coin');log(`Наняты наёмники: ${m.n} (${m.k} × ${U[m.u].n}) на ${MERC_T} ходов.`,'good');save();render()}
+function mercCard(m,o={}){return card({cls:`c-unit ${o.cls||''}`,name:m.n,artCls:'cat',art:artOfRaw('mc_'+m.id,I('atk')),cost:o.cost?`<span class="${s.res.gold<mercPrice(m)?'lack':''}">${mercPrice(m)}${RI.gold}</span>`:'',text:`${m.k} × ${U[m.u].n}${m.xp?` · ${VR[VR.reduce((a,x,i)=>m.xp>=x.xp?i:a,0)].n}`:''}`,tag:o.tag||'',tagCls:o.tagCls||'ok',attrs:o.attrs||'',el:o.el})}
+function renderMerc(p){ensureMerc();const M=s.merc;
+  p.innerHTML=`<div class="small muted" style="margin-bottom:10px">Наёмники приходят сразу, без обучения и без нужных построек. Контракт на ${MERC_T} ходов, сверху обычного содержания каждый наёмник берёт 1 золото за ход. Новые отряды предлагают раз в 10 ходов (следующие через ${Math.max(0,M.at-s.day)} ход.).</div>
+   <h3>Предлагают услуги</h3><div class="cards">${M.offers.map(id=>mercCard(MERCM[id],{cost:1,attrs:`data-mc="${id}"`})).join('')||'<div class="small muted">Сейчас никого. Загляните позже.</div>'}</div>
+   <h3>На службе</h3><div class="cards">${M.bands.map((b,i)=>mercCard(MERCM[b.id],{tag:`Ещё ${b.until-s.day} ход.`,tagCls:b.until-s.day<=5?'bad':'ok',attrs:`data-mb="${i}"`})).join('')||'<div class="small muted">Наёмников нет.</div>'}</div>`;
+  p.querySelectorAll('[data-mc]').forEach(b=>b.onclick=()=>{const m=MERCM[b.dataset.mc];const pr=mercPrice(m);
+    openModal(`<div class="cv">${mercCard(m,{cls:'big',el:'div'})}<div class="info"><h2>${m.n}</h2><p>${m.d}</p><div class="small">${m.k} × ${U[m.u].n} · контракт ${MERC_T} ходов · ${pr}${RI.gold} сразу и ${m.k}${RI.gold} за ход</div>
+     <div class="row"><button class="btn" id="mcH" ${s.res.gold>=pr?'':'disabled'}>Нанять</button><button class="btn ghost" id="mcX">Закрыть</button></div></div></div>`,true);
+    $('#mcX').onclick=closeModal;$('#mcH').onclick=()=>{closeModal();hireMerc(m.id)}});
+  p.querySelectorAll('[data-mb]').forEach(b=>b.onclick=()=>{const bd=M.bands[+b.dataset.mb];const m=MERCM[bd.id];const pr=Math.round(mercPrice(m)*.6);
+    openModal(`<div class="cv">${mercCard(m,{cls:'big',el:'div'})}<div class="info"><h2>${m.n}</h2><div class="small">На службе: ${Math.min(bd.n,s.army[bd.u]||0)} из ${bd.n} · контракт ещё ${bd.until-s.day} ход.</div>
+     <div class="row"><button class="btn" id="mcR" ${s.res.gold>=pr?'':'disabled'}>Продлить на ${MERC_T} ходов: ${pr}${RI.gold}</button><button class="btn ghost" id="mcX">Закрыть</button></div></div></div>`,true);
+    $('#mcX').onclick=closeModal;$('#mcR').onclick=()=>{if(s.res.gold<pr)return;s.res.gold-=pr;bd.until+=MERC_T;sfx('coin');closeModal();save();render()}})}
 
 /* ---------- навигация ---------- */
 const NAV=[
  {id:'home',n:'Деревня',ic:'home',subs:[['h','Стол'],['v','Сводка'],['l','Летопись']]},
- {id:'build',n:'Постройки',ic:'jobs',subs:[['b','Постройки']]},
+ {id:'build',n:'Постройки',ic:'jobs',subs:[['b','Постройки'],['gw','Великие стройки']]},
  {id:'people',n:'Мастера',ic:'people',subs:[['m','Мастера']]},
  {id:'trade',n:'Торговля',ic:'trade',subs:[['tr','Рынок'],['tgd','Товары'],['tnb','Соседи'],['tcs','Города'],['tcv','Караваны']]},
- {id:'war',n:'Война',ic:'atk',subs:[['a','Войска'],['ab','Тактика'],['hero','Староста'],['ex','Экспедиции'],['n','Народы'],['spy','Шпионаж'],['pir','Пираты']]},
+ {id:'war',n:'Война',ic:'atk',subs:[['a','Войска'],['merc','Наёмники'],['ab','Тактика'],['hero','Староста'],['ex','Экспедиции'],['n','Народы'],['spy','Шпионаж'],['pir','Пираты']]},
  {id:'prog',n:'Развитие',ic:'science',subs:[['t','Наука'],['tc','Культура'],['s','Магия'],['g','Боги'],['rl','Реликвии']]}
 ];
 const navOf=t=>NAV.find(n=>n.subs.some(x=>x[0]===t))||NAV[0];
@@ -2646,6 +2722,8 @@ function renderPane(){
   if(tab==='pir'){renderPirates(p);return}
   if(tab==='spy'){renderSpies(p);return}
   if(tab==='hero'){renderHero(p);return}
+  if(tab==='gw'){renderGW(p);return}
+  if(tab==='merc'){renderMerc(p);return}
   if(tab==='ex'){renderExp(p);return}
   if(tab==='tcv'){renderCar(p);return}
   if(tab==='rl'){renderRelics(p);return}
