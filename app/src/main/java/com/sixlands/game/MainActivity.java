@@ -52,7 +52,7 @@ public class MainActivity extends Activity {
 
         cacheDir = new File(getFilesDir(), "www");
         cacheDir.mkdirs();
-        try { bundled.putAll(parse(readAll(getAssets().open("www/manifest.json")))); } catch (Exception ignored) {}
+        try { bundled.putAll(parse(new String(readAll(getAssets().open("www/manifest.json")), "UTF-8"))); } catch (Exception ignored) {}
 
         web = new WebView(this);
         web.setBackgroundColor(Color.parseColor("#0d0b08"));
