@@ -472,7 +472,7 @@ body{overflow-x:hidden}
 <style id="imgcss"></style>
 
 <script>
-const BUILD_VER="13.11.2026 08:43";
+const BUILD_VER="13.11.2026 08:51";
 let SLOT=1;try{SLOT=+localStorage.getItem('sixlands-slot')||1}catch(e){}
 const SK_=n=>'sixlands-save-'+n;
 try{const old=localStorage.getItem('tiholesye-v3');if(old&&!localStorage.getItem(SK_(1))){localStorage.setItem(SK_(1),old);localStorage.removeItem('tiholesye-v3')}}catch(e){}
@@ -1296,8 +1296,14 @@ function tick(){
   save();renderTop();renderRes();renderTable();if(tab!=='i')renderPane();
 }
 function needChoice(){if(!s.tech.cur&&TECHS.some(canT))return't';if(!s.civ.cur&&CIVICS.some(canC))return'tc';return null}
-function endTurn(){if(modalOpen||!s.lands.length)return;
-  const nc=needChoice();if(nc){sfx('bad');toast(nc==='t'?'Сначала выберите, что исследовать':'Сначала выберите институт');go(nc);return}tick();sweep();seasonBanner();if(!modalOpen&&!REPORT.length)toast(`Ход ${s.day}`)}
+let TURNERR=null;
+function endTurn(){if(!s.lands.length)return;
+  if($('#modalBg').hidden)modalOpen=false;else if(modalOpen)return;else closeModal();
+  const nc=needChoice();if(nc){sfx('bad');toast(nc==='t'?'Сначала выберите, что исследовать':'Сначала выберите институт');go(nc);return}
+  const d0=s.day;
+  try{tick()}catch(e){TURNERR=(e&&e.message||String(e))+' | '+((e&&e.stack)||'').split('\n').slice(1,3).join(' ');try{localStorage.setItem('sixlands-err',`ход ${s.day}: `+TURNERR)}catch(_){}
+    modalOpen=false;try{render()}catch(_){}toast('Ход завершён с ошибкой. Скриншот этого сообщения поможет исправить: '+esc(TURNERR.slice(0,140)));return}
+  try{sweep();seasonBanner()}catch(e){}if(!modalOpen&&!REPORT.length)toast(`Ход ${s.day}`)}
 
 /* ---------- армия ---------- */
 function trainTurn(){
