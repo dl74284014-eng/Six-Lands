@@ -336,6 +336,10 @@ html.noanim *,html.noanim *::before,html.noanim *::after{animation:none!importan
 #endTurn.need{background:linear-gradient(180deg,#c9fbf2 0%,#82dacd 45%,#3e9c90 100%);border-color:#1d4e48;color:#0c2420}
 #endTurn.need .etn{background:#0c2420;color:#c9fbf2;box-shadow:inset 0 0 0 1.5px #82dacd}
 @media (prefers-reduced-motion:no-preference){#endTurn .etg{animation:etg 4.5s ease-in-out infinite}@keyframes etg{0%,70%{transform:translateX(-120%)}100%{transform:translateX(120%)}}}
+.sw-l{animation:swl .32s cubic-bezier(.2,.8,.25,1)}.sw-r{animation:swr .32s cubic-bezier(.2,.8,.25,1)}
+@keyframes swl{from{opacity:.2;transform:translateX(40px)}}@keyframes swr{from{opacity:.2;transform:translateX(-40px)}}
+.bump-l{animation:bpl .3s ease}.bump-r{animation:bpr .3s ease}@keyframes bpl{40%{transform:translateX(-14px)}}@keyframes bpr{40%{transform:translateX(14px)}}
+body{overflow-x:hidden}
 @media (min-width:900px){.bnav{max-width:720px;margin:0 auto}.dock .turnbar{max-width:1240px;margin:0 auto}}
 </style>
 
@@ -381,7 +385,7 @@ html.noanim *,html.noanim *::before,html.noanim *::after{animation:none!importan
 <style id="imgcss"></style>
 
 <script>
-const BUILD_VER="12.11.2026 10:09";
+const BUILD_VER="12.11.2026 10:13";
 const KEY='tiholesye-v3';
 const I=k=>`<i class="ico i-${k}"></i>`;
 
@@ -2203,6 +2207,7 @@ function howTo(){
    <p><b>Наука и культура.</b> Выбирайте технологии и институты в разделе «Развитие». Без выбора ход не наступит.</p>
    <p><b>Война.</b> Пехота бьёт конницу, конница бьёт стрелков и магов, стрелки и маги бьют пехоту, осадные машины ломают стены. Выбирайте тактику: Стена щитов бьёт Натиск, Натиск бьёт Обход, Обход бьёт Стену щитов.</p>
    <p><b>Торговля.</b> На рынке покупайте и продавайте ресурсы, у заезжих купцов — редкие товары, с соседями меняйтесь. Города-государства дают бонусы друзьям и союзникам, их можно и захватить. Берегитесь пиратов с моря.</p>
+   <p><b>Свайпы.</b> Проведите пальцем влево или вправо, чтобы листать вкладки и разделы: Стол, Постройки, Мастера, Торговля, Война, Развитие.</p>
    <p><b>Подсказка.</b> Нажмите на любой ресурс, фишку на столе или карту, чтобы узнать подробности. Не хватает дерева или камня, купите их, нажав на ресурс.</p></div>
    <button class="btn" id="hwOk">Понятно</button>`,true);
   $('#hwOk').onclick=closeModal;
@@ -2216,6 +2221,23 @@ window.onAndroidBack=function(){
   if(titleOn()){confirmExit();return 1}
   openPause();return 1;
 };
+
+/* ---------- свайпы между разделами ---------- */
+const SWIPE_ORDER=()=>NAV.flatMap(n=>n.subs.map(x=>x[0]));
+function swipeGo(dir){
+  const L=SWIPE_ORDER();let i=L.indexOf(tab);if(i<0)return;const j=i+dir;if(j<0||j>=L.length){bump(dir);return}
+  const t=L[j];tab=t;lastSub[navOf(t).id]=t;renderPane();window.scrollTo({top:0});
+  if(!RM){const el=t==='h'?$('#tableSec'):$('#panelSec');el.classList.remove('sw-l','sw-r');void el.offsetWidth;el.classList.add(dir>0?'sw-l':'sw-r');setTimeout(()=>el.classList.remove('sw-l','sw-r'),400)}
+  const sb=document.querySelector('#subnav .on');if(sb)sb.scrollIntoView({inline:'center',block:'nearest',behavior:RM?'auto':'smooth'});
+}
+function bump(dir){if(RM)return;const el=tab==='h'?$('#tableSec'):$('#panelSec');el.classList.remove('bump-l','bump-r');void el.offsetWidth;el.classList.add(dir>0?'bump-l':'bump-r')}
+(()=>{let sx=0,sy=0,st=0,ok=false;
+  document.addEventListener('touchstart',e=>{if(e.touches.length!==1){ok=false;return}const t=e.target;
+    ok=!titleOn()&&$('#modalBg').hidden&&!t.closest('.filters,.subnav,#rivalsBar,.resbar,.tblw,input,textarea,.dock');
+    sx=e.touches[0].clientX;sy=e.touches[0].clientY;st=Date.now()},{passive:true});
+  document.addEventListener('touchend',e=>{if(!ok)return;ok=false;const t=e.changedTouches[0];const dx=t.clientX-sx,dy=t.clientY-sy;
+    if(Date.now()-st<700&&Math.abs(dx)>70&&Math.abs(dx)>Math.abs(dy)*1.8)swipeGo(dx<0?1:-1)},{passive:true});
+})();
 $('#menuBtn').onclick=()=>{sfx('card');openPause()};
 applySettings();
 
