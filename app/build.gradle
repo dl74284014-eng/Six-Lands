@@ -6,10 +6,21 @@ android {
         applicationId 'com.sixlands.game'
         minSdk 24
         targetSdk 34
-        versionCode 1
-        versionName '1.0'
+        versionCode((System.getenv('GITHUB_RUN_NUMBER') ?: '1') as int)
+        versionName "1.${System.getenv('GITHUB_RUN_NUMBER') ?: '0'}"
     }
-    buildTypes { release { minifyEnabled false } }
+    signingConfigs {
+        game {
+            storeFile file('sixlands.keystore')
+            storePassword 'sixlands123'
+            keyAlias 'sixlands'
+            keyPassword 'sixlands123'
+        }
+    }
+    buildTypes {
+        debug { signingConfig signingConfigs.game }
+        release { minifyEnabled false; signingConfig signingConfigs.game }
+    }
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
     aaptOptions { noCompress 'jpg', 'png', 'mp3' }
 }
