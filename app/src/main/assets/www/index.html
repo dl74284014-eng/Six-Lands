@@ -377,6 +377,7 @@ body{overflow-x:hidden}
 .task.ok{border-color:rgba(232,192,106,.7);background:rgba(232,192,106,.08);box-shadow:0 0 12px rgba(232,192,106,.2)}
 .task.dn{opacity:.55}
 #questBox,#scnBox{display:none!important}
+@media (max-width:899px){.app{padding-bottom:calc(var(--dockH,140px) + 28px)!important}}
 .lnk{background:none;border:0;padding:0;color:var(--brass);font:inherit;font-size:12px;text-decoration:underline dotted;cursor:pointer}
 .btn.sm{padding:6px 10px;font-size:13px}
 .cards.hand{grid-template-columns:repeat(3,minmax(0,1fr))}
@@ -471,7 +472,7 @@ body{overflow-x:hidden}
 <style id="imgcss"></style>
 
 <script>
-const BUILD_VER="13.11.2026 08:26";
+const BUILD_VER="13.11.2026 08:30";
 let SLOT=1;try{SLOT=+localStorage.getItem('sixlands-slot')||1}catch(e){}
 const SK_=n=>'sixlands-save-'+n;
 try{const old=localStorage.getItem('tiholesye-v3');if(old&&!localStorage.getItem(SK_(1))){localStorage.setItem(SK_(1),old);localStorage.removeItem('tiholesye-v3')}}catch(e){}
@@ -1909,7 +1910,7 @@ function renderProg(p){
   const st=stats();
   const sec=(isT)=>{const list=isT?TECHS:CIVICS,box=isT?s.tech:s.civ,map=isT?TECH:CIVIC,per=isT?st.sci:st.cult,cur=box.cur&&map[box.cur];
     const allE=[...new Set(list.map(t=>t.era))];const kk=isT?'t':'c';const hv=isT?hasT:hasC;
-    if(eraF[kk]==null){const e=allE.find(e=>list.some(t=>t.era===e&&!hv(t.id)));eraF[kk]=e||'all'}
+    const ca=isT?canT:canC;if(eraF[kk]==null||(eraF[kk]!=='all'&&!list.some(t=>t.era===eraF[kk]&&!hv(t.id)))||(eraF[kk]!=='all'&&!box.cur&&list.some(ca)&&!list.some(t=>t.era===eraF[kk]&&ca(t)))){const e=allE.find(e=>list.some(t=>t.era===e&&ca(t)))||allE.find(e=>list.some(t=>t.era===e&&!hv(t.id)));eraF[kk]=e||'all'}
     const eras=eraF[kk]==='all'?allE:[eraF[kk]];
     const chips=chipRow([...allE.map(e=>[e,ERA[e],`${list.filter(t=>t.era===e&&hv(t.id)).length}/${list.filter(t=>t.era===e).length}`]),['all','Все',null]],eraF[kk],'era');
     return`<div class="sec"><div class="two" style="gap:10px"><div class="stack"><h3>${I(isT?'science':'culture')} ${isT?'Наука':'Культура'}: ${sgn(per)} за ход</h3>
@@ -3279,6 +3280,7 @@ function startTimer(){}
 function setSpeed(v){s.speed=v;save();renderTop();startTimer()}
 
 $('#endTurn').onclick=endTurn;
+{const dk=document.querySelector('.dock');const setH=()=>{try{document.documentElement.style.setProperty('--dockH',Math.ceil(dk.getBoundingClientRect().height)+'px')}catch(e){}};setH();try{new ResizeObserver(setH).observe(dk)}catch(e){}addEventListener('resize',setH)}
 $('#lands').addEventListener('click',e=>{const c=e.target.closest('[data-l]');if(c)return openLand(+c.dataset.l);if(e.target.closest('#newland'))buyLand()});
 document.querySelectorAll('[data-sp]').forEach(b=>b.onclick=()=>setSpeed(+b.dataset.sp));
 
