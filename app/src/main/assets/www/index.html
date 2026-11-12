@@ -340,19 +340,18 @@ html.noanim *,html.noanim *::before,html.noanim *::after{animation:none!importan
 @keyframes swl{from{opacity:.2;transform:translateX(40px)}}@keyframes swr{from{opacity:.2;transform:translateX(-40px)}}
 .bump-l{animation:bpl .3s ease}.bump-r{animation:bpr .3s ease}@keyframes bpl{40%{transform:translateX(-14px)}}@keyframes bpr{40%{transform:translateX(14px)}}
 body{overflow-x:hidden}
-.sarr{position:fixed;top:50%;z-index:14;width:34px;height:64px;padding:0;border:1px solid rgba(232,192,106,.55);background:linear-gradient(180deg,rgba(60,42,18,.92),rgba(28,20,10,.92));box-shadow:0 4px 14px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,231,163,.25);display:flex;align-items:center;justify-content:center;transform:translateY(-50%);cursor:pointer;opacity:.82;transition:opacity .2s,width .2s}
-.sarr.l{left:0;border-left:0;border-radius:0 14px 14px 0;padding-left:max(0px,env(safe-area-inset-left,0px))}
-.sarr.r{right:0;border-right:0;border-radius:14px 0 0 14px;padding-right:max(0px,env(safe-area-inset-right,0px))}
-.sarr i{width:12px;height:12px;border-top:3px solid #e9b955;border-left:3px solid #e9b955;filter:drop-shadow(0 0 4px rgba(232,192,106,.7))}
-.sarr.l i{transform:rotate(-45deg);margin-left:6px}.sarr.r i{transform:rotate(135deg);margin-right:6px}
-.sarr span{position:absolute;top:calc(100% + 6px);white-space:nowrap;font-family:var(--display);font-size:11px;color:var(--brass);background:rgba(19,17,14,.88);border:1px solid var(--line);border-radius:6px;padding:1px 6px;opacity:0;transition:opacity .2s;pointer-events:none}
-.sarr.l span{left:4px}.sarr.r span{right:4px}
-.sarr:hover,.sarr:focus-visible{opacity:1}.sarr:hover span,.sarr:focus-visible span{opacity:1}
-.sarr:active{transform:translateY(-50%) scale(.94)}
-@media (hover:none){.sarr span{opacity:.85}}
-@media (prefers-reduced-motion:no-preference){.sarr.r i{animation:nudr 2.6s ease-in-out infinite}.sarr.l i{animation:nudl 2.6s ease-in-out infinite}
- @keyframes nudr{0%,70%,100%{translate:0}80%{translate:3px}}@keyframes nudl{0%,70%,100%{translate:0}80%{translate:-3px}}}
-@media (min-width:900px){.sarr{width:42px;height:80px}}
+.sarr{position:fixed;top:50%;z-index:14;width:18px;height:46px;padding:0;border:1px solid rgba(232,192,106,.28);background:rgba(28,20,10,.55);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;transform:translateY(-50%);cursor:pointer;opacity:.6;transition:opacity .2s}
+.sarr.l{left:0;border-left:0;border-radius:0 9px 9px 0;padding-left:max(0px,env(safe-area-inset-left,0px))}
+.sarr.r{right:0;border-right:0;border-radius:9px 0 0 9px;padding-right:max(0px,env(safe-area-inset-right,0px))}
+.sarr::before{content:"";position:absolute;inset:-14px -12px}
+.sarr i{width:7px;height:7px;border-top:2px solid #e9b955;border-left:2px solid #e9b955}
+.sarr.l i{transform:rotate(-45deg);margin-left:3px}.sarr.r i{transform:rotate(135deg);margin-right:3px}
+.sarr span{display:none}
+.sarr:hover,.sarr:focus-visible{opacity:1}
+.sarr:active{opacity:1;transform:translateY(-50%) scale(.92)}
+@media (prefers-reduced-motion:no-preference){.sarr.r i{animation:nudr 3.2s ease-in-out infinite}.sarr.l i{animation:nudl 3.2s ease-in-out infinite}
+ @keyframes nudr{0%,75%,100%{translate:0}85%{translate:2px}}@keyframes nudl{0%,75%,100%{translate:0}85%{translate:-2px}}}
+@media (min-width:900px){.sarr{width:22px;height:56px}}
 @media (min-width:900px){.bnav{max-width:720px;margin:0 auto}.dock .turnbar{max-width:1240px;margin:0 auto}}
 </style>
 
@@ -399,7 +398,7 @@ body{overflow-x:hidden}
 <style id="imgcss"></style>
 
 <script>
-const BUILD_VER="12.11.2026 10:20";
+const BUILD_VER="12.11.2026 10:22";
 const KEY='tiholesye-v3';
 const I=k=>`<i class="ico i-${k}"></i>`;
 
