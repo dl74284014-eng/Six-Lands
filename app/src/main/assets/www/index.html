@@ -362,6 +362,33 @@ body{overflow-x:hidden}
 .card.c-land.hint{box-shadow:0 0 0 1.5px rgba(232,192,106,.6);animation:hintp 2.6s ease-in-out infinite}
 @keyframes hintp{50%{box-shadow:0 0 0 1.5px rgba(232,192,106,.95),0 0 16px rgba(232,192,106,.35)}}
 #wxc{position:fixed;inset:0;width:100%;height:100%;z-index:11;pointer-events:none;display:none}
+.herocv{max-width:220px;margin:0 auto}
+.lnk{background:none;border:0;padding:0;color:var(--brass);font:inherit;font-size:12px;text-decoration:underline dotted;cursor:pointer}
+.btn.sm{padding:6px 10px;font-size:13px}
+.cards.hand{grid-template-columns:repeat(3,minmax(0,1fr))}
+.ordwait{padding:8px 10px;border:1px dashed rgba(232,192,106,.25);border-radius:10px}
+.adjbox{display:grid;gap:5px;padding:10px;border:1px solid rgba(160,212,124,.3);border-radius:10px;background:rgba(160,212,124,.05)}
+.card.adj .gem{box-shadow:0 0 0 2px #a3d47c,0 0 12px #a3d47c}
+.achs{display:grid;gap:6px;margin:10px 0;grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
+.ach{display:flex;gap:10px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:10px;opacity:.55}
+.ach.on{opacity:1;border-color:rgba(232,192,106,.6);background:rgba(232,192,106,.07)}
+.scnbar{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;margin:6px 0 10px;padding:9px 12px;border-radius:10px;border:1px solid rgba(232,192,106,.5);background:linear-gradient(90deg,rgba(232,192,106,.16),rgba(232,192,106,.03));color:inherit;font:inherit;text-align:left;cursor:pointer}
+.scnbar span{font-size:12px;opacity:.85}
+.sumscore{display:flex;align-items:baseline;justify-content:space-between;padding:10px 14px;margin:10px 0;border-radius:12px;background:linear-gradient(90deg,rgba(232,192,106,.2),rgba(232,192,106,.04));border:1px solid rgba(232,192,106,.5)}
+.sumscore b{font-size:30px;color:var(--brass);font-family:var(--title)}
+.sumgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px;margin-bottom:10px}
+.sumgrid div{display:flex;justify-content:space-between;gap:6px;padding:6px 9px;border:1px solid var(--line);border-radius:8px;font-size:13px}
+.spk{margin:6px 0}.spk svg{width:100%;height:60px;display:block;background:rgba(0,0,0,.18);border-radius:8px}
+.enclist{display:grid;gap:6px;margin:10px 0;max-height:60vh;overflow:auto}
+.encrow{display:flex;gap:10px;align-items:center;padding:6px;border:1px solid var(--line);border-radius:10px}
+.encart{flex:none;width:46px;height:62px;border-radius:6px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.25)}
+.encart .pic{display:block;width:100%;height:100%;background-size:cover;background-position:center}
+.tsplit{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#tut{position:fixed;inset:0;z-index:70;pointer-events:none}
+#tut .tspot{position:fixed;border-radius:12px;border:2px solid var(--brass);box-shadow:0 0 0 9999px rgba(0,0,0,.45),0 0 20px rgba(232,192,106,.6);transition:all .35s ease}
+#tut.inmodal .tspot{box-shadow:0 0 18px rgba(232,192,106,.7)}
+#tut .tbub{position:fixed;left:50%;transform:translateX(-50%);width:min(360px,calc(100% - 32px));pointer-events:auto;padding:12px 14px;border-radius:12px;background:#2a1f14;border:1px solid var(--brass);box-shadow:0 10px 30px rgba(0,0,0,.6);display:grid;gap:8px;font-size:14px;line-height:1.4}
+#tut .tbub .row{display:flex;gap:12px;align-items:center;justify-content:space-between}
 .diffbox{display:grid;gap:8px;padding:12px;border:1px solid rgba(232,192,106,.3);border-radius:12px;background:rgba(0,0,0,.18)}
 .diffbox .dlab{font-family:var(--title);color:var(--brass);font-size:16px}
 .dseg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
@@ -408,7 +435,9 @@ body{overflow-x:hidden}
       </div>
       <div class="chips" id="buffs"></div>
       <div class="chips" id="rivalsBar"></div>
+      <div id="scnBox"></div>
       <div id="questBox"></div>
+      <div id="ordBox"></div>
       <div id="advice"></div>
       <div class="zone-h"><span>Земли деревни</span><span id="landCount"></span></div>
       <div class="cards" id="lands"></div>
@@ -428,8 +457,10 @@ body{overflow-x:hidden}
 <style id="imgcss"></style>
 
 <script>
-const BUILD_VER="12.11.2026 22:04";
-const KEY='tiholesye-v3';
+const BUILD_VER="12.11.2026 22:18";
+let SLOT=1;try{SLOT=+localStorage.getItem('sixlands-slot')||1}catch(e){}
+const SK_=n=>'sixlands-save-'+n;
+try{const old=localStorage.getItem('tiholesye-v3');if(old&&!localStorage.getItem(SK_(1))){localStorage.setItem(SK_(1),old);localStorage.removeItem('tiholesye-v3')}}catch(e){}
 const I=k=>`<i class="ico i-${k}"></i>`;
 
 const RES=['gold','wood','stone','food','mana'];
@@ -566,7 +597,7 @@ const CK=Object.keys(CULTURES);CK.forEach(c=>{CULTURES[c].ic=`<i class="ico em i
 const C=()=>CULTURES[s.culture]||CULTURES.europe;
 const ADD={happy:0,settle:0,train:0,cav:0,freeMage:0};
 const MOD0=k=>{const v=C().mods[k];return v===undefined?(ADD[k]??1):v};
-const MOD=k=>{let v=MOD0(k);if(s&&s.tech){const L=[...(s.tech.known||[]),...(s.civ.known||[])];for(const id of L){const e=(TECH[id]||CIVIC[id]||{}).fx;if(e&&e[k]!==undefined)v=k in ADD?v+e[k]:v*e[k]}}return v};
+const MOD=k=>{let v=MOD0(k);if(s&&s.tech){const L=[...(s.tech.known||[]),...(s.civ.known||[])];for(const id of L){const e=(TECH[id]||CIVIC[id]||{}).fx;if(e&&e[k]!==undefined)v=k in ADD?v+e[k]:v*e[k]}for(const e of extraFx())if(e[k]!==undefined)v=k in ADD?v+e[k]:v*e[k]}return v};
 
 /* ---------- боги ---------- */
 const GODS=[
@@ -749,7 +780,7 @@ const BCIVIC={theater:'drama'};
 const UTECH={soldier:'bronze',unique:'bronze',archer:'archery',cavalry:'riding',siege:'math',mage:'arcana'};
 const SCI={hall:2,library:4,observatory:3,tower:2,mapper:1,workshop:2,alchemy:1,enchanter:1,runes:1,glass:1,infirmary:1,beacon:2};
 const CUL={hall:2,temple:3,theater:4,wonder:6,fountain:1,tavern:1,library:1,garden:2,grove:1,jeweler:1,potter:1,tailor:1,sh_harvest:1,sh_forge:1,sh_magic:1,sh_guard:1,sh_hearth:1,sh_trade:1};
-function ensureProg(){if(!s.wx)wxRoll(true);if(!s.vet)s.vet={};if(!s.spies){s.spies=[];s.intel={};s.spyId=1}ensureTrade();if(!s.gp)s.gp={sci:0,cult:0,war:0,nS:90,nC:70,nW:3};if(!s.quests)s.quests=[];if(s.qDone==null)s.qDone=0;if(!s.tech)s.tech={known:[],cur:null,p:0};if(!s.civ)s.civ={known:[],cur:null,p:0};if(s.cultTotal==null){s.cultTotal=0;s.borderAt=30}}
+function ensureProg(){if(s&&s.lands&&s.lands.length)ensureFeat();if(!s.wx)wxRoll(true);if(!s.vet)s.vet={};if(!s.spies){s.spies=[];s.intel={};s.spyId=1}ensureTrade();if(!s.gp)s.gp={sci:0,cult:0,war:0,nS:90,nC:70,nW:3};if(!s.quests)s.quests=[];if(s.qDone==null)s.qDone=0;if(!s.tech)s.tech={known:[],cur:null,p:0};if(!s.civ)s.civ={known:[],cur:null,p:0};if(s.cultTotal==null){s.cultTotal=0;s.borderAt=30}}
 const canT=t=>!hasT(t.id)&&t.req.every(hasT);
 const canC=t=>!hasC(t.id)&&t.req.every(hasC);
 
@@ -833,9 +864,15 @@ let LASTRES=null,VETMSG=[],REPORT0=[];
 function gainVet(S,won){if(!s.vet)s.vet={};VETMSG=[];
   S.g.forEach(x=>{if(x.fixed||!U[x.id]||!(s.army[x.id]>0))return;const r0=vr(x.id);s.vet[x.id]=vxp(x.id)+(won?1:.35);const r1=vr(x.id);
     if(r1>r0){const m=`${U[x.id].n}: новое звание «${VR[r1].n}» — атака +${Math.round(VR[r1].b*100)}%, стойкость +${Math.round(VR[r1].b*50)}%.`;VETMSG.push(m);log(m,'good')}})}
-function applyMyLosses(S){if(LASTRES)gainVet(S,S===LASTRES.A?LASTRES.win:!LASTRES.win);S.g.forEach(x=>{if(x.fixed)return;const k=Math.max(0,x.n);s.army[x.id]=Math.min(s.army[x.id]||0,Math.floor(k)+(rnd()<k-Math.floor(k)?1:0))})}
+function applyMyLosses(S){const won=LASTRES?(S===LASTRES.A?LASTRES.win:!LASTRES.win):false;if(LASTRES)gainVet(S,won);
+  const hg=S.g.find(g=>g.id==='hero');if(hg&&s.hero){heroXp(won?2:1);if(!won&&hg.n<.4&&rnd()<.6){s.hero.hurt=s.day+6;log(`Староста ${s.hero.name} ранен и 6 ходов не сможет сражаться.`,'bad')}}
+  S.g.filter(g=>g.ally).forEach(g=>{const r2=s.rivals[g.ri];if(r2){r2.army=Math.max(0,r2.army-(g.n0-Math.max(0,g.n)));r2.rel=Math.min(100,r2.rel+1)}});
+  if(buff('cry'))delete s.buffs.cry;S.g.forEach(x=>{if(x.fixed)return;const k=Math.max(0,x.n);s.army[x.id]=Math.min(s.army[x.id]||0,Math.floor(k)+(rnd()<k-Math.floor(k)?1:0))})}
 function mySide(o={}){const st=stats();const S=mkSide('Ваше войско',s.army,id=>({...U[id],def:U[id].def*(1+vb(id)/2)}),u=>uAtk(u)*(1+vb(u.id)),{garrison:o.home?st.bdef/5+st.P/10:0,wall:o.home?st.bdef:0,tac:o.tac||s.tactic||'shield',home:o.home});
-  S.g.forEach(x=>{if(!x.fixed&&vr(x.id))x.name+=` · ${VR[vr(x.id)].n}`});return S}
+  S.g.forEach(x=>{if(!x.fixed&&vr(x.id))x.name+=` · ${VR[vr(x.id)].n}`});
+  if(s.hero&&heroFree()&&s.hero.lead!==false)S.g.push({id:'hero',name:'Староста '+s.hero.name,ic:I('rank'),type:'inf',atk:heroPow()*.8,hp:heroPow()*.9,n0:1,n:1,fixed:1});
+  if(o.vs)allyGroups(o.vs).forEach(g=>S.g.push(g));
+  if(buff('cry'))S.g.forEach(g=>g.atk*=1.2);return S}
 function rivalSide(r,o={}){return mkSide(rivalName(r),rivalCounts(r,o.attacking),id=>rivalUnit(r.c,id),u=>rivalAtk(r.c,u),{garrison:o.home?r.wall*3/4+r.pop/10:0,wall:o.home?r.wall*3:0,tac:o.tac||pickTac(r.c),home:o.home})}
 function remainArmy(S){return S.g.filter(x=>!x.fixed).reduce((a,x)=>a+Math.max(0,x.n),0)}
 
@@ -1108,14 +1145,14 @@ function chooseCulture(first){
         ${first?'':'<div class="small" style="color:var(--bad)">Текущая деревня будет потеряна.</div>'}</div>`:'<p class="small muted">Нажмите на народ, чтобы узнать о нём.</p>'}`;
     $('#modal').querySelectorAll('[data-cu]').forEach(b=>b.onclick=()=>{pick=b.dataset.cu;sfx('card');draw()});
     $('#modal').querySelectorAll('[data-df]').forEach(b=>b.onclick=()=>{dif=b.dataset.df;sfx('card');const y=$('#modal').scrollTop;draw();$('#modal').scrollTop=y});
-    const go=$('#cuGo');if(go)go.onclick=()=>{newGame(pick,dif);save();modalOpen=false;$('#modalBg').hidden=true;render();startTimer();toast(`${CULTURES[pick].full}: деревня основана · ${DIFF[dif].n}`);hideTitle();PREV=null;tab='h';renderPane()};
+    const go=$('#cuGo');if(go)go.onclick=()=>{newGame(pick,dif);ensureFeat();save();setTimeout(()=>tutStart(),900);modalOpen=false;$('#modalBg').hidden=true;render();startTimer();toast(`${CULTURES[pick].full}: деревня основана · ${DIFF[dif].n}`);hideTitle();PREV=null;tab='h';renderPane()};
     const x=$('#cuX');if(x)x.onclick=()=>{modalOpen=false;closeModal()};
     if(!$('#cuX')&&titleOn()){}
   };
   modalOpen=true;stopTimer();$('#modalBg').hidden=false;draw();
 }
-function save(){try{localStorage.setItem(KEY,JSON.stringify(s))}catch(e){}}
-function load(){try{const j=localStorage.getItem(KEY);if(j){const o=JSON.parse(j);if(o&&o.v===3&&o.culture&&CULTURES[o.culture]){s=o;applyCulture();return true}}}catch(e){}return false}
+function save(){try{if(s&&s.lands&&s.lands.length){s.saved=Date.now();localStorage.setItem(SK_(SLOT),JSON.stringify(s))}}catch(e){}}
+function load(){try{const j=localStorage.getItem(SK_(SLOT));if(j){const o=JSON.parse(j);if(o&&o.v===3&&o.culture&&CULTURES[o.culture]){s=o;applyCulture();return true}}}catch(e){}return false}
 function log(t,k=''){s.log.unshift({d:s.day,t,k});if(s.log.length>100)s.log.length=100}
 let toastT;function toast(t){const el=$('#toast');el.innerHTML=t;el.hidden=false;el.classList.remove('in');void el.offsetWidth;el.classList.add('in');clearTimeout(toastT);toastT=setTimeout(()=>el.hidden=true,2600)}
 
@@ -1136,7 +1173,7 @@ function stats(){
   const jobs=act.reduce((a,x)=>a+(x.d.jobs||0),0);
   const eff=jobs?Math.min(1,P/jobs):1;
   const tools=has('smithy')?1.25:1;
-  let farmSeason=se.farm;if(se.i===3)farmSeason=MOD('winter')!==1?MOD('winter'):se.farm;if(buff('ward'))farmSeason=Math.max(1,farmSeason);farmSeason*=WXo().farm||1;
+  let farmSeason=se.farm;if(se.i===3)farmSeason=MOD('winter')!==1?MOD('winter'):se.farm;if(se.i===3&&hasRel('icecrown'))farmSeason=Math.max(farmSeason,.8);if(buff('ward'))farmSeason=Math.max(1,farmSeason);farmSeason*=WXo().farm||1;
   const farmM=farmSeason*MOD('farm')*(1+.3*lvl('harvest'))*(has('mill')?1.2:1)*(buff('bloom')?2:1);
   const forge=1+.25*lvl('forge'),manaM=(1+.4*lvl('magic'))*MOD('mana');
   const delta={gold:0,wood:0,stone:0,food:0,mana:0};const br={gold:{},wood:{},stone:{},food:{},mana:{},sci:{},cult:{}};let sci=0,cult=0;const add=(r,l,n)=>{br[r][l]=(br[r][l]||0)+n};
@@ -1167,9 +1204,12 @@ function stats(){
   if(lvl('hearth')){happy+=6*lvl('hearth');hp.push([`Благословение: ${gN('hearth')}`,6*lvl('hearth')])}
   if(buff('fest')){happy+=10;hp.push(['Праздник',10])}
   if(buff('scare')){happy-=8;hp.push(['Страх после набега',-8])}
+  {const actSet=new Set(act.map(x=>x.i));let ah=0;act.forEach(x=>adjOf(x.i,actSet).forEach(a=>{for(const[k,v]of Object.entries(a.fx)){if(k==='happy')ah+=v;else if(k==='def')def+=v;else if(k==='sci'){sci+=v;add('sci','Соседство',v)}else if(k==='cult'){cult+=v;add('cult','Соседство',v)}else{delta[k]+=v;add(k,'Соседство',v)}}}));if(ah){happy+=ah;hp.push(['Соседство',ah])}}
+  def+=extraDef();
   if(def>=th){happy+=3;hp.push(['Чувство защищённости',3])}else if(def<th/2){happy-=5;hp.push(['Слабая оборона',-5])}
   delta.food-=P*.5;add('food','Жители едят',-P*.5);
   if(WXo().eat){delta.food-=P*WXo().eat;add('food','Мороз',-P*WXo().eat)}
+  if(relicSum('happy')){happy+=relicSum('happy');hp.push(['Реликвии',relicSum('happy')])}
   if(WXo().happy){happy+=WXo().happy;hp.push(['Погода: '+WXo().n,WXo().happy])}
   const starving=s.res.food+delta.food<0;
   const shortage=!starving&&delta.food<0&&s.res.food<-delta.food*12;
@@ -1226,14 +1266,15 @@ function tick(){
   while(s.rank<RANKS.length-1&&RANKS[s.rank+1].ok()){s.rank++;s.rep=Math.min(100,s.rep+5);sfx('good');log(`Деревня получает звание «${RANKS[s.rank].n}»! Слава +5.`,'arc');toast('Новое звание: '+RANKS[s.rank].n)}
   trainTurn();
   REPORT=REPORT0;REPORT0=[];aiTurn();
-  progTurn(st);greatTurn(st);checkQuests(true);tradeTurn();spyTurn();
+  progTurn(st);greatTurn(st);checkQuests(true);tradeTurn();spyTurn();featTurn(st);
 
-  if(!s.won&&(s.rivals.every(r=>r.vassal)||s.rank>=RANKS.length-1||hasT('final')||hasC('golden'))){s.won=true;REPORT.push(['Победа!',s.rivals.every(r=>r.vassal)?'Военная победа: все народы признали вашу власть.':hasT('final')?'Научная победа: ваш народ совершил Великое открытие.':hasC('golden')?'Культурная победа: настал Золотой век.':'Ваша деревня стала Городом чудес.','good'])}
+  if(!s.won&&(s.rivals.every(r=>r.vassal)||s.rank>=RANKS.length-1||hasT('final')||hasC('golden'))){s.won=true;s.sumDue=1;REPORT.push(['Победа!',s.rivals.every(r=>r.vassal)?'Военная победа: все народы признали вашу власть.':hasT('final')?'Научная победа: ваш народ совершил Великое открытие.':hasC('golden')?'Культурная победа: настал Золотой век.':'Ваша деревня стала Городом чудес.','good'])}
   if(s.trip&&s.day>=s.trip.at)persuade();
   else if(REPORT.length)showReport();
   else if(s.pendingGP&&s.pendingGP.length)greatModal();
   else if(PEACE)peaceOffer();
   else if(s.pir.due)pirateModal();
+  else if(s.sumDue){s.sumDue=0;openSummary()}
   else if(s.day>4&&s.day-s.lastEv>3&&rnd()<.18){s.lastEv=s.day;event()}
   save();renderTop();renderRes();renderTable();if(tab!=='i')renderPane();
 }
@@ -1283,16 +1324,16 @@ function aiTurn(){
       if(!PEACE&&((r.army*2<myPower()*.6&&rnd()<.25)||(r.warT>12&&rnd()<.15)))PEACE=r;
     }else{
       const base=-(ag-1)*70-(s.lands.length>12?(s.lands.length-12)*1.5:0)+(r.trade?25:0);
-      r.rel+=(base-r.rel)*.03;
-      if(s.day>15&&rnd()<.012*ag*dA){r.rel-=12+rnd()*10;log(`Стычка на границе с народом «${rivalName(r)}». Отношения портятся.`,'bad')}
-      if(s.day>40&&pop()>=12&&!s.rivals.some(o=>o.war)&&r.rel<-25&&r.army>armySize()*.6&&rnd()<.05*ag*dA){r.war=true;r.warT=0;r.trade=false;r.rel=-100;REPORT.push([`Народ «${rivalName(r)}» объявляет войну!`,'Их армия выступила в поход. Готовьте оборону.','bad']);sfx('war')}
+      r.rel+=(base+(r.ally?30:0)+(r.wed?15:0)+(r.pact>s.day?10:0)-r.rel)*.03;if(r.wed)r.rel=Math.max(r.rel,10);
+      if(s.day>15&&!(r.pact>s.day)&&!r.ally&&rnd()<.012*ag*dA){r.rel-=12+rnd()*10;log(`Стычка на границе с народом «${rivalName(r)}». Отношения портятся.`,'bad')}
+      if(s.day>40&&pop()>=12&&!s.rivals.some(o=>o.war)&&r.rel<-25&&!(r.pact>s.day)&&!r.ally&&r.army>armySize()*.6&&rnd()<.05*ag*dA){r.war=true;r.warT=0;r.trade=false;r.rel=-100;REPORT.push([`Народ «${rivalName(r)}» объявляет войну!`,'Их армия выступила в поход. Готовьте оборону.','bad']);sfx('war')}
     }
   });
 }
 function enemyAttack(r){
   const n=rivalName(r);
   if(buff('mirage')){delete s.buffs.mirage;r.army*=.85;REPORT.push([`Набег: ${n}`,'Войско врага заблудилось в мираже и ушло.','good']);return}
-  const A=rivalSide(r,{attacking:true}),D=mySide({home:true});if(hasIntel(s.rivals.indexOf(r)))A.g.forEach(x=>x.atk*=.85);const res=battle(A,D);
+  const A=rivalSide(r,{attacking:true}),D=mySide({home:true,vs:r});if(hasIntel(s.rivals.indexOf(r)))A.g.forEach(x=>x.atk*=.85);const res=battle(A,D);
   applyMyLosses(D);r.army=remainArmy(A);const html=battleHTML(res,false);
   if(!res.win){s.rep=Math.min(100,s.rep+2);s.wins=(s.wins||0)+1;s.gp.war++;REPORT.push([`Набег отбит: ${n}`,`Враг отступил. Слава +2.`,'good',html]);sfx('good')}
   else if(res.pa<res.pd*2.2){const g=Math.round(s.res.gold*.15),f=Math.round(s.res.food*.15);s.res.gold-=g;s.res.food-=f;REPORT.push([`Тяжёлый бой: ${n}`,`Враг прорвался и унёс ${g} золота и ${f} еды.`,'bad',html]);sfx('bad')}
@@ -1312,7 +1353,7 @@ function attackRival(i,tac){
     $('#tcx').onclick=closeModal;document.querySelectorAll('[data-tc]').forEach(b=>b.onclick=()=>{closeModal();attackRival(i,b.dataset.tc)});return;
   }
   s.rivals.forEach(o=>{if(o!==r&&!o.vassal&&!o.war)o.rel-=3});
-  const A=mySide({tac}),D=rivalSide(r,{home:true});const res=battle(A,D);
+  const A=mySide({tac,vs:r}),D=rivalSide(r,{home:true});const res=battle(A,D);
   applyMyLosses(A);r.army=remainArmy(D);let msg;
   if(res.win){
     const loot=Math.round(r.gold*.4+r.pop*2);s.res.gold+=loot;r.gold*=.6;r.pop*=.8;r.wall=Math.max(1,r.wall*.8);r.hits++;s.rep=Math.min(100,s.rep+3);
@@ -1346,11 +1387,12 @@ function openRival(i){
   }else{
     acts.push(`<button class="btn ghost" id="rg" ${s.res.gold>=30?'':'disabled'}><i class="ico i-gift"></i> Подарок: 30<i class="ico i-gold"></i> → отношения +15</button>`);
     if(!r.trade)acts.push(`<button class="btn ghost" id="rt" ${r.rel>=25&&cnt('market')&&hasT('currency')&&s.res.gold>=20?'':'disabled'}><i class="ico i-trade"></i> Торговый договор: 20<i class="ico i-gold"></i> → +3<i class="ico i-gold"></i> за ход</button>`);
-    acts.push(`<button class="btn ghost" id="rw" style="color:var(--bad)"><i class="ico i-war"></i> Объявить войну</button>`);
+    acts.push(...dipActs(r,i));
+    acts.push(`<button class="btn ghost" id="rw" style="color:var(--bad)" ${r.pact>s.day||r.ally?'disabled':''}><i class="ico i-war"></i> Объявить войну${r.pact>s.day?' (действует договор)':r.ally?' (союзник)':''}</button>`);
   }
   openModal(`<div class="cv">${rivalCard(r,{cls:'big',el:'div'})}<div class="info"><h2>${n}</h2><div class="muted">${cu.full}</div>
     <div class="small">Семей: ${Math.round(r.pop)} · Армия: ~${Math.round(r.army)} воин. · Стены: ${Math.round(r.wall*3)}</div><div class="small">Любимая тактика: ${TACT[favTac(r.c)].ic} ${TACT[favTac(r.c)].n} · Особый воин: ${cu.unit.ic} ${cu.unit.n} (${TY[uType(cu.unit)].n.toLowerCase()})</div>
-    <div class="small">Отношения: ${relText(r)}${r.war||r.vassal?'':` (${Math.round(r.rel)})`}${r.trade?' · торговый договор':''}${r.war?` · война ${r.warT} ход.`:''}</div>
+    <div class="small">Отношения: ${relText(r)}${r.war||r.vassal?'':` (${Math.round(r.rel)})`}${r.trade?' · торговый договор':''}${r.war?` · война ${r.warT} ход.`:''}</div>${dipStatus(r)?`<div class="small up">${dipStatus(r)}</div>`:''}
     <div class="small muted">Сильные стороны: ${cu.bonus.join('; ')}. Слабые: ${cu.minus.join('; ')}.</div>
     ${!r.trade&&!r.war&&!r.vassal?'<div class="small muted">Для договора нужны отношения от 25 и Рынок.</div>':''}
     <div class="stack">${acts.join('')}</div><button class="btn ghost" id="rx">Закрыть</button></div></div>`,true);
@@ -1360,7 +1402,8 @@ function openRival(i){
   on('#rp',()=>{s.peaceCd[r.c]=s.day+3;if(rnd()<peaceChance(r)){r.war=false;r.rel=-10;r.warT=0;log(`Мир с народом «${n}».`,'good');toast('Мир заключён')}else{log(`${n} отвергает мир.`,'bad');toast('Предложение отвергнуто')}closeModal();save();render()});
   on('#rg',()=>{s.res.gold-=30;r.rel=Math.min(100,r.rel+(hasC('diplomacy')?22:15));sfx('coin');save();render();openRival(i)});
   on('#rt',()=>{s.res.gold-=20;r.trade=true;r.rel+=5;sfx('coin');log(`Торговый договор с народом «${n}».`,'good');save();render();openRival(i)});
-  on('#rw',()=>{r.war=true;r.warT=0;r.trade=false;r.rel=-100;s.rep=Math.max(0,s.rep-3);s.rivals.forEach(o=>{if(o!==r&&!o.vassal)o.rel-=10});sfx('war');log(`Вы объявили войну народу «${n}».`,'bad');save();render();openRival(i)});
+  bindDip(r,i);
+  on('#rw',()=>{if(r.pact>s.day||r.ally)return;r.war=true;r.warT=0;r.trade=false;r.rel=-100;s.rep=Math.max(0,s.rep-3);s.rivals.forEach(o=>{if(o!==r&&!o.vassal)o.rel-=10});sfx('war');log(`Вы объявили войну народу «${n}».`,'bad');save();render();openRival(i)});
 }
 function loseFamily(why){if(pop()>Math.max(2,mcount())){s.pop.p--;log(`${why} одна семья покинула деревню.`,'bad');return true}return false}
 
@@ -1653,9 +1696,10 @@ function openLand(i){
       <div class="small muted">Участок: ${LAND[l.t].n}${l.t==='ley'&&d.ley?` (×${d.ley})`:''}</div>
       ${why?`<div class="small" style="color:var(--bad)">Простаивает: ${why}</div>`:'<div class="small" style="color:var(--good)">Работает</div>'}
       ${upH}
+      ${adjBoxHTML(i)}
       <div class="row">${d.noBuild?'':'<button class="btn ghost" id="ld">Снести</button>'}<button class="btn ghost" id="lx">Закрыть</button></div>
       ${d.noBuild?'':'<div class="small muted">При сносе вернётся половина ресурсов.</div>'}</div></div>`,true);
-    const dm=$('#ld');if(dm)dm.onclick=()=>demolish(i);const ub=$('#lu');if(ub)ub.onclick=()=>window.__up();
+    const dm=$('#ld');if(dm)dm.onclick=()=>demolish(i);const ub=$('#lu');if(ub)ub.onclick=()=>window.__up();{const a=$('#mvL'),b=$('#mvR');if(a)a.onclick=()=>moveLand(i,-1);if(b)b.onclick=()=>moveLand(i,1)}
   }else{
     openModal(`<div class="cv">${card({cls:'c-land big',name:LAND[l.t].n,artCls:`tex-${l.t}`,text:LAND[l.t].d,el:'div'})}<div class="info">
       <h2>${LAND[l.t].n}</h2><p>${LAND[l.t].d}</p><p class="muted small">Свободный участок. Ниже постройки, которые можно заложить именно здесь. Золотой рамкой отмечены те, что советуем сейчас.</p>
@@ -1915,6 +1959,8 @@ function renderTable(){
   $('#rivalsBar').querySelectorAll('[data-rv]').forEach(b=>b.onclick=()=>openRival(+b.dataset.rv));
   $('#questBox').innerHTML=`<div class="zone-h"><span>Поручения</span><span>выполнено ${s.qDone}</span></div>`+questsHTML();
   $('#questBox').querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>openQuest(+b.dataset.q));
+  $('#scnBox').innerHTML=scnHTML();{const sb=$('#scnBar');if(sb)sb.onclick=()=>{const x=SCN.find(y=>y.id===s.scn.id);openModal(`<h2>Испытание: ${x.n}</h2><p>${x.d}</p><div class="small">${x.prog()} · осталось ${Math.max(0,s.scn.end-s.day)} ход.</div><button class="btn ghost" id="sbX">Закрыть</button>`,true);$('#sbX').onclick=closeModal}}
+  $('#ordBox').innerHTML=ordHTML();bindOrd($('#ordBox'));
   $('#advice').innerHTML=adviceHTML();bindAdvice($('#advice'));
   $('#landCount').textContent=`${s.lands.filter(l=>l.b).length} из ${s.lands.length} заняты`;
   const c=landCost();
@@ -1924,18 +1970,422 @@ function renderTable(){
     const d=B[l.b];const why=st.off.get(i);
     if(l.bt>0){const tg=l.up?B[l.up]:d;return buildingCard(tg,{cls:'constr'+(l.up?' upg':'')+(JUST===i?' placed':''),land:l.t,tag:`${l.up?'Улучшение':'Стройка'}: ${l.bt} ход.`,tagCls:'arc',attrs:`data-l="${i}"`})}
     const canUp=UPG[l.b]&&!lockReason(B[UPG[l.b]]);
-    return buildingCard(d,{cls:(why?'off':'')+(JUST===i?' placed':'')+(canUp?' canup':''),land:l.t,tag:why||'',tagCls:'bad',attrs:`data-l="${i}"`});
+    const hasAdj=!why&&adjOf(i).length;
+    return buildingCard(d,{cls:(why?'off':'')+(JUST===i?' placed':'')+(canUp?' canup':'')+(hasAdj?' adj':''),land:l.t,tag:why||'',tagCls:'bad',attrs:`data-l="${i}"`});
   }).join('')+(s.lands.length<48?`<button class="card newland" id="newland" ${afford(c)?'':'disabled'}><span class="plus">+</span><span class="nl">Новый участок</span><span class="nc">${c.gold}<i class="ico i-gold"></i> ${c.wood}<i class="ico i-wood"></i><br>тянете карту земли</span></button>`:'');
 }
+
+/* =================== НОВЫЕ СИСТЕМЫ =================== */
+function inc(k,n=1){if(!s.cnt)s.cnt={};s.cnt[k]=(s.cnt[k]||0)+n}
+const cntOf=k=>(s.cnt&&s.cnt[k])||0;
+
+/* ---------- приказы старосты ---------- */
+const ORD=[
+ {id:'fair',n:'Ярмарка',d:'+40 золота и праздник на 3 хода.',base:1,fx:()=>{s.res.gold+=40;s.buffs.fest=Math.max(s.buffs.fest||0,s.day+3)},p:'a lively medieval village fair with colorful tents, jugglers and merchants'},
+ {id:'harvest',n:'Страда',d:'Все в поле: еды +6 за каждую ферму и ещё +20.',base:1,fx:()=>{s.res.food+=20+6*cnt('farm')},p:'villagers harvesting golden wheat fields together at sunset with sickles and baskets'},
+ {id:'logging',n:'Лесозаготовка',d:'+35 дерева.',base:1,fx:()=>{s.res.wood+=35},p:'woodcutters felling tall trees and stacking logs at the forest edge'},
+ {id:'watch',n:'Ночной дозор',d:'Оборона +8 на 5 ходов.',base:1,fx:()=>{s.buffs.watch=s.day+5},p:'village watchmen with torches and spears patrolling a palisade wall at night'},
+ {id:'muster',n:'Сбор ополчения',d:'+2 ополченца в армию.',base:1,fx:()=>{s.army.militia=(s.army.militia||0)+2},p:'farmers taking up pitchforks and spears, gathering in the village square for militia muster'},
+ {id:'stone',n:'Каменный оброк',d:'+30 камня.',need:()=>cnt('quarry'),fx:()=>{s.res.stone+=30},p:'workers hauling cut stone blocks on carts from a mountain quarry'},
+ {id:'study',n:'Учёный совет',d:'Наука: +30 и ещё треть хода.',need:()=>hasT('writing'),fx:()=>{s.tech.p+=30+Math.round(s.day*.3)},p:'scholars debating around a table covered with scrolls and candles in a stone hall'},
+ {id:'tithe',n:'Десятина храму',d:'Культура +30, слава +3.',need:()=>cnt('temple'),fx:()=>{s.civ.p+=30;s.rep=Math.min(100,s.rep+3)},p:'villagers bringing offerings of grain and candles to a glowing village temple'},
+ {id:'guild',n:'Купеческая гильдия',d:'+70 золота.',need:()=>cnt('market'),fx:()=>{s.res.gold+=70},p:'wealthy merchants signing a guild charter over chests of coins in a market hall'},
+ {id:'ley',n:'Ритуал лей-линий',d:'+25 маны.',need:()=>cnt('manawell'),fx:()=>{s.res.mana+=25},p:'robed villagers performing a ritual around a glowing ley line circle of stones'},
+ {id:'labor',n:'Трудовая повинность',d:'Все стройки на 1 ход быстрее.',need:()=>hasT('masonry')||s.day>20,fx:()=>{s.lands.forEach(l=>{if(l.bt>1)l.bt--})},p:'many villagers working together carrying beams and stones to build a house'},
+ {id:'envoy',n:'Посольство',d:'Отношения со всеми мирными соседями +12.',need:()=>hasC('diplomacy')||hasT('writing'),fx:()=>{s.rivals.forEach(r=>{if(!r.war&&!r.vassal)r.rel=Math.min(100,r.rel+12)})},p:'a diplomatic envoy on horseback carrying a banner and gifts towards a foreign castle'},
+ {id:'levy',n:'Военный набор',d:'+1 солдат и +1 лучник, если они уже открыты.',need:()=>cnt('yard'),fx:()=>{['soldier','archer'].forEach(u=>{if(U[u]&&!(U[u].need&&U[u].need()))s.army[u]=(s.army[u]||0)+1})},p:'young recruits lining up before a sergeant at a training yard with banners'},
+ {id:'arts',n:'Праздник искусств',d:'Культура +40, счастье на 4 хода.',need:()=>here('theater')||here('tavern'),fx:()=>{s.civ.p+=40;s.buffs.fest=Math.max(s.buffs.fest||0,s.day+4)},p:'a village festival of music and theater with bards, dancers and lanterns'},
+ {id:'cry',n:'Клич старосты',d:'Следующий бой в ближайшие 5 ходов: армия +20% к атаке.',need:()=>s.hero&&s.hero.lvl>=2,fx:()=>{s.buffs.cry=s.day+5},p:'a village chief raising a sword and shouting a battle cry before cheering warriors'},
+ {id:'secret',n:'Тайная служба',d:'Все шпионы получают опыт задания.',need:()=>s.spies&&s.spies.length,fx:()=>{s.spies.forEach(sp=>spyXp(sp))},p:'a hooded spymaster handing sealed orders to agents in a candlelit cellar'},
+ {id:'expedit',n:'Карта сокровищ',d:'Появляется новое место для экспедиции.',need:()=>s.hero,fx:()=>{newSite(true)},p:'an old treasure map spread on a table with a compass, dagger and candle'}
+];
+const ORDM=Object.fromEntries(ORD.map(o=>[o.id,o]));
+BUFFN.watch='Ночной дозор';BUFFN.cry='Клич старосты';
+function ensureOrd(){if(!s.ord)s.ord={deck:ORD.filter(o=>o.base).map(o=>o.id),burn:[],hand:[],next:s.day+1}}
+function ordEvery(){return heroPerk('chief')?2:3}
+function ordTurn(){ensureOrd();
+  ORD.forEach(o=>{if(!o.base&&!s.ord.deck.includes(o.id)&&!s.ord.burn.includes(o.id)&&o.need&&o.need()){s.ord.deck.push(o.id);log(`Новый приказ в колоде: «${o.n}».`,'arc')}});
+  if(!s.ord.hand.length&&s.day>=s.ord.next){const d=s.ord.deck.slice().sort(()=>rnd()-.5);s.ord.hand=d.slice(0,3)}}
+function ordCard(o,x={}){return card({cls:`c-spell ${x.cls||''}`,name:o.n,artCls:'cat',art:artOfRaw('o_'+o.id,I('rank')),text:o.d,attrs:x.attrs||'',el:x.el,tag:x.tag||'',tagCls:'gold'})}
+function ordHTML(){ensureOrd();const O=s.ord;
+  return`<div class="zone-h"><span>Приказы старосты</span><span><button class="lnk" id="ordDeck">колода ${O.deck.length}</button></span></div>
+  ${O.hand.length?`<div class="cards hand">${O.hand.map(id=>ordCard(ORDM[id],{attrs:`data-ord="${id}"`})).join('')}</div><div class="small muted">Выберите один приказ. Остальные вернутся в колоду.</div>`
+  :`<div class="small muted ordwait">Новые приказы через ${Math.max(1,O.next-s.day)} ход. Раз в ${ordEvery()} хода вы тянете 3 карты из колоды и разыгрываете одну.</div>`}`}
+function bindOrd(root){root.querySelectorAll('[data-ord]').forEach(b=>b.onclick=()=>openOrd(b.dataset.ord));const d=root.querySelector('#ordDeck');if(d)d.onclick=openDeck}
+function openOrd(id){const o=ORDM[id];
+  openModal(`<div class="cv">${ordCard(o,{cls:'big',el:'div'})}<div class="info"><h2>${o.n}</h2><p>${o.d}</p><div class="small muted">Разыграть можно только один приказ из трёх.</div>
+    <div class="row"><button class="btn" id="opPlay">Разыграть</button><button class="btn ghost" id="opX">Закрыть</button></div></div></div>`,true);
+  $('#opX').onclick=closeModal;$('#opPlay').onclick=()=>{o.fx();s.ord.hand=[];s.ord.next=s.day+ordEvery();inc('orders');sfx('spell');log(`Приказ старосты: «${o.n}».`,'arc');toast(`Приказ: ${o.n}`);closeModal();checkQuests(false);save();render()}}
+function openDeck(){ensureOrd();const O=s.ord;
+  openModal(`<h2>Колода приказов</h2><p class="small">В колоде ${O.deck.length} карт. Новые карты добавляются сами, когда вы открываете постройки, технологии и растите героя. Слабую карту можно сжечь, тогда сильные будут выпадать чаще (в колоде должно остаться хотя бы 4 карты).</p>
+    <div class="cards picker">${O.deck.map(id=>ordCard(ORDM[id],{attrs:`data-burn="${id}"`})).join('')}</div>
+    ${O.burn.length?`<div class="small muted">Сожжены: ${O.burn.map(id=>ORDM[id].n).join(', ')}</div>`:''}
+    <div class="small muted">Ещё закрыто: ${ORD.filter(o=>!O.deck.includes(o.id)&&!O.burn.includes(o.id)).length}</div><button class="btn ghost" id="dkX">Закрыть</button>`,true);
+  $('#dkX').onclick=closeModal;
+  document.querySelectorAll('[data-burn]').forEach(b=>b.onclick=()=>{const id=b.dataset.burn;if(O.deck.length<=4){toast('В колоде должно остаться хотя бы 4 карты');return}
+    confirmBox(`Сжечь «${ORDM[id].n}»?`,'Карта навсегда уйдёт из колоды этой партии.','Сжечь',()=>{O.deck=O.deck.filter(x=>x!==id);O.burn.push(id);O.hand=O.hand.filter(x=>x!==id);save();render();openDeck()})})}
+
+/* ---------- соседство карт ---------- */
+const ADJ=[
+ ['farm','farm',{food:1},'Соседние поля'],['farm','mill',{food:2},'Мельница рядом'],['mill','farm',{food:1},'Поля рядом'],
+ ['lumber','lumber',{wood:1},'Соседняя лесопилка'],['lumber','workshop',{wood:1},'Инженер рядом'],
+ ['quarry','smithy',{stone:1},'Кузница рядом'],['smithy','quarry',{gold:1},'Камень под рукой'],
+ ['market','tavern',{gold:2},'Таверна рядом'],['tavern','market',{gold:1},'Рынок рядом'],['market','jeweler',{gold:2},'Ювелир рядом'],['market','tailor',{gold:1},'Портной рядом'],
+ ['temple','fountain',{cult:1,happy:2},'Площадь у храма'],['fountain','temple',{happy:1},'Храм рядом'],['fountain','hut',{happy:1},'Дома у площади'],['fountain','house',{happy:1},'Дома у площади'],['fountain','manor',{happy:1},'Дома у площади'],
+ ['library','observatory',{sci:2},'Обсерватория рядом'],['observatory','library',{sci:1},'Библиотека рядом'],['library','temple',{sci:1},'Храм рядом'],['alchemy','herbalist',{mana:1},'Травница рядом'],
+ ['tower','manawell',{mana:1},'Колодец маны рядом'],['manawell','manawell',{mana:1},'Соседний колодец'],['enchanter','tower',{mana:1},'Башня рядом'],
+ ['watchtower','palisade',{def:2},'Частокол рядом'],['watchtower','stonewall',{def:3},'Стена рядом'],['barracks','yard',{def:2},'Двор рядом'],['yard','barracks',{def:1},'Казарма рядом'],
+ ['bakery','mill',{food:2},'Мельница рядом'],['bakery','farm',{food:1},'Поля рядом'],['butcher','hunter',{food:1},'Охотник рядом'],['brewery','farm',{gold:1},'Поля рядом'],['brewery','tavern',{gold:1},'Таверна рядом'],
+ ['theater','tavern',{cult:1},'Таверна рядом'],['theater','fountain',{cult:1},'Площадь рядом'],['garden','grove',{food:2},'Роща рядом'],['grove','garden',{mana:1},'Сад рядом'],
+ ['infirmary','herbalist',{happy:2},'Травница рядом'],['herbalist','grove',{mana:1},'Роща рядом']
+];
+const nbrs=i=>[i-1,i+1].filter(j=>j>=0&&j<s.lands.length);
+function adjOf(i,actSet){const l=s.lands[i];if(!l||!l.b||busy(l))return[];const out=[];
+  nbrs(i).forEach(j=>{const n=s.lands[j];if(!n.b||busy(n)||(actSet&&!actSet.has(j)))return;ADJ.forEach(([a,b,fx,t])=>{if(a===l.b&&b===n.b)out.push({j,fx,t})})});return out}
+function adjText(fx){return Object.entries(fx).map(([k,v])=>`+${v}${k==='happy'?' счастья':k==='def'?' обороны':k==='sci'?'<i class="ico i-science"></i>':k==='cult'?'<i class="ico i-culture"></i>':RI[k]}`).join(' ')}
+function moveLand(i,dir){const j=i+dir;if(j<0||j>=s.lands.length)return;const a=s.lands;[a[i],a[j]]=[a[j],a[i]];JUST=j;sfx('card');save();render();setTimeout(()=>JUST=null,600);openLand(j)}
+function adjBoxHTML(i){const l=s.lands[i];const L=adjOf(i);const pot=ADJ.filter(x=>x[0]===l.b);
+  return`<div class="adjbox"><div class="small"><b>Соседство</b> <span class="muted">(соседи — карты слева и справа по порядку на столе)</span></div>
+   ${L.length?L.map(x=>`<div class="small up">${x.t}: ${adjText(x.fx)}</div>`).join(''):'<div class="small muted">Сейчас бонусов нет.</div>'}
+   ${pot.length?`<div class="small muted">Любит соседство: ${[...new Set(pot.map(x=>B[x[1]]&&B[x[1]].n).filter(Boolean))].join(', ')}.</div>`:''}
+   <div class="row"><button class="btn ghost sm" id="mvL" ${i>0?'':'disabled'}>← Сдвинуть</button><button class="btn ghost sm" id="mvR" ${i<s.lands.length-1?'':'disabled'}>Сдвинуть →</button></div></div>`}
+
+/* ---------- герой-староста ---------- */
+const HNAMES={east:['Сора Ясный Клинок','Харуто Ветер','Мин-хо Стойкий'],europe:['Эдрик Твёрдый','Ровена Светлая','Годрик Щит'],elves:['Аэлар Лунный Лист','Ильвен Звёздная','Тирион Тихий'],magi:['Мерида Пламенная','Каспиан Руна','Аурелия Звезда'],north:['Рагнар Медвежий','Сигрид Буря','Эйрик Секира'],desert:['Зафир Песчаный','Лейла Мираж','Кассим Острый']};
+const HP=[
+ {id:'general',n:'Полководец',d:'Армия +10% к атаке.',fx:{atk:1.1}},
+ {id:'guard',n:'Страж',d:'Оборона деревни +6.'},
+ {id:'steward',n:'Хозяин',d:'Налоги +12%.',fx:{tax:1.12}},
+ {id:'diplomat',n:'Дипломат',d:'Отношения с соседями растут быстрее, договоры дешевле на треть.'},
+ {id:'seeker',n:'Искатель',d:'Экспедиции на 1 ход короче, добыча +30%.'},
+ {id:'scholar',n:'Книжник',d:'Наука +10%.',fx:{sci:1.1}},
+ {id:'bard',n:'Сказитель',d:'Культура +10%.',fx:{cult:1.1}},
+ {id:'champion',n:'Богатырь',d:'Сила героя +5.'},
+ {id:'chief',n:'Вождь',d:'Приказы приходят раз в 2 хода вместо 3.'},
+ {id:'quarter',n:'Интендант',d:'Содержание армии −15%.',fx:{upkeep:.85}}
+];
+const HPM=Object.fromEntries(HP.map(p=>[p.id,p]));
+const HXP=[0,4,10,18,28,40,55,72,92,115];
+const heroPerk=id=>!!(s&&s.hero&&s.hero.perks.includes(id));
+function ensureHero(){if(!s.hero){const L=HNAMES[s.culture]||HNAMES.europe;s.hero={name:L[(rnd()*L.length)|0],lvl:1,xp:0,perks:[],at:'home',hurt:0,lead:true,pick:null}}}
+function heroPow(){const h=s.hero;if(!h)return 0;return 6+3*h.lvl+(heroPerk('champion')?5:0)+relicSum('hero')}
+const heroFree=()=>s.hero&&s.hero.at==='home'&&!(s.hero.hurt>s.day);
+function heroXp(n,why){const h=s.hero;if(!h)return;h.xp+=n;while(h.lvl<HXP.length&&h.xp>=HXP[h.lvl]){h.lvl++;const pool=HP.filter(p=>!h.perks.includes(p.id)).sort(()=>rnd()-.5).slice(0,3).map(p=>p.id);h.pick=pool.length?pool:null;
+  const m=`${h.name} достигает ${h.lvl}-го уровня${h.pick?'. Выберите новое умение во вкладке «Староста».':'.'}`;log(m,'good');REPORT.push(['Староста растёт',m,'good']);inc('hlvl')}}
+function heroCard(x={}){const h=s.hero;return card({cls:`c-unit ${x.cls||''}`,name:h.name,artCls:'cat',art:artOf('hero',I('rank')),text:`Уровень ${h.lvl} · сила ${heroPow()}`,tag:h.hurt>s.day?`Ранен: ${h.hurt-s.day} ход.`:h.at!=='home'?'В экспедиции':'Дома',tagCls:h.hurt>s.day?'bad':h.at!=='home'?'arc':'ok',attrs:x.attrs||'',el:x.el})}
+function renderHero(p){ensureHero();const h=s.hero;const nx=HXP[h.lvl];
+  p.innerHTML=`<div class="two"><div class="herocv">${heroCard({cls:'big',el:'div'})}</div><div class="stack">
+   <h3>${h.name}</h3><div class="small">Уровень ${h.lvl} · опыт ${h.xp}${nx?` / ${nx}`:''} · сила ${heroPow()}</div>
+   ${nx?`<div class="bar"><i style="width:${Math.min(100,(h.xp-HXP[h.lvl-1])/(nx-HXP[h.lvl-1])*100)}%"></i></div>`:''}
+   <div class="small muted">Опыт: победа в бою +2, поражение +1, удачная экспедиция +3, повергнутый босс +6.</div>
+   <label class="setrow"><span>Ведёт армию в бой<small>Добавляет силу героя в каждую битву. При тяжёлом поражении герой может быть ранен на 6 ходов.</small></span><input type="checkbox" class="sw" id="hLead" ${h.lead!==false?'checked':''}></label>
+   ${h.pick?`<h3>Новое умение</h3><div class="stack">${h.pick.map(id=>`<button class="opt" data-perk="${id}"><span><b>${HPM[id].n}</b><br><span class="small muted">${HPM[id].d}</span></span></button>`).join('')}</div>`:''}
+   <h3>Умения</h3>${h.perks.length?h.perks.map(id=>`<div class="small"><b>${HPM[id].n}</b> — ${HPM[id].d}</div>`).join(''):'<div class="small muted">Пока нет. Первое умение — на 2-м уровне.</div>'}
+   <h3>Реликвии</h3><div class="small">${s.relics&&s.relics.length?s.relics.map(id=>RELM[id].n).join(', '):'Пока нет. Ищите их в экспедициях.'}</div>
+  </div></div>`;
+  $('#hLead').onchange=e=>{h.lead=e.target.checked;save()};
+  p.querySelectorAll('[data-perk]').forEach(b=>b.onclick=()=>{h.perks.push(b.dataset.perk);h.pick=null;sfx('good');log(`${h.name} осваивает умение «${HPM[b.dataset.perk].n}».`,'good');save();render()})}
+
+/* ---------- реликвии ---------- */
+const RELICS=[
+ {id:'crown',n:'Корона первого старосты',d:'Налоги +15%.',fx:{tax:1.15},p:'an ancient simple golden crown with worn engravings resting on a velvet cushion'},
+ {id:'horn',n:'Рог северного ветра',d:'Армия +10% к атаке.',fx:{atk:1.1},p:'a carved ivory war horn with silver runes and frost swirling from its mouth'},
+ {id:'seed',n:'Вечное зерно',d:'Фермы +15%.',fx:{farm:1.15},p:'a single glowing golden seed floating above an open wooden box with wheat stalks'},
+ {id:'lens',n:'Линза звездочёта',d:'Наука +15%.',fx:{sci:1.15},p:'a brass astronomical lens with a crystal glowing with starlight on an old star chart'},
+ {id:'lyre',n:'Лира забытого барда',d:'Культура +15%.',fx:{cult:1.15},p:'an elegant old golden lyre with glowing strings and ivy wrapped around it'},
+ {id:'grail',n:'Чаша исцеления',d:'Содержание армии −15%, счастье +3.',fx:{upkeep:.85},happy:3,p:'a radiant silver chalice filled with glowing healing water on an altar'},
+ {id:'axe',n:'Неутомимый топор',d:'Дерево +20%.',fx:{wood:1.2},p:'a legendary woodcutter axe with a rune-etched blade embedded in a tree stump'},
+ {id:'pick',n:'Кирка гномов',d:'Камень +20%.',fx:{stone:1.2},p:'a dwarven pickaxe with a glowing gemstone in the handle leaning on rocks'},
+ {id:'orb',n:'Сфера маны',d:'Мана +25%.',fx:{mana:1.25},p:'a floating crystal orb swirling with blue arcane energy above a stone pedestal'},
+ {id:'banner',n:'Знамя героев',d:'Оборона +6, сила старосты +3.',def:6,hero:3,p:'a tattered heroic battle banner with a golden emblem on a spear in the wind'},
+ {id:'mask',n:'Маска тени',d:'Шпионы +10% к успеху.',spy:.1,p:'a black lacquered mask with silver filigree lying on a dark velvet cloth'},
+ {id:'map',n:'Карта забытых земель',d:'Экспедиции находят реликвии чаще.',p:'an ancient parchment map with glowing ink marking forgotten lands and ruins'},
+ {id:'heart',n:'Сердце дракона',d:'Мана +30%, армия +10% к атаке.',fx:{mana:1.3,atk:1.1},boss:1,p:'a huge glowing ruby dragon heart pulsing with fire inside a stone reliquary'},
+ {id:'icecrown',n:'Ледяной венец великана',d:'Оборона +10, зимой урожай не падает так сильно.',def:10,winter:1,boss:1,p:'a massive crown of blue ice with frozen runes, mist rising from it'},
+ {id:'staff',n:'Посох короля-лича',d:'Наука +20%, культура +10%.',fx:{sci:1.2,cult:1.1},boss:1,p:'a dark bone staff topped with a green glowing skull crystal and runes'}
+];
+const RELM=Object.fromEntries(RELICS.map(r=>[r.id,r]));
+const hasRel=id=>!!(s&&s.relics&&s.relics.includes(id));
+const relicSum=k=>s&&s.relics?s.relics.reduce((a,id)=>a+(RELM[id][k]||0),0):0;
+function extraFx(){const L=[];if(!s)return L;if(s.relics)s.relics.forEach(id=>{if(RELM[id].fx)L.push(RELM[id].fx)});if(s.hero)s.hero.perks.forEach(id=>{if(HPM[id].fx)L.push(HPM[id].fx)});return L}
+function extraDef(){return relicSum('def')+(heroPerk('guard')?6:0)+(buff('watch')?8:0)}
+function gainRelic(pool){if(!s.relics)s.relics=[];const L=(pool||RELICS.filter(r=>!r.boss)).filter(r=>!hasRel(r.id));if(!L.length)return null;const r=L[(rnd()*L.length)|0];s.relics.push(r.id);inc('relics');log(`Найдена реликвия: «${r.n}».`,'arc');return r}
+function relicCard(r,x={}){const own=hasRel(r.id);return card({cls:`c-god ${own?'':'locked'} ${x.cls||''}`,name:own||x.show?r.n:'???',artCls:'cat',art:own||x.show?artOfRaw('rl_'+r.id,I('spark')):I('lock'),text:own||x.show?r.d:(r.boss?'Трофей босса':'Ищите в экспедициях'),attrs:x.attrs||'',el:x.el,tag:r.boss&&own?'Трофей':'',tagCls:'gold'})}
+function renderRelics(p){p.innerHTML=`<div class="small muted" style="margin-bottom:10px">Собрано ${s.relics?s.relics.length:0} из ${RELICS.length}. Реликвии действуют всю партию. Обычные находят в экспедициях, три особые — трофеи боссов.</div>
+  <div class="cards">${RELICS.map(r=>relicCard(r,{attrs:`data-rl="${r.id}"`})).join('')}</div>`;
+  p.querySelectorAll('[data-rl]').forEach(b=>b.onclick=()=>{const r=RELM[b.dataset.rl];if(!hasRel(r.id))return;openModal(`<div class="cv">${relicCard(r,{cls:'big',el:'div'})}<div class="info"><h2>${r.n}</h2><p>${r.d}</p><button class="btn ghost" id="rlX">Закрыть</button></div></div>`,true);$('#rlX').onclick=closeModal})}
+
+/* ---------- экспедиции и логова ---------- */
+const SITES={
+ ruins:{n:'Древние руины',pow:9,t:'inf',turns:3,loot:{gold:60},rel:.35,d:'Обвалившиеся стены и стражи-скелеты.',p:'ancient overgrown stone ruins with broken pillars and skeleton guardians in mist'},
+ cave:{n:'Пещера тролля',pow:14,t:'inf',turns:4,loot:{stone:50,gold:40},rel:.3,d:'Тролль сторожит груду награбленного.',p:'a dark mountain cave entrance with a huge troll guarding a pile of treasure'},
+ temple:{n:'Затонувший храм',pow:11,t:'mage',turns:4,loot:{mana:30,cult:30},rel:.4,d:'Под водой спят древние духи.',p:'a half-sunken ancient temple in a misty lake with glowing water spirits'},
+ nest:{n:'Гнездо грифонов',pow:16,t:'cav',turns:4,loot:{gold:80},rel:.35,d:'Грифоны тащат в гнездо всё блестящее.',p:'a griffin nest on a high cliff full of shiny treasures with griffins circling'},
+ camp:{n:'Лагерь разбойников',pow:10,t:'arch',turns:3,loot:{gold:90,food:30},rel:.15,d:'Шайка грабит караваны на дороге.',p:'a bandit camp in a dark forest clearing with tents, campfire and stolen loot'},
+ barrow:{n:'Курган',pow:12,t:'inf',turns:3,loot:{gold:50,sci:30},rel:.4,d:'Древний вождь не любит гостей.',p:'an ancient burial mound with standing stones and a ghostly warrior at night'},
+ dragon:{n:'Логово дракона',pow:30,t:'mage',turns:5,loot:{gold:300},boss:'heart',d:'Дракон проснулся. Если его не остановить, он сожжёт деревню.',p:'a huge red dragon sleeping on mountains of gold inside a volcanic cavern'},
+ giant:{n:'Зимний великан',pow:28,t:'inf',turns:5,loot:{gold:250,stone:100},boss:'icecrown',d:'Великан идёт с гор, и за ним приходит вечная зима.',p:'a colossal frost giant with an ice club walking through a snowstorm towards a village'},
+ lich:{n:'Король-лич',pow:32,t:'mage',turns:5,loot:{gold:250,sci:120},boss:'staff',d:'Мёртвые поднимаются из курганов по его зову.',p:'an undead lich king on a bone throne with green magic fire in a dark crypt'}
+};
+const SK=['ruins','cave','temple','nest','camp','barrow'],BOSSK=['dragon','giant','lich'];
+function ensureExp(){if(!s.exp)s.exp={sites:[],id:1,party:null,next:s.day+6,boss:41}}
+const sitePow=x=>Math.round(SITES[x.k].pow*(1+s.day/65)*DF().am);
+function newSite(force){ensureExp();if(s.exp.sites.filter(x=>!SITES[x.k].boss).length>=3&&!force)return;const k=SK[(rnd()*SK.length)|0];s.exp.sites.push({id:s.exp.id++,k,until:s.day+30});
+  log(`Разведчики нашли место для экспедиции: «${SITES[k].n}».`,'arc')}
+function expTurn(){ensureExp();ensureHero();const E=s.exp;
+  if(s.day>=E.next){newSite();E.next=s.day+9+((rnd()*5)|0)}
+  E.sites=E.sites.filter(x=>SITES[x.k].boss||x.until>s.day||(E.party&&E.party.site===x.id));
+  if(s.day>=E.boss&&!E.sites.some(x=>SITES[x.k].boss)){const k=BOSSK.filter(b=>!hasRel(SITES[b].boss))[0]||BOSSK[(rnd()*3)|0];E.sites.push({id:E.id++,k,until:s.day+18});E.boss=s.day+40;
+    REPORT.push([`Босс: ${SITES[k].n}`,`${SITES[k].d} У вас 18 ходов, чтобы отправить экспедицию. Иначе он нападёт на деревню.`,'bad']);sfx('war')}
+  E.sites.filter(x=>SITES[x.k].boss&&x.until<=s.day&&!(E.party&&E.party.site===x.id)).forEach(x=>{bossAttack(x);E.sites=E.sites.filter(y=>y!==x)});
+  if(E.party&&s.day>=E.party.end)expResolve()}
+function monsterSide(x){const S=SITES[x.k];const P=sitePow(x);const n=Math.max(1,P/2);return{name:S.n,g:[{id:'mon',name:S.boss?S.n:'Стражи: '+S.n,ic:I('threat'),type:S.t,atk:2.6,hp:3,n0:n,n}],wall:0,tac:'rush',home:false}}
+function partySide(units,withHero){const g=[];for(const id in units){const n=units[id];if(!(n>0))continue;const u=U[id];g.push({id,name:u.n,ic:u.ic,type:uType(u),atk:uAtk(u)*(1+vb(id)),hp:u.def*(1+vb(id)/2),n0:n,n})}
+  if(withHero)g.push({id:'hero',name:'Староста '+s.hero.name,ic:I('rank'),type:'inf',atk:heroPow()*.8,hp:heroPow()*.9,n0:1,n:1,fixed:1});return{name:'Экспедиция',g,wall:0,tac:s.tactic||'rush',home:false}}
+function openSite(id){ensureExp();const x=s.exp.sites.find(y=>y.id===id);if(!x)return;const S=SITES[x.k];const busyP=!!s.exp.party;
+  const P=sitePow(x);const turns=Math.max(1,S.turns-(heroPerk('seeker')?1:0));
+  const opts=[0,3,6,10].filter(n=>n===0||armySize()>=n);
+  const est=n=>{const u=takeUnits(n,true);const A=partySide(u,heroFree());const pw=A.g.reduce((a,g)=>a+g.n*(g.atk+g.hp),0);const m=Math.max(1,P/2)*5.6;return Math.max(.05,Math.min(.95,.5+(pw-m)/(m*1.6)))};
+  openModal(`<div class="cv">${siteCard(x,{cls:'big',el:'div'})}<div class="info"><h2>${S.n}</h2><p>${S.d}</p>
+    <div class="small">Сила стража: <b>${P}</b> (${TY[S.t].n.toLowerCase()}) · поход ${turns} ход.${S.boss?'':` · исчезнет через ${Math.max(0,x.until-s.day)} ход.`}</div>
+    <div class="small">Добыча: ${Object.entries(S.loot).map(([k,v])=>`${v}${k==='sci'?'<i class="ico i-science"></i>':k==='cult'?'<i class="ico i-culture"></i>':RI[k]}`).join(' ')}${S.boss?` и трофей «${RELM[S.boss].n}»`:` · шанс реликвии ${Math.round((S.rel+(hasRel('map')?.15:0))*100)}%`}</div>
+    ${busyP?'<div class="small" style="color:var(--bad)">Экспедиция уже в пути. Дождитесь её возвращения.</div>':!heroFree()?'<div class="small" style="color:var(--bad)">Староста ранен или в пути. Без него экспедицию не собрать.</div>':
+    `<div class="small">Кого отправить со старостой (воины уходят из армии на время похода):</div><div class="stack">${opts.map(n=>`<button class="opt" data-pn="${n}"><span><b>${n?`Староста и ${n} воин.`:'Только староста'}</b></span><span class="p">${Math.round(est(n)*100)}%</span></button>`).join('')}</div>`}
+    <button class="btn ghost" id="stX">Закрыть</button></div></div>`,true);
+  $('#stX').onclick=closeModal;
+  document.querySelectorAll('[data-pn]').forEach(b=>b.onclick=()=>{const n=+b.dataset.pn;const u=takeUnits(n);s.exp.party={site:x.id,units:u,end:s.day+turns};s.hero.at='exp';sfx('card');log(`Экспедиция выступила: «${S.n}».`);closeModal();save();render()})}
+function takeUnits(n,dry){const u={};let left=n;const L=UNITS.map(x=>x.id).filter(id=>(s.army[id]||0)>0).sort((a,b)=>uAtk(U[b])-uAtk(U[a]));
+  while(left>0&&L.some(id=>(s.army[id]||0)-(u[id]||0)>0)){for(const id of L){if(left<=0)break;if((s.army[id]||0)-(u[id]||0)>0){u[id]=(u[id]||0)+1;left--}}}
+  if(!dry)for(const id in u)s.army[id]-=u[id];return u}
+function expResolve(){const E=s.exp,P=E.party;E.party=null;s.hero.at='home';const x=E.sites.find(y=>y.id===P.site);
+  if(!x){for(const id in P.units)s.army[id]=(s.army[id]||0)+P.units[id];return}
+  const S=SITES[x.k];const A=partySide(P.units,true),D=monsterSide(x);const res=battle(A,D);
+  A.g.forEach(g=>{if(g.fixed)return;const k=Math.max(0,g.n);s.army[g.id]=(s.army[g.id]||0)+Math.floor(k)+(rnd()<k-Math.floor(k)?1:0);if(res.win&&U[g.id]){if(!s.vet)s.vet={};s.vet[g.id]=vxp(g.id)+.5}});
+  const hg=A.g.find(g=>g.id==='hero');const html=battleHTML(res,true);
+  if(res.win){const m=heroPerk('seeker')?1.3:1;const got=[];for(const[k,v]of Object.entries(S.loot)){const n=Math.round(v*m*(1+s.day/150));if(k==='sci')s.tech.p+=n;else if(k==='cult')s.civ.p+=n;else s.res[k]+=n;got.push(`${n}${k==='sci'?' науки':k==='cult'?' культуры':RI[k]}`)}
+    let rl=null;if(S.boss){rl=RELM[S.boss];if(!hasRel(rl.id)){s.relics=s.relics||[];s.relics.push(rl.id);inc('relics')}inc('bosses');heroXp(6)}else if(rnd()<S.rel+(hasRel('map')?.15:0))rl=gainRelic();
+    inc('exps');heroXp(3);E.sites=E.sites.filter(y=>y!==x);
+    REPORT.push([S.boss?`${S.n} повержен!`:`Экспедиция: ${S.n} — успех`,`Добыча: ${got.join(', ')}.${rl?` Реликвия: «${rl.n}» — ${rl.d}`:''}`,'good',html]);sfx('good')}
+  else{heroXp(1);if(hg&&hg.n<.5){s.hero.hurt=s.day+6}REPORT.push([`Экспедиция: ${S.n} — неудача`,`Страж оказался сильнее. Выжившие вернулись домой.${s.hero.hurt>s.day?' Староста ранен на 6 ходов.':''}`,'bad',html]);sfx('bad')}}
+function bossAttack(x){const S=SITES[x.k];const A=monsterSide(x);A.g[0].atk*=1.1;const D=mySide({home:true});const res=battle(A,D);applyMyLosses(D);const html=battleHTML(res,false);
+  if(!res.win){inc('bosses');const rl=RELM[S.boss];if(!hasRel(rl.id)){s.relics=s.relics||[];s.relics.push(rl.id);inc('relics')}heroXp(6);REPORT.push([`${S.n} разбит у стен!`,`Деревня выстояла. Трофей: «${rl.n}».`,'good',html]);sfx('good')}
+  else{const g=Math.round(s.res.gold*.3),f=Math.round(s.res.food*.3);s.res.gold-=g;s.res.food-=f;loseFamily('После нападения');loseFamily('После нападения');const b=s.lands.findIndex(l=>l.b&&l.b!=='hall'&&!l.bt);if(b>=0){log(`${S.n} разрушил: ${B[s.lands[b].b].n}.`,'bad');s.lands[b].b=null}
+    REPORT.push([`${S.n} опустошил деревню`,`Потеряно ${g} золота и ${f} еды, ушли две семьи, разрушена одна постройка.`,'bad',html]);sfx('bad')}}
+function siteCard(x,o={}){const S=SITES[x.k];const P=s.exp.party&&s.exp.party.site===x.id;
+  return card({cls:`${S.boss?'c-rival':'c-spell'} ${o.cls||''}`,name:S.n,artCls:'cat',art:artOfRaw('ex_'+x.k,I('threat')),text:`Сила ${sitePow(x)} · ${S.turns} ход.`,tag:P?`Экспедиция: ${Math.max(0,s.exp.party.end-s.day)} ход.`:S.boss?`Нападёт через ${Math.max(0,x.until-s.day)}`:'',tagCls:P?'arc':'bad',attrs:o.attrs||'',el:o.el})}
+function renderExp(p){ensureExp();ensureHero();const E=s.exp;
+  p.innerHTML=`<div class="two" style="margin-bottom:12px"><div class="stack"><h3>Экспедиции</h3><div class="small muted">Староста с отрядом отправляется к опасным местам за золотом и реликвиями. Новые места разведчики находят раз в 9–13 ходов. Раз в 40 ходов (с 41-го) приходит босс.</div>
+   ${E.party?`<div class="small">В пути: «${SITES[(E.sites.find(y=>y.id===E.party.site)||{k:'ruins'}).k].n}», вернётся через ${Math.max(0,E.party.end-s.day)} ход.</div>`:''}</div>
+   </div>
+   <div class="cards">${heroCard({attrs:'data-hero="1"'})}${E.sites.map(x=>siteCard(x,{attrs:`data-site="${x.id}"`})).join('')||'<div class="small muted">Пока мест нет. Разведчики ищут.</div>'}</div>`;
+  p.querySelectorAll('[data-site]').forEach(b=>b.onclick=()=>openSite(+b.dataset.site));p.querySelectorAll('[data-hero]').forEach(b=>b.onclick=()=>go('hero'))}
+
+/* ---------- дипломатия ---------- */
+const dipCost=n=>Math.round(n*(heroPerk('diplomat')?.67:1));
+function dipActs(r,i){const A=[];const P=r.pact>s.day;
+  if(r.war||r.vassal)return A;
+  if(!P&&!r.ally)A.push(`<button class="btn ghost" id="dPact" ${r.rel>=5&&s.res.gold>=dipCost(40)?'':'disabled'}><i class="ico i-peace"></i> Договор о ненападении на 30 ходов: ${dipCost(40)}<i class="ico i-gold"></i> (отношения от 5)</button>`);
+  if(!r.ally)A.push(`<button class="btn ghost" id="dAlly" ${r.rel>=40&&s.res.gold>=dipCost(80)?'':'disabled'}><i class="ico i-vassal"></i> Союз: ${dipCost(80)}<i class="ico i-gold"></i> (отношения от 40). Союзник помогает в ваших войнах.</button>`);
+  else A.push(`<button class="btn ghost" id="dBreak">Разорвать союз</button>`);
+  if(!r.wed&&s.hero)A.push(`<button class="btn ghost" id="dWed" ${r.rel>=30&&s.res.gold>=dipCost(100)?'':'disabled'}><i class="ico i-gift"></i> Династический брак: ${dipCost(100)}<i class="ico i-gold"></i> (отношения от 30). Отношения +25 и никогда не падают ниже 10.</button>`);
+  if(!r.ally&&!(r.trib>s.day))A.push(`<button class="btn ghost" id="dTrib" ${armySize()>=Math.max(4,r.army*1.5)?'':'disabled'}><i class="ico i-atk"></i> Потребовать дань (армия в 1.5 раза больше их) — шанс ${Math.round(tribChance(r)*100)}%</button>`);
+  return A}
+function tribChance(r){return Math.max(.1,Math.min(.85,(armySize()/(r.army+1)-1)*.35+(r.rel>0?.15:0)))}
+function dipStatus(r){const L=[];if(r.pact>s.day)L.push(`договор о ненападении (${r.pact-s.day} ход.)`);if(r.ally)L.push('союз');if(r.wed)L.push('родство домов');if(r.trib>s.day)L.push(`платят дань (${r.trib-s.day} ход.)`);return L.join(' · ')}
+function bindDip(r,i){const on=(id,fn)=>{const b=$(id);if(b)b.onclick=fn};const n=rivalName(r);
+  on('#dPact',()=>{s.res.gold-=dipCost(40);r.pact=s.day+30;r.rel+=5;inc('treaties');log(`Договор о ненападении с народом «${n}».`,'good');sfx('coin');save();render();openRival(i)});
+  on('#dAlly',()=>{s.res.gold-=dipCost(80);r.ally=true;r.rel+=10;inc('allies');log(`Союз с народом «${n}»!`,'good');REPORT.push([`Союз: ${n}`,'Союзник будет помогать войском в ваших войнах.','good']);sfx('good');save();render();openRival(i)});
+  on('#dBreak',()=>{r.ally=false;r.rel-=20;log(`Союз с народом «${n}» разорван.`,'bad');save();render();openRival(i)});
+  on('#dWed',()=>{s.res.gold-=dipCost(100);r.wed=true;r.rel=Math.min(100,r.rel+25);inc('weds');log(`Династический брак: дома старосты и народа «${n}» породнились.`,'good');sfx('good');save();render();openRival(i)});
+  on('#dTrib',()=>{if(rnd()<tribChance(r)){r.trib=s.day+20;r.rel-=10;log(`Народ «${n}» согласился платить дань: 6 золота за ход, 20 ходов.`,'good');toast('Дань принята');inc('tribs')}
+    else{r.rel-=25;log(`Народ «${n}» с гневом отверг требование дани.`,'bad');toast('Требование отвергнуто');if(r.rel<-30&&rnd()<.4){r.war=true;r.warT=0;r.trade=false;r.rel=-100;REPORT.push([`Народ «${n}» объявляет войну!`,'Требование дани стало последней каплей.','bad'])}}save();render();openRival(i)})}
+function dipTurn(){s.rivals.forEach(r=>{if(r.trib>s.day){const v=Math.min(6,r.gold);r.gold-=v;s.res.gold+=v}
+  if(r.ally&&(r.war||r.rel<15)){r.ally=false;log(`Союз с народом «${rivalName(r)}» распался.`,'bad')}
+  if(heroPerk('diplomat')&&!r.war&&!r.vassal)r.rel=Math.min(100,r.rel+.3)})}
+function allyGroups(vs){const g=[];s.rivals.forEach((r,ri)=>{if(r.ally&&r!==vs&&!r.war&&r.army>1){const n=r.army*.25;g.push({id:'ally'+ri,ri,ally:1,name:'Союзники: '+rivalName(r),ic:I('vassal'),type:'inf',atk:rivalAtk(r.c,U.soldier||{atk:4}),hp:4,n0:n,n,fixed:1})}});return g}
+
+/* ---------- караваны ---------- */
+function carMax(){return 1+cnt('market')+(here('tavern')?1:0)+(hasT('currency')?1:0)}
+function carTargets(){const L=[];s.rivals.forEach((r,i)=>{if(!r.war&&r.rel>-10)L.push({to:'r'+i,n:rivalName(r),inc:3+(r.trade?1:0)+(r.ally?1:0)+(r.wed?1:0),ex:null})});
+  CITIES.forEach(c=>{const x=s.cs[c.id];if(!x.war&&!x.own)L.push({to:'c'+c.id,n:c.n,inc:2,ex:c.id})});return L}
+const carCost=()=>({gold:40+10*(s.car||[]).length,food:20});
+function carName(to){return to[0]==='r'?rivalName(s.rivals[+to.slice(1)]):CITY[to.slice(1)].n}
+function carTurn(){if(!s.car)s.car=[];s.car.slice().forEach(c=>{const tg=c.to[0]==='r'?s.rivals[+c.to.slice(1)]:s.cs[c.to.slice(1)];
+  if(!tg||tg.war){s.car=s.car.filter(x=>x!==c);REPORT.push([`Караван захвачен`,`Караван в ${carName(c.to)} разграблен: между вами война.`,'bad']);return}
+  if(s.pir&&rnd()<.02&&!(s.pir.quiet>s.day)){s.car=s.car.filter(x=>x!==c);REPORT.push(['Пираты ограбили караван',`Караван в ${carName(c.to)} пропал. Разгромите пиратскую бухту, чтобы дороги стали безопаснее.`,'bad']);return}
+  const v=c.inc*(1+.1*cnt('market'));s.res.gold+=v;c.total=(c.total||0)+v;if(c.to[0]==='r')tg.rel=Math.min(100,tg.rel+.15);else tg.inf=Math.min(100,tg.inf+.3);inc('carGold',v)})}
+function renderCar(p){if(!s.car)s.car=[];const T=carTargets();const cc=carCost();const free=s.car.length<carMax();
+  p.innerHTML=`<div class="small muted" style="margin-bottom:10px">Караван каждый ход приносит золото и улучшает отношения (с городами растёт влияние). Караванов можно держать ${carMax()}: больше дают рынки, таверна и чеканка монет. Война с целью или пираты могут погубить караван.</div>
+   <h3>В пути: ${s.car.length}/${carMax()}</h3>
+   <div class="cards">${s.car.map((c,k)=>card({cls:'c-shop',name:carName(c.to),artCls:'cat',art:artOfRaw('caravan',I('trade')),text:`+${Math.round(c.inc*(1+.1*cnt('market'))*10)/10}<i class="ico i-gold"></i> за ход · всего ${Math.round(c.total||0)}`,tag:'В пути',tagCls:'ok',attrs:`data-car="${k}"`})).join('')||'<div class="small muted">Караванов нет.</div>'}</div>
+   <h3>Новый караван: ${cc.gold}<i class="ico i-gold"></i> ${cc.food}<i class="ico i-food"></i></h3>
+   <div class="stack">${T.map(t=>`<button class="opt" data-cto="${t.to}" ${free&&afford(cc)&&!s.car.some(c=>c.to===t.to)?'':'disabled'}><span><b>${t.n}</b><br><span class="small muted">${s.car.some(c=>c.to===t.to)?'Караван уже идёт':t.ex?'Город-государство: влияние растёт':'Отношения растут'}</span></span><span class="p">+${t.inc}<i class="ico i-gold"></i></span></button>`).join('')}</div>`;
+  p.querySelectorAll('[data-cto]').forEach(b=>b.onclick=()=>{const t=T.find(x=>x.to===b.dataset.cto);if(!t||!free||!afford(cc))return;pay(cc);s.car.push({to:t.to,inc:t.inc,total:0});inc('caravans');sfx('coin');log(`Караван отправлен: ${t.n}.`,'good');save();render()});
+  p.querySelectorAll('[data-car]').forEach(b=>b.onclick=()=>{const k=+b.dataset.car;confirmBox('Распустить караван?','Затраты не вернутся.','Распустить',()=>{s.car.splice(k,1);save();render()})})}
+
+/* ---------- достижения ---------- */
+const ACH=[
+ {id:'first',n:'Первый камень',d:'Заложить первую постройку.',ok:()=>s.lands.some(l=>l.b&&l.b!=='hall'&&l.b!=='hut')},
+ {id:'pop25',n:'Шумная деревня',d:'25 семей.',ok:()=>pop()>=25},
+ {id:'pop60',n:'Почти город',d:'60 семей.',ok:()=>pop()>=60},
+ {id:'rich',n:'Полная казна',d:'Накопить 1000 золота.',ok:()=>s.res.gold>=1000},
+ {id:'army20',n:'Войско',d:'Армия из 20 воинов.',ok:()=>armySize()>=20},
+ {id:'win5',n:'Защитник',d:'Выиграть 5 боёв.',ok:()=>(s.wins||0)>=5},
+ {id:'win25',n:'Гроза соседей',d:'Выиграть 25 боёв.',ok:()=>(s.wins||0)>=25},
+ {id:'vassal',n:'Покоритель',d:'Сделать народ вассалом.',ok:()=>s.rivals.some(r=>r.vassal)},
+ {id:'ally',n:'Верный союзник',d:'Заключить союз.',ok:()=>cntOf('allies')>0},
+ {id:'wed',n:'Родство домов',d:'Династический брак.',ok:()=>cntOf('weds')>0},
+ {id:'tech8',n:'Учёная деревня',d:'Открыть 8 технологий.',ok:()=>s.tech.known.length>=8},
+ {id:'civ6',n:'Традиции',d:'Принять 6 институтов.',ok:()=>s.civ.known.length>=6},
+ {id:'masters10',n:'Город мастеров',d:'10 мастеров живут в деревне.',ok:()=>mcount()>=10},
+ {id:'relic1',n:'Находка',d:'Найти первую реликвию.',ok:()=>s.relics&&s.relics.length>=1},
+ {id:'relic8',n:'Собиратель',d:'Собрать 8 реликвий.',ok:()=>s.relics&&s.relics.length>=8},
+ {id:'boss',n:'Убийца чудищ',d:'Победить босса.',ok:()=>cntOf('bosses')>=1},
+ {id:'boss3',n:'Легенда земель',d:'Победить трёх боссов.',ok:()=>cntOf('bosses')>=3},
+ {id:'exp5',n:'Искатель приключений',d:'5 удачных экспедиций.',ok:()=>cntOf('exps')>=5},
+ {id:'hero5',n:'Опытный староста',d:'Герой 5-го уровня.',ok:()=>s.hero&&s.hero.lvl>=5},
+ {id:'orders20',n:'Слово старосты',d:'Разыграть 20 приказов.',ok:()=>cntOf('orders')>=20},
+ {id:'car500',n:'Шёлковый путь',d:'Караваны принесли 500 золота.',ok:()=>cntOf('carGold')>=500},
+ {id:'spy',n:'Мастер шпионажа',d:'Шпион со званием «Легенда».',ok:()=>s.spies&&s.spies.some(x=>x.lvl>=4)},
+ {id:'elite',n:'Элитная гвардия',d:'Отряд со званием «Элита».',ok:()=>UNITS.some(u=>vr(u.id)>=3&&s.army[u.id])},
+ {id:'adj',n:'Хозяйственный',d:'5 бонусов соседства одновременно.',ok:()=>{let n=0;s.lands.forEach((l,i)=>n+=adjOf(i).length);return n>=5}},
+ {id:'won',n:'Победа!',d:'Победить любым путём.',ok:()=>s.won},
+ {id:'legend',n:'Легендарный староста',d:'Победить на сложности «Легенда».',ok:()=>s.won&&s.diff==='legend'},
+ {id:'scn',n:'Испытатель',d:'Пройти любое испытание.',ok:()=>false},
+ {id:'scnall',n:'Все испытания',d:'Пройти все испытания.',ok:()=>false}
+];
+let ACHS={};try{ACHS=JSON.parse(localStorage.getItem('sixlands-ach')||'{}')}catch(e){}
+function achGive(id){if(ACHS[id])return;const a=ACH.find(x=>x.id===id);if(!a)return;ACHS[id]=Date.now();try{localStorage.setItem('sixlands-ach',JSON.stringify(ACHS))}catch(e){}
+  log(`Достижение: «${a.n}».`,'arc');toast(`Достижение: ${a.n}`);sfx('good')}
+function achCheck(){if(!s||!s.lands.length)return;ACH.forEach(a=>{if(!ACHS[a.id])try{if(a.ok())achGive(a.id)}catch(e){}})}
+function openAch(back){const n=Object.keys(ACHS).length;
+  openModal(`<h2>Достижения</h2><div class="small muted">Открыто ${n} из ${ACH.length}. Достижения общие для всех партий.</div>
+   <div class="achs">${ACH.map(a=>`<div class="ach ${ACHS[a.id]?'on':''}"><i class="ico i-${ACHS[a.id]?'rank':'lock'}"></i><div><b>${a.n}</b><div class="small muted">${a.d}</div></div></div>`).join('')}</div><button class="btn ghost" id="acX">Назад</button>`,true);
+  $('#acX').onclick=()=>{closeModal();if(back)back()}}
+
+/* ---------- испытания ---------- */
+const SCN=[
+ {id:'winter',n:'Долгая зима',cu:'north',diff:'normal',lim:40,d:'Зима пришла раньше срока, а амбары почти пусты. Продержитесь 40 ходов, и чтобы в деревне жило не меньше 12 семей.',
+  setup:()=>{s.day=31;s.res.food=25;s.res.wood=40},goal:()=>s.day>=s.scn.end&&pop()>=12,fail:()=>s.day>=s.scn.end&&pop()<12,prog:()=>`семей ${pop()}/12`,p:'a small nordic village buried in deep snow during a long harsh winter, smoke from chimneys'},
+ {id:'siege',n:'Осада',cu:'europe',diff:'hard',lim:35,d:'Два соседа объявили вам войну с первого хода. Выстойте 35 ходов и не потеряйте ни одной постройки.',
+  setup:()=>{s.res.gold+=80;s.res.wood+=60;s.res.stone+=40;s.army.militia=4;s.rivals.slice(0,2).forEach(r=>{r.war=true;r.warT=0;r.rel=-100});s.scnB=s.lands.filter(l=>l.b).length},goal:()=>s.day>=s.scn.end,fail:()=>s.lands.filter(l=>l.b).length<s.scnB-0&&s.lands.filter(l=>l.b).length<3,prog:()=>`ход ${s.day}/${s.scn.end}`,p:'a medieval village under siege with enemy armies and siege towers outside wooden walls'},
+ {id:'merchant',n:'Торговый принц',cu:'desert',diff:'normal',lim:70,d:'Станьте богатейшим домом пустыни: соберите 2000 золота за 70 ходов.',
+  setup:()=>{},goal:()=>s.res.gold>=2000,fail:()=>s.day>=s.scn.end,prog:()=>`золото ${Math.round(s.res.gold)}/2000`,p:'a rich desert merchant prince in a bazaar surrounded by chests of gold and silk'},
+ {id:'sage',n:'Путь мудреца',cu:'magi',diff:'normal',lim:60,d:'Откройте 7 технологий за 60 ходов.',
+  setup:()=>{},goal:()=>s.tech.known.length>=7,fail:()=>s.day>=s.scn.end,prog:()=>`технологий ${s.tech.known.length}/7`,p:'an old sage mage in a tower library surrounded by floating glowing books'},
+ {id:'hunter',n:'Охотник на чудищ',cu:'east',diff:'normal',lim:60,d:'Дракон проснулся уже на 12-м ходу. Победите босса и пройдите ещё 2 экспедиции за 60 ходов.',
+  setup:()=>{ensureExp();s.exp.boss=12;s.exp.next=4},goal:()=>cntOf('bosses')>=1&&cntOf('exps')>=3,fail:()=>s.day>=s.scn.end,prog:()=>`боссов ${cntOf('bosses')}/1 · экспедиций ${cntOf('exps')}/3`,p:'a samurai hero facing a giant dragon on a misty mountain at dawn'},
+ {id:'unity',n:'Объединитель',cu:'elves',diff:'normal',lim:90,d:'Объедините земли без лишней крови: два союза или вассала за 90 ходов.',
+  setup:()=>{s.res.gold+=60},goal:()=>s.rivals.filter(r=>r.ally||r.vassal).length>=2,fail:()=>s.day>=s.scn.end,prog:()=>`союзов и вассалов ${s.rivals.filter(r=>r.ally||r.vassal).length}/2`,p:'elven and human leaders shaking hands under banners in a sunlit forest glade'}
+];
+let SCND={};try{SCND=JSON.parse(localStorage.getItem('sixlands-scn')||'{}')}catch(e){}
+function openScn(){openModal(`<h2>Испытания</h2><p class="small">Короткие партии с особыми условиями. Народ и сложность заданы заранее.</p>
+  <div class="cards picker">${SCN.map(x=>card({cls:'c-civic',name:x.n,artCls:'cat',art:artOfRaw('sc_'+x.id,I('rank')),text:`${CULTURES[x.cu].n} · ${DIFF[x.diff].n} · ${x.lim} ход.`,tag:SCND[x.id]?'Пройдено':'',tagCls:'gold',attrs:`data-scn="${x.id}"`})).join('')}</div><button class="btn ghost" id="scX">Назад</button>`,true);
+  $('#scX').onclick=()=>{closeModal();showTitle()};
+  document.querySelectorAll('[data-scn]').forEach(b=>b.onclick=()=>{const x=SCN.find(y=>y.id===b.dataset.scn);
+    openModal(`<div class="cv">${card({cls:'c-civic big',name:x.n,artCls:'cat',art:artOfRaw('sc_'+x.id,I('rank')),text:CULTURES[x.cu].full,el:'div'})}<div class="info"><h2>${x.n}</h2><p>${x.d}</p><div class="small">Народ: ${CULTURES[x.cu].full} · сложность: ${DIFF[x.diff].n} · ${x.lim} ходов</div>
+      <div class="row"><button class="btn" id="scGo">Начать</button><button class="btn ghost" id="scB">Назад</button></div></div></div>`,true);
+    $('#scB').onclick=openScn;$('#scGo').onclick=()=>pickSlot('new',()=>startScn(x))})}
+function startScn(x){newGame(x.cu,x.diff);ensureFeat();s.scn={id:x.id,end:0};x.setup();s.scn.end=s.day+x.lim;s.name=x.n;save();closeModal();hideTitle();tab='h';render();
+  setTimeout(()=>openModal(`<h2>Испытание: ${x.n}</h2><p>${x.d}</p><button class="btn" id="scOk">Вперёд</button>`,true),300);setTimeout(()=>{const b=$('#scOk');if(b)b.onclick=closeModal},350)}
+function scnTurn(){if(!s.scn||s.scn.done)return;const x=SCN.find(y=>y.id===s.scn.id);if(!x)return;
+  if(x.goal()){s.scn.done='win';SCND[x.id]=Date.now();try{localStorage.setItem('sixlands-scn',JSON.stringify(SCND))}catch(e){}achGive('scn');if(SCN.every(y=>SCND[y.id]))achGive('scnall');
+    REPORT.push([`Испытание пройдено: ${x.n}`,'Отличная работа, староста! Можно продолжить партию или вернуться в меню.','good']);s.sumDue=1}
+  else if(x.fail()){s.scn.done='fail';REPORT.push([`Испытание провалено: ${x.n}`,'Не вышло в этот раз. Попробуйте другую тактику.','bad']);s.sumDue=1}}
+function scnHTML(){if(!s.scn)return'';const x=SCN.find(y=>y.id===s.scn.id);if(!x)return'';
+  return`<button class="scnbar" id="scnBar"><b>Испытание: ${x.n}</b><span>${s.scn.done==='win'?'пройдено':s.scn.done==='fail'?'провалено':`${x.prog()} · осталось ${Math.max(0,s.scn.end-s.day)} ход.`}</span></button>`}
+
+/* ---------- итоги партии ---------- */
+function histTurn(){if(!s.hist)s.hist=[];s.hist.push({d:s.day,p:pop(),a:armySize(),g:Math.round(s.res.gold),t:s.tech.known.length+s.civ.known.length});if(s.hist.length>300)s.hist=s.hist.filter((x,i)=>i%2===0||i>s.hist.length-50);
+  REPORT.forEach(r=>{if(/Победа|войну|разграблен|Набег отбит|повержен|Союз|опустошил|разбит у стен|Испытание|Великий|Великая/.test(r[0])){if(!s.chron)s.chron=[];s.chron.push([s.day,r[0]]);if(s.chron.length>40)s.chron.shift()}})}
+function score(){return Math.round(pop()*10+s.tech.known.length*15+s.civ.known.length*15+(s.relics||[]).length*30+(s.wins||0)*8+s.rivals.filter(r=>r.vassal).length*60+s.rivals.filter(r=>r.ally).length*30+mcount()*10+(s.hero?s.hero.lvl*10:0)+(s.won?500:0))}
+function spark(H,k,col,lab){if(!H||H.length<2)return'';const W=300,Hh=70,mx=Math.max(1,...H.map(x=>x[k])),d0=H[0].d,d1=H[H.length-1].d;
+  const pts=H.map(x=>`${((x.d-d0)/Math.max(1,d1-d0)*W).toFixed(1)},${(Hh-x[k]/mx*(Hh-6)-3).toFixed(1)}`).join(' ');
+  return`<div class="spk"><div class="small"><b>${lab}</b> <span class="muted">макс. ${mx}</span></div><svg viewBox="0 0 ${W} ${Hh}" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="${col}" stroke-width="2" vector-effect="non-scaling-stroke"/></svg></div>`}
+function openSummary(){const H=s.hist||[];
+  openModal(`<h2>Итоги партии</h2><div class="small muted">${s.name||C().n} · ${C().full} · сложность ${DF().n} · ход ${s.day}${s.won?' · <b class="up">победа</b>':''}</div>
+   <div class="sumscore"><span>Счёт</span><b>${score()}</b></div>
+   <div class="sumgrid">${[['Семей',pop()],['Воинов',armySize()],['Побед в боях',s.wins||0],['Технологий',s.tech.known.length],['Институтов',s.civ.known.length],['Мастеров',mcount()],['Реликвий',(s.relics||[]).length],['Экспедиций',cntOf('exps')],['Приказов',cntOf('orders')],['Вассалов',s.rivals.filter(r=>r.vassal).length]].map(([a,b])=>`<div><span>${a}</span><b>${b}</b></div>`).join('')}</div>
+   ${spark(H,'p','#9fd28a','Население')}${spark(H,'a','#e48a6a','Армия')}${spark(H,'g','#e8c06a','Золото')}${spark(H,'t','#8ab8e8','Технологии и институты')}
+   <h3>Летопись главного</h3>${(s.chron||[]).length?`<ul class="req">${s.chron.slice(-14).map(([d,t])=>`<li style="list-style:none"><span class="muted">Ход ${d}:</span> ${t}</li>`).join('')}</ul>`:'<div class="small muted">Пока ничего громкого.</div>'}
+   <div class="row"><button class="btn" id="smX">Продолжить</button><button class="btn ghost" id="smM">Главное меню</button></div>`,true);
+  $('#smX').onclick=closeModal;$('#smM').onclick=()=>{save();showTitle()}}
+
+/* ---------- энциклопедия ---------- */
+let ENCT='b';
+function openEnc(back){const T=[['b','Постройки'],['u','Войска'],['t','Технологии'],['c','Институты'],['m','Мастера'],['g','Боги'],['o','Приказы'],['r','Реликвии'],['x','Экспедиции'],['a','Соседство'],['w','Погода'],['n','Народы'],['h','Умения старосты']];
+  const row=(art,n,d)=>`<div class="encrow"><div class="encart">${art}</div><div><b>${n}</b><div class="small muted">${d}</div></div></div>`;
+  let L='';
+  if(ENCT==='b')L=BL.filter(d=>!d.noBuild).map(d=>row(artOf(d.id,d.ic),d.n,`${effText(d)} · ${costSpans(d.cost)} · ${bTurns(d)} ход. ${d.desc||''}`)).join('');
+  else if(ENCT==='u')L=UNITS.map(u=>row(artOf('u_'+u.id,u.ic),u.n,`${TY[uType(u)].n} · атака ${u.atk} · защита ${u.def} · ${costSpans(u.cost)}`)).join('');
+  else if(ENCT==='t')L=TECHS.map(x=>row(artOfRaw('t_'+x.id,I('science')),x.n,`${x.d} · ${x.cost} науки${hasT(x.id)?' · открыто':''}`)).join('');
+  else if(ENCT==='c')L=CIVICS.map(x=>row(artOfRaw('c_'+x.id,I('culture')),x.n,`${x.d} · ${x.cost} культуры${hasC(x.id)?' · принят':''}`)).join('');
+  else if(ENCT==='m')L=ML.map(m=>row(artOf('m_'+m.id,I('people')),mName(m),`${m.trade}${B[m.id]?' · '+B[m.id].n:''}`)).join('');
+  else if(ENCT==='g')L=GODS.map(g=>row(artOf('g_'+g.id,g.ic),gN(g.id),gT(g.id))).join('');
+  else if(ENCT==='o')L=ORD.map(o=>row(artOfRaw('o_'+o.id,I('rank')),o.n,o.d)).join('');
+  else if(ENCT==='r')L=RELICS.map(r=>row(artOfRaw('rl_'+r.id,I('spark')),r.n,r.d+(r.boss?' Трофей босса.':''))).join('');
+  else if(ENCT==='x')L=Object.entries(SITES).map(([k,x])=>row(artOfRaw('ex_'+k,I('threat')),x.n,`${x.d} Сила ${x.pow}+, ${x.turns} ход.${x.boss?' Босс.':''}`)).join('');
+  else if(ENCT==='a')L=ADJ.filter(x=>B[x[0]]&&B[x[1]]).map(([a,b,fx,t])=>row(artOf(a,''),`${B[a].n} + ${B[b].n}`,`${adjText(fx)} — ${t}`)).join('');
+  else if(ENCT==='w')L=Object.values(WX).map(w=>row(I('s_spring'),w.n,w.d)).join('');
+  else if(ENCT==='n')L=CK.map(c=>row(`<i class="ico em i-em-${c}"></i>`,CULTURES[c].full,`Сильные стороны: ${CULTURES[c].bonus.join('; ')}. Слабые: ${CULTURES[c].minus.join('; ')}.`)).join('');
+  else if(ENCT==='h')L=HP.map(p=>row(I('rank'),p.n,p.d)).join('');
+  openModal(`<h2>Энциклопедия</h2>${chipRow(T.map(([k,l])=>[k,l]),ENCT,'enc')}<div class="enclist">${L}</div><button class="btn ghost" id="enX">Закрыть</button>`,true);
+  document.querySelectorAll('[data-enc]').forEach(b=>b.onclick=()=>{ENCT=b.dataset.enc;openEnc(back)});$('#enX').onclick=()=>{closeModal();if(back)back()}}
+
+/* ---------- ячейки сохранения ---------- */
+function slotInfo(n){try{const j=localStorage.getItem(SK_(n));if(!j)return null;const o=JSON.parse(j);if(!o||!o.lands||!o.lands.length||!CULTURES[o.culture])return null;return o}catch(e){return null}}
+function pickSlot(mode,then){const rows=[1,2,3].map(n=>{const o=slotInfo(n);
+  return`<button class="opt slot" data-slot="${n}" ${mode==='load'&&!o?'disabled':''}><span><b>Ячейка ${n}${n===SLOT&&o?' · текущая':''}</b><br><span class="small muted">${o?`${esc(o.name||'')} · ${CULTURES[o.culture].n} · ${(DIFF[o.diff]||DIFF.normal).n} · ход ${o.day}${o.scn?' · испытание':''}${o.saved?' · '+new Date(o.saved).toLocaleDateString('ru-RU'):''}`:'Пусто'}</span></span>${o&&mode==='load'?'':''}</button>`}).join('');
+  openModal(`<h2>${mode==='load'?'Загрузить игру':'Ячейка для новой игры'}</h2><div class="stack">${rows}</div>${mode==='load'?'<div class="small muted">Удерживать не нужно: удалить сохранение можно в Настройках.</div>':''}<button class="btn ghost" id="slX">Назад</button>`,true);
+  $('#slX').onclick=()=>{closeModal();showTitle()};
+  document.querySelectorAll('[data-slot]').forEach(b=>b.onclick=()=>{const n=+b.dataset.slot;const o=slotInfo(n);
+    if(mode==='load'){setSlot(n);if(load()){closeModal();hideTitle();tab='h';render();if(AU.musicOn&&!AU.playing)musicStart()}}
+    else if(o)confirmBox(`Перезаписать ячейку ${n}?`,`Там деревня «${esc(o.name||'')}» (${CULTURES[o.culture].n}, ход ${o.day}). Она будет потеряна.`,'Перезаписать',()=>{setSlot(n);then()});
+    else{setSlot(n);then()}})}
+function setSlot(n){SLOT=n;try{localStorage.setItem('sixlands-slot',String(n))}catch(e){}}
+
+/* ---------- обучение ---------- */
+const TUT=[
+ {t:'Добро пожаловать, староста! Это ваша деревня. Коротко покажу главное — займёт минуту.',btn:'Начнём'},
+ {sel:'#res',t:'Это ресурсы и их прирост за ход. Нажмите на любой ресурс, чтобы узнать, откуда он берётся.',btn:'Понятно'},
+ {sel:'#lands',t:'Это стол: каждая карта — участок земли. Нажмите на свободный участок, там будут постройки, которые можно на нём поставить.',until:()=>!$('#modalBg').hidden&&document.querySelector('[data-lb]'),pre:()=>{if(tab!=='h')go('h')}},
+ {sel:'.picker',t:'Выберите постройку. Советуемые отмечены золотой рамкой. Например, ферма даст еду.',until:()=>s.lands.some(l=>l.bt>0)},
+ {sel:'#advice',t:'Здесь неброские советы: что деревне нужно прямо сейчас. Нажмите на совет — откроется нужная постройка.',btn:'Дальше',pre:()=>{if(tab!=='h')go('h')}},
+ {sel:'#bnav',t:'Разделы игры: постройки, мастера, торговля, война и развитие. Перед концом хода нужно выбрать технологию и институт в разделе «Развитие».',until:()=>s.tech.cur&&(s.civ.cur||!CIVICS.some(canC)),pre:()=>{if(!s.tech.cur)go('t');else if(!s.civ.cur)go('tc')}},
+ {sel:'#endTurn',t:'Отлично! Теперь нажмите «Конец хода». Постройки достроятся, ресурсы придут.',until:()=>s.day>TUTD.day},
+ {sel:'#ordBox',t:'Раз в несколько ходов вы получаете три приказа старосты и разыгрываете один. А в разделе «Война» ждут экспедиции вашего героя.',btn:'Дальше',pre:()=>{if(tab!=='h')go('h')}},
+ {sel:'#menuBtn',t:'В меню — пауза, настройки, энциклопедия, достижения и итоги партии. Удачи, староста!',btn:'Готово'}
+];
+let TUTD=null;try{if(localStorage.getItem('sixlands-tut')==='done')TUTD={done:1}}catch(e){}
+function tutStart(force){if(!force&&TUTD&&TUTD.done)return;TUTD={i:0,day:s.day};tutShow()}
+function tutEnd(){TUTD={done:1};try{localStorage.setItem('sixlands-tut','done')}catch(e){}const o=$('#tut');if(o)o.remove()}
+function tutShow(){if(!TUTD||TUTD.done)return;let o=$('#tut');if(!o){o=document.createElement('div');o.id='tut';o.innerHTML='<div class="tspot"></div><div class="tbub"><div class="tt"></div><div class="row"><button class="btn sm" id="tutB"></button><button class="lnk" id="tutS">Пропустить обучение</button></div></div>';document.body.appendChild(o);
+    $('#tutS').onclick=tutEnd;$('#tutB').onclick=()=>{TUTD.i++;tutShow()}}
+  const st=TUT[TUTD.i];if(!st){tutEnd();return}if(st.pre)try{st.pre()}catch(e){}
+  if(st.sel){const el=document.querySelector(st.sel);if(el&&!el.closest('.dock')&&!el.closest('header'))setTimeout(()=>{try{el.scrollIntoView({behavior:'smooth',block:'center'})}catch(e){}},150)}
+  o.querySelector('.tt').textContent=st.t;const b=$('#tutB');b.hidden=!st.btn;b.textContent=st.btn||'';tutPos()}
+function tutPos(){if(!TUTD||TUTD.done)return;const o=$('#tut');if(!o)return;const st=TUT[TUTD.i];if(!st)return;
+  const el=st.sel&&document.querySelector(st.sel);const sp=o.querySelector('.tspot'),bb=o.querySelector('.tbub');
+  if(el&&el.getBoundingClientRect().width){const r=el.getBoundingClientRect();sp.hidden=false;sp.style.cssText=`left:${r.left-6}px;top:${r.top-6}px;width:${r.width+12}px;height:${Math.min(r.height+12,innerHeight*.6)}px`;
+    const below=r.top<innerHeight/2;bb.style.top=below?Math.min(innerHeight-170,Math.min(r.bottom,innerHeight*.6)+14)+'px':'auto';bb.style.bottom=below?'auto':(innerHeight-r.top+14)+'px'}
+  else{sp.hidden=true;bb.style.top='38%';bb.style.bottom='auto'}
+  o.classList.toggle('inmodal',!$('#modalBg').hidden);
+  if(!$('#modalBg').hidden){bb.style.top='auto';bb.style.bottom='calc(12px + env(safe-area-inset-bottom,0px))'}
+  if(st.until&&st.until()){TUTD.i++;tutShow()}}
+setInterval(()=>{try{tutPos()}catch(e){}},400);
+
+/* ---------- общий ход ---------- */
+function featTurn(st){ensureOrd();ensureHero();ordTurn();expTurn();dipTurn();carTurn();scnTurn();histTurn();achCheck()}
+function ensureFeat(){ensureOrd();ensureHero();ensureExp();if(!s.relics)s.relics=[];if(!s.car)s.car=[];if(!s.cnt)s.cnt={};if(!s.hist)s.hist=[];if(!s.chron)s.chron=[]}
 
 /* ---------- навигация ---------- */
 const NAV=[
  {id:'home',n:'Деревня',ic:'home',subs:[['h','Стол'],['v','Сводка'],['l','Летопись']]},
  {id:'build',n:'Постройки',ic:'jobs',subs:[['b','Постройки']]},
  {id:'people',n:'Мастера',ic:'people',subs:[['m','Мастера']]},
- {id:'trade',n:'Торговля',ic:'trade',subs:[['tr','Рынок'],['tgd','Товары'],['tnb','Соседи'],['tcs','Города']]},
- {id:'war',n:'Война',ic:'atk',subs:[['a','Войска'],['ab','Тактика'],['n','Народы'],['spy','Шпионаж'],['pir','Пираты']]},
- {id:'prog',n:'Развитие',ic:'science',subs:[['t','Наука'],['tc','Культура'],['s','Магия'],['g','Боги']]}
+ {id:'trade',n:'Торговля',ic:'trade',subs:[['tr','Рынок'],['tgd','Товары'],['tnb','Соседи'],['tcs','Города'],['tcv','Караваны']]},
+ {id:'war',n:'Война',ic:'atk',subs:[['a','Войска'],['ab','Тактика'],['hero','Староста'],['ex','Экспедиции'],['n','Народы'],['spy','Шпионаж'],['pir','Пираты']]},
+ {id:'prog',n:'Развитие',ic:'science',subs:[['t','Наука'],['tc','Культура'],['s','Магия'],['g','Боги'],['rl','Реликвии']]}
 ];
 const navOf=t=>NAV.find(n=>n.subs.some(x=>x[0]===t))||NAV[0];
 const lastSub={};
@@ -2104,7 +2554,7 @@ const SLV=['Новичок','Агент','Мастер','Тень','Легенд
 const SXP=[0,2,5,9,14];
 const SPERK=['—','+7% к успеху','реже попадается при провале','задания на 1 ход короче','добыча и эффект заданий ×1.5'];
 function spyXp(sp){sp.xp++;if(sp.lvl<4&&sp.xp>=SXP[sp.lvl+1]){sp.lvl++;const m=`${sp.name} получает звание «${SLV[sp.lvl]}»: ${SPERK[sp.lvl]}.`;log(m,'good');return' '+m}return''}
-const spyCh=(sp,m)=>m.base+.07*sp.lvl+(s.culture==='east'?.15:0)+(WXo().spy||0);
+const spyCh=(sp,m)=>m.base+.07*sp.lvl+(s.culture==='east'?.15:0)+(WXo().spy||0)+relicSum('spy');
 const MS={
  scout:{n:'Разведка',t:'rival',turns:2,base:.85,d:'Узнать точный состав армии соседа. 15 ходов вы видите их силы, а их набеги на вас слабее на 15%.',p:'a spy hiding in tall grass watching an enemy army camp through a small spyglass at dusk'},
  steal:{n:'Кража знаний',t:'rival',turns:4,base:.5,d:'Выкрасть чертежи и свитки: половина стоимости текущего исследования.',p:'a spy secretly copying glowing blueprints and scrolls by candlelight in an enemy library'},
@@ -2195,6 +2645,10 @@ function renderPane(){
   if(['tr','tgd','tnb','tcs'].includes(tab)){renderTrade(p);return}
   if(tab==='pir'){renderPirates(p);return}
   if(tab==='spy'){renderSpies(p);return}
+  if(tab==='hero'){renderHero(p);return}
+  if(tab==='ex'){renderExp(p);return}
+  if(tab==='tcv'){renderCar(p);return}
+  if(tab==='rl'){renderRelics(p);return}
   if(tab==='b'){
     const all=BL.filter(d=>!d.noBuild);const ok=d=>!lockReason(d);
     const cats=[['ready','Можно строить',all.filter(ok).length],...Object.keys(CATS).map(c=>[c,CATS[c],all.filter(d=>d.cat===c).length])];
@@ -2564,7 +3018,7 @@ requestAnimationFrame(wxLoop);
 document.addEventListener('pointerdown',()=>{if(AU.ambOn&&(!AU.amb||AU.amb.gain.value<.01))ambStart()},{passive:true});
 document.addEventListener('visibilitychange',()=>{if(document.hidden)ambStop();else if(AU.ambOn&&AU.amb)ambStart()});
 
-const hasSave=()=>{try{const j=localStorage.getItem(KEY);return!!(j&&JSON.parse(j).lands.length)}catch(e){return false}};
+const hasSave=()=>!!slotInfo(SLOT);const anySave=()=>[1,2,3].some(n=>slotInfo(n));
 const titleOn=()=>!$('#title').hidden;
 function hideTitle(){const t=$('#title');setTimeout(()=>{try{renderNav()}catch(e){}},0);t.classList.add('out');setTimeout(()=>{t.hidden=true;t.classList.remove('out')},RM?0:400)}
 function showTitle(){
@@ -2574,8 +3028,11 @@ function showTitle(){
     <h1>Шесть Земель</h1>
     <p class="tsub">Пошаговая стратегия о волшебной деревне,<br>мастерах, богах и шести народах</p>
     <div class="tbtns">
-      ${sv?`<button class="btn tbig" id="tCont">Продолжить<small>${C().n} · ${DF().n} · ход ${s.day}</small></button>`:''}
+      ${sv?`<button class="btn tbig" id="tCont">Продолжить<small>Ячейка ${SLOT} · ${C().n} · ${DF().n} · ход ${s.day}</small></button>`:''}
       <button class="btn ${sv?'ghost':'tbig'}" id="tNew">Новая игра</button>
+      ${anySave()?'<button class="btn ghost" id="tLoad">Загрузить</button>':''}
+      <button class="btn ghost" id="tScn">Испытания</button>
+      <div class="tsplit"><button class="btn ghost" id="tAch">Достижения</button><button class="btn ghost" id="tEnc">Энциклопедия</button></div>
       <button class="btn ghost" id="tHow">Как играть</button>
       <button class="btn ghost" id="tSet">Настройки</button>
       ${IS_APP?'<button class="btn ghost" id="tExit">Выход</button>':''}
@@ -2585,7 +3042,7 @@ function showTitle(){
   t.hidden=false;$('#arrL').hidden=$('#arrR').hidden=true;
   const on=(id,f)=>{const b=$('#'+id);if(b)b.onclick=()=>{sfx('card');f()}};
   on('tCont',()=>{hideTitle();render();if(AU.musicOn&&!AU.playing)musicStart()});
-  on('tNew',()=>{if(sv)confirmBox('Начать новую игру?','Текущая деревня будет потеряна навсегда.','Начать заново',()=>chooseCulture(true));else chooseCulture(true)});
+  on('tNew',()=>pickSlot('new',()=>chooseCulture(true)));on('tLoad',()=>pickSlot('load'));on('tScn',openScn);on('tAch',()=>openAch(showTitle));on('tEnc',()=>openEnc(showTitle));
   on('tHow',howTo);on('tSet',openSettings);on('tExit',confirmExit);
 }
 function confirmBox(title,text,okText,ok,danger=true){
@@ -2595,10 +3052,10 @@ function confirmBox(title,text,okText,ok,danger=true){
 function confirmExit(){confirmBox('Выйти из игры?','Прогресс сохраняется автоматически, вы сможете продолжить с того же хода.','Выйти',()=>{save();if(window.AndroidApp)AndroidApp.exit()})}
 function openPause(){
   openModal(`<div class="pause"><h2>Пауза</h2><div class="small muted">${C().full} · сложность: ${DF().n} · ход ${s.day}</div>
-    <button class="btn" id="pRes">Продолжить</button><button class="btn ghost" id="pSet">Настройки</button><button class="btn ghost" id="pHow">Как играть</button>
+    <button class="btn" id="pRes">Продолжить</button><button class="btn ghost" id="pSet">Настройки</button><button class="btn ghost" id="pHow">Как играть</button><button class="btn ghost" id="pSum">Итоги партии</button><div class="tsplit"><button class="btn ghost" id="pEnc">Энциклопедия</button><button class="btn ghost" id="pAch">Достижения</button></div>
     <button class="btn ghost" id="pMain">Главное меню</button>${IS_APP?'<button class="btn ghost" id="pExit">Выйти из игры</button>':''}
     <div class="small muted">Игра сохраняется сама после каждого действия.</div></div>`,true);
-  $('#pRes').onclick=closeModal;$('#pSet').onclick=openSettings;$('#pHow').onclick=howTo;$('#pMain').onclick=()=>{save();showTitle()};
+  $('#pRes').onclick=closeModal;$('#pSet').onclick=openSettings;$('#pSum').onclick=openSummary;$('#pEnc').onclick=()=>openEnc(openPause);$('#pAch').onclick=()=>openAch(openPause);$('#pHow').onclick=howTo;$('#pMain').onclick=()=>{save();showTitle()};
   const e=$('#pExit');if(e)e.onclick=confirmExit;
 }
 function openSettings(){
@@ -2607,7 +3064,7 @@ function openSettings(){
   openModal(`<h2>Настройки</h2>
     <div class="setgrp"><h3>Звук</h3>${tg('stMusOn','Музыка',AU.musicOn)}${sl('stMus','Громкость музыки',SET.music)}${tg('stSfxOn','Звуки',AU.sfxOn)}${sl('stSfx','Громкость звуков',SET.sfx)}${tg('stAmbOn','Звуки окружения',AU.ambOn,'Ветер, дождь, птицы, колокола народа')}${sl('stAmb','Громкость окружения',SET.amb)}</div>
     <div class="setgrp"><h3>Экран</h3>${tg('stAnim','Анимации',SET.anim,'Раздача карт, вспышки, смена сезона')}${tg('stBig','Крупный текст',SET.big)}${tg('stWx','Погода на столе',SET.weather!==false,'Снег, дождь, листопад, туман поверх стола')}</div>
-    <div class="setgrp"><h3>Игра</h3><div class="row"><button class="btn ghost" id="stRename">Переименовать деревню</button><button class="btn ghost danger-t" id="stReset">Удалить сохранение</button>${IS_APP&&window.AndroidApp.checkNow?'<button class="btn ghost" id="stUpd">Проверить обновления</button>':''}</div></div>
+    <div class="setgrp"><h3>Игра</h3><div class="row"><button class="btn ghost" id="stRename">Переименовать деревню</button><button class="btn ghost" id="stTut">Обучение заново</button><button class="btn ghost danger-t" id="stReset">Удалить сохранение (ячейка ${SLOT})</button>${IS_APP&&window.AndroidApp.checkNow?'<button class="btn ghost" id="stUpd">Проверить обновления</button>':''}</div></div>
     <div class="small muted">Шесть Земель · версия ${BUILD_VER}${IS_APP?` · ${appStatus()||'обновления приходят сами при запуске с интернетом'}`:''}</div>
     <button class="btn" id="stOk">Готово</button>`,true);
   const v=id=>$('#'+id);
@@ -2623,9 +3080,10 @@ function openSettings(){
   v('stBig').onchange=e=>{SET.big=e.target.checked;setSave();applySettings()};
   v('stRename').onclick=()=>{openModal(`<h2>Название деревни</h2><input type="text" id="rnI" maxlength="28" value="${esc(s.name||'')}"><div class="row"><button class="btn" id="rnOk">Сохранить</button><button class="btn ghost" id="rnX">Отмена</button></div>`,true);
     $('#rnX').onclick=openSettings;$('#rnOk').onclick=()=>{const n=$('#rnI').value.trim();if(n){s.name=n;save();render()}openSettings()}};
-  v('stReset').onclick=()=>confirmBox('Удалить сохранение?','Деревня, армия и весь прогресс будут стёрты. Это нельзя отменить.','Удалить',()=>{try{localStorage.removeItem(KEY)}catch(e){}location.reload()});
+  v('stReset').onclick=()=>confirmBox('Удалить сохранение?','Деревня, армия и весь прогресс будут стёрты. Это нельзя отменить.','Удалить',()=>{try{localStorage.removeItem(SK_(SLOT))}catch(e){}location.reload()});
   {const u=$('#stUpd');if(u)u.onclick=()=>{try{AndroidApp.checkNow()}catch(e){}toast('Проверяю обновления… Если есть новая версия, игра перезагрузится.')}}
   v('stOk').onclick=closeModal;
+  v('stTut').onclick=()=>{closeModal();if(!s.lands.length)return;if(!$('#title').hidden)hideTitle();tab='h';render();setTimeout(()=>tutStart(true),500)};
 }
 function howTo(){
   openModal(`<h2>Как играть</h2><div class="how">
