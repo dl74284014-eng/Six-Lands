@@ -322,6 +322,20 @@ html.noanim *,html.noanim *::before,html.noanim *::after{animation:none!importan
 .deal{grid-template-columns:1fr auto}.deal .dl{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0}.deal .dl .ico{width:26px;height:26px}
 .deal .dx{grid-column:1/2;font-size:14px}.deal .btn{grid-row:1/3;grid-column:2;align-self:center}
 .bnav button span{font-size:11px;white-space:nowrap}
+
+#endTurn{position:relative;overflow:hidden;display:flex;align-items:center;gap:8px;padding:8px 14px 8px 10px!important;border-radius:12px;font-family:var(--display)!important;font-weight:700;font-size:17px!important;letter-spacing:.02em;color:#2a1a06;
+ background:linear-gradient(180deg,#ffe7a3 0%,#e9b955 38%,#c98a2c 70%,#a8681c 100%);
+ border:1px solid #6b4310;box-shadow:inset 0 1px 0 rgba(255,255,255,.75),inset 0 -2px 0 rgba(80,45,5,.45),0 0 0 2px rgba(19,17,14,.9),0 0 0 3px rgba(232,192,106,.55),0 6px 16px rgba(0,0,0,.55);text-shadow:0 1px 0 rgba(255,240,200,.6)}
+#endTurn::before,#endTurn::after{content:"";position:absolute;top:50%;width:7px;height:7px;background:#6b4310;transform:translateY(-50%) rotate(45deg);box-shadow:0 0 0 1.5px #ffe7a3}
+#endTurn::before{left:-3px}#endTurn::after{right:-3px}
+#endTurn .etl{color:#2a1a06!important;text-shadow:0 1px 0 rgba(255,240,200,.7)}#endTurn.need .etl{color:#0c2420!important;text-shadow:0 1px 0 rgba(220,255,250,.6)}
+#endTurn .ico{width:28px;height:28px;filter:drop-shadow(0 1px 1px rgba(60,30,0,.5))}
+#endTurn .etn{min-width:26px;height:26px;padding:0 6px;border-radius:99px;display:grid;place-items:center;background:#2a1a06;color:#ffe7a3;font-size:13px;font-family:var(--body);box-shadow:inset 0 0 0 1.5px #e9b955;text-shadow:none}
+#endTurn .etg{position:absolute;inset:0;background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.55) 45%,transparent 60%);transform:translateX(-120%);pointer-events:none}
+#endTurn:hover{filter:brightness(1.06)}#endTurn:active{transform:translateY(1px) scale(.98);box-shadow:inset 0 2px 4px rgba(80,45,5,.5),0 0 0 2px rgba(19,17,14,.9),0 0 0 3px rgba(232,192,106,.55)}
+#endTurn.need{background:linear-gradient(180deg,#c9fbf2 0%,#82dacd 45%,#3e9c90 100%);border-color:#1d4e48;color:#0c2420}
+#endTurn.need .etn{background:#0c2420;color:#c9fbf2;box-shadow:inset 0 0 0 1.5px #82dacd}
+@media (prefers-reduced-motion:no-preference){#endTurn .etg{animation:etg 4.5s ease-in-out infinite}@keyframes etg{0%,70%{transform:translateX(-120%)}100%{transform:translateX(120%)}}}
 @media (min-width:900px){.bnav{max-width:720px;margin:0 auto}.dock .turnbar{max-width:1240px;margin:0 auto}}
 </style>
 
@@ -367,7 +381,7 @@ html.noanim *,html.noanim *::before,html.noanim *::after{animation:none!importan
 <style id="imgcss"></style>
 
 <script>
-const BUILD_VER="12.11.2026 09:44";
+const BUILD_VER="12.11.2026 09:51";
 const KEY='tiholesye-v3';
 const I=k=>`<i class="ico i-${k}"></i>`;
 
@@ -1675,7 +1689,7 @@ function render(){renderTop();renderRes();renderTable();renderPane()}
 function renderTop(){
   $('#vname').textContent=s.name;$('#rank').textContent=RANKS[s.rank].n;$('#culture').textContent=C().full;
   const se=season();$('#date').textContent=`Ход ${s.day} · ${se.n}, год ${Math.floor((s.day-1)/40)+1}`;
-  {const nc=needChoice(),eb=$('#endTurn');if(eb){eb.textContent=nc?(nc==='t'?'Выбрать науку':'Выбрать институт'):'Конец хода';eb.classList.toggle('need',!!nc)}}
+  {const nc=needChoice(),eb=$('#endTurn');if(eb){const lb=nc?(nc==='t'?'Выбрать науку':'Выбрать институт'):'Конец хода';const ic=nc?(nc==='t'?'science':'culture'):'turns';if(eb.dataset.lb!==lb){eb.dataset.lb=lb;eb.innerHTML=`<span class="etg"></span>${I(ic)}<span class="etl">${lb}</span><b class="etn">${s.day}</b>`}else eb.querySelector('.etn').textContent=s.day;eb.classList.toggle('need',!!nc)}}
   const ti=$('#turnInfo');if(ti)ti.textContent=`Ход ${s.day} · ${se.n}`+(s.queue.length?` · обучается: ${s.queue.length}`:'')+(s.rivals.some(r=>r.war)?' · идёт война':'')+(!s.tech.cur&&TECHS.some(canT)?' · выберите науку':'')+(!s.civ.cur&&CIVICS.some(canC)?' · выберите институт':'');
   const lg=$('#logo');const lk=src(s.culture+'__emblem')?s.culture+'__emblem':src('logo')?'logo':null;
   lg.hidden=!lk;if(lk)lg.style.backgroundImage=`url("${src(lk)}")`;
