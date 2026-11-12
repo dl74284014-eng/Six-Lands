@@ -1,4 +1,4 @@
-<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px sans-serif}img{max-width:100%}[hidden]{display:none!important}</style></head><body><title>Шесть Земель</title>
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px sans-serif;background:#0d0b08}img{max-width:100%}[hidden]{display:none!important}</style></head><body><title>Шесть Земель</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -280,6 +280,41 @@ button.tok:hover,.prop[role=button]:hover{border-color:var(--brass)}
  .bnav .dot{animation:dotp 1.8s ease-in-out infinite}
  @keyframes dotp{50%{transform:scale(1.3)}}
 }
+.menubtn{flex:none;width:44px;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--drawer);display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px;padding:0}
+.menubtn span{display:block;width:20px;height:2px;border-radius:2px;background:var(--brass)}
+.modal-bg{z-index:50}.toast{z-index:60}
+.title{position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;overflow:auto;background:#0d0b08;padding:calc(20px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.title .tbg{position:fixed;inset:0;background:url(img/season_summer.jpg) center/cover;filter:saturate(.9) brightness(.55)}
+.title .tbg::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,rgba(13,11,8,.35),rgba(13,11,8,.92) 75%),linear-gradient(transparent 50%,#0d0b08)}
+.title .tin{position:relative;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;width:min(360px,100%);margin:auto}
+.title .tlogo{width:120px;height:120px;border-radius:50%;background:url(img/logo.jpg) center/cover;box-shadow:0 0 0 3px var(--brass),0 0 40px rgba(232,192,106,.45)}
+.title h1{font-family:var(--title);font-weight:400;font-size:clamp(40px,12vw,58px);line-height:1;margin:6px 0 0;color:var(--brass);text-shadow:0 3px 18px rgba(0,0,0,.9)}
+.title .tsub{margin:0;color:#e9dcc0;font-size:15px;text-shadow:0 1px 4px #000}
+.title .tbtns{display:flex;flex-direction:column;gap:10px;width:100%;margin-top:14px}
+.title .tbtns .btn{width:100%;padding:13px 16px;font-size:17px;font-family:var(--display)}
+.title .tbtns .btn.ghost{background:rgba(19,17,14,.7);border-color:rgba(232,192,106,.45)}
+.title .tbig small{display:block;font-family:var(--body);font-size:12.5px;font-weight:500;opacity:.8;margin-top:2px}
+.title .tem{display:flex;gap:10px;margin-top:14px}.title .tem .ico{width:34px;height:34px;box-shadow:0 0 0 1.5px rgba(232,192,106,.6)}
+.title .tver{font-size:12px;color:var(--muted);margin-top:4px}
+.btn.danger{background:var(--bad);color:#200a05}.danger-t{color:var(--bad)!important;border-color:rgba(226,115,91,.5)!important}
+.pause{display:flex;flex-direction:column;gap:10px;text-align:center}.pause .btn{width:100%;padding:12px;font-size:16px}
+.setgrp{display:flex;flex-direction:column;gap:4px;border-top:1px solid var(--line);padding-top:10px}
+.setrow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 0;min-width:0}
+.setrow span{display:flex;flex-direction:column}.setrow small{color:var(--muted);font-size:12px}
+.setrow input[type=range]{width:46%;accent-color:var(--brass)}
+.sw{appearance:none;-webkit-appearance:none;width:46px;height:26px;border-radius:99px;background:var(--line);position:relative;flex:none;cursor:pointer;transition:background .2s;margin:0}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:var(--ink);transition:left .2s}
+.sw:checked{background:var(--brass)}.sw:checked::after{left:23px;background:#1d1407}
+.how p{margin:0 0 10px;font-size:14.5px}
+html.bigtext body{font-size:17px}html.bigtext .small{font-size:15px}html.bigtext .card .ce{font-size:9.6cqi}
+html.noanim *,html.noanim *::before,html.noanim *::after{animation:none!important;transition:none!important}
+@media (prefers-reduced-motion:no-preference){
+ .title:not([hidden]) .tin>*{animation:tin .7s cubic-bezier(.2,.8,.25,1) both}
+ .title .tin>*:nth-child(2){animation-delay:.08s}.title .tin>*:nth-child(3){animation-delay:.16s}.title .tin>*:nth-child(4){animation-delay:.24s}.title .tin>*:nth-child(5){animation-delay:.32s}
+ @keyframes tin{from{opacity:0;transform:translateY(16px)}}
+ .title .tbg{animation:kb 30s ease-in-out infinite alternate}@keyframes kb{to{transform:scale(1.12) translate(-2%,-2%)}}
+ .title.out{animation:tout .4s ease-in forwards}@keyframes tout{to{opacity:0;transform:scale(1.04)}}
+}
 @media (min-width:900px){.bnav{max-width:720px;margin:0 auto}.dock .turnbar{max-width:1240px;margin:0 auto}}
 </style>
 
@@ -292,10 +327,8 @@ button.tok:hover,.prop[role=button]:hover{border-color:var(--brass)}
         <div class="sub"><b id="rank">Хутор</b> · <span id="culture"></span> · <span id="date"></span></div>
       </div>
     </div>
-    <div class="speed" role="group" aria-label="Звук">
-      <button id="musBtn" class="snd" title="Музыка" aria-label="Музыка"><i class="ico i-music"></i></button>
-      <button id="sfxBtn" class="snd" title="Звуки" aria-label="Звуки"><i class="ico i-sound"></i></button>
-    </div>
+    <button class="menubtn" id="menuBtn" aria-label="Меню"><span></span><span></span><span></span></button>
+    <div hidden><button id="musBtn"></button><button id="sfxBtn"></button></div>
   </header>
   <div class="resbar" id="res"></div>
   <nav class="subnav" id="subnav" hidden></nav>
@@ -318,6 +351,7 @@ button.tok:hover,.prop[role=button]:hover{border-color:var(--brass)}
     <div id="pane"></div>
   </section>
 </div>
+<div class="title" id="title" hidden></div>
 <div class="modal-bg" id="modalBg" hidden><div class="modal" id="modal" role="dialog" aria-modal="true"></div></div>
 <div class="toast" id="toast" hidden></div>
 <div class="dock"><div class="turnbar"><span id="turnInfo"></span><button class="btn" id="endTurn">Конец хода</button></div><nav class="bnav" id="bnav" aria-label="Разделы"></nav></div>
@@ -326,6 +360,7 @@ button.tok:hover,.prop[role=button]:hover{border-color:var(--brass)}
 <style id="imgcss"></style>
 
 <script>
+const BUILD_VER="12.11.2026 09:11";
 const KEY='tiholesye-v3';
 const I=k=>`<i class="ico i-${k}"></i>`;
 
@@ -944,11 +979,12 @@ function chooseCulture(first){
       <div class="small"><b>Чудо народа:</b> ${cu.wonder.n}. ${cu.wonder.desc}</div>
         <div class="small"><b>Особое заклинание:</b> ${cu.spell.n}. ${cu.spell.d}</div>
         <div class="small"><b>Боги:</b> ${GODS.map(g=>cu.gods[g.id][0]).join(', ')}</div>
-        <div class="row"><button class="btn" id="cuGo">Основать деревню</button>${first?'':'<button class="btn ghost" id="cuX">Отмена</button>'}</div>
+        <div class="row"><button class="btn" id="cuGo">Основать деревню</button>${first&&!titleOn()?'':'<button class="btn ghost" id="cuX">Назад</button>'}</div>
         ${first?'':'<div class="small" style="color:var(--bad)">Текущая деревня будет потеряна.</div>'}</div>`:'<p class="small muted">Нажмите на народ, чтобы узнать о нём.</p>'}`;
     $('#modal').querySelectorAll('[data-cu]').forEach(b=>b.onclick=()=>{pick=b.dataset.cu;sfx('card');draw()});
-    const go=$('#cuGo');if(go)go.onclick=()=>{newGame(pick);save();modalOpen=false;$('#modalBg').hidden=true;render();startTimer();toast(`${CULTURES[pick].full}: деревня основана`)};
-    const x=$('#cuX');if(x)x.onclick=()=>{closeModal()};
+    const go=$('#cuGo');if(go)go.onclick=()=>{newGame(pick);save();modalOpen=false;$('#modalBg').hidden=true;render();startTimer();toast(`${CULTURES[pick].full}: деревня основана`);hideTitle();PREV=null;tab='h';renderPane()};
+    const x=$('#cuX');if(x)x.onclick=()=>{modalOpen=false;closeModal()};
+    if(!$('#cuX')&&titleOn()){}
   };
   modalOpen=true;stopTimer();$('#modalBg').hidden=false;draw();
 }
@@ -1636,7 +1672,7 @@ function renderTop(){
 }
 
 /* ---------- анимации ---------- */
-const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+let RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
 let PREV=null,JUST=null,LASTSEASON=null;
 function dealIn(root,max=18){if(RM||!root)return;root.querySelectorAll('.cards > .card').forEach((c,i)=>{if(i>=max)return;c.style.setProperty('--d',(i*35)+'ms');c.classList.remove('deal');void c.offsetWidth;c.classList.add('deal')})}
 function popRes(){
@@ -1927,6 +1963,102 @@ renderAudio();
 
 
 
+/* ---------- меню, настройки, главный экран ---------- */
+const IS_APP=!!window.AndroidApp;
+const SET={music:.6,sfx:.6,anim:true,big:false};
+try{Object.assign(SET,JSON.parse(localStorage.getItem('sixlands-settings')||'{}'))}catch(e){}
+function setSave(){try{localStorage.setItem('sixlands-settings',JSON.stringify(SET))}catch(e){}}
+function applySettings(){
+  document.documentElement.classList.toggle('noanim',!SET.anim);
+  document.documentElement.classList.toggle('bigtext',!!SET.big);
+  RM=matchMedia('(prefers-reduced-motion: reduce)').matches||!SET.anim;
+  if(AU.ctx){AU.sfx.gain.value=SET.sfx;if(AU.playing)AU.mus.gain.setTargetAtTime(SET.music,AU.ctx.currentTime,.3)}
+}
+{const _ai=auInit;auInit=function(){const r=_ai();if(r&&AU.sfx)AU.sfx.gain.value=SET.sfx;return r}}
+{const _ms=musicStart;musicStart=function(){_ms();if(AU.ctx&&AU.mus){AU.mus.gain.cancelScheduledValues(AU.ctx.currentTime);AU.mus.gain.setTargetAtTime(SET.music,AU.ctx.currentTime,.8)}}}
+const hasSave=()=>{try{const j=localStorage.getItem(KEY);return!!(j&&JSON.parse(j).lands.length)}catch(e){return false}};
+const titleOn=()=>!$('#title').hidden;
+function hideTitle(){const t=$('#title');t.classList.add('out');setTimeout(()=>{t.hidden=true;t.classList.remove('out')},RM?0:400)}
+function showTitle(){
+  closeModal();modalOpen=false;const t=$('#title');const sv=hasSave()&&s.lands.length;
+  t.innerHTML=`<div class="tbg"></div><div class="tin">
+    <div class="tlogo"></div>
+    <h1>Шесть Земель</h1>
+    <p class="tsub">Пошаговая стратегия о волшебной деревне,<br>мастерах, богах и шести народах</p>
+    <div class="tbtns">
+      ${sv?`<button class="btn tbig" id="tCont">Продолжить<small>${C().n} · ход ${s.day} · ${RANKS[s.rank].n}</small></button>`:''}
+      <button class="btn ${sv?'ghost':'tbig'}" id="tNew">Новая игра</button>
+      <button class="btn ghost" id="tHow">Как играть</button>
+      <button class="btn ghost" id="tSet">Настройки</button>
+      ${IS_APP?'<button class="btn ghost" id="tExit">Выход</button>':''}
+    </div>
+    <div class="tem">${CK.map(c=>`<i class="ico em i-em-${c}" title="${CULTURES[c].n}"></i>`).join('')}</div>
+    <div class="tver">версия ${BUILD_VER}</div></div>`;
+  t.hidden=false;
+  const on=(id,f)=>{const b=$('#'+id);if(b)b.onclick=()=>{sfx('card');f()}};
+  on('tCont',()=>{hideTitle();render();if(AU.musicOn&&!AU.playing)musicStart()});
+  on('tNew',()=>{if(sv)confirmBox('Начать новую игру?','Текущая деревня будет потеряна навсегда.','Начать заново',()=>chooseCulture(true));else chooseCulture(true)});
+  on('tHow',howTo);on('tSet',openSettings);on('tExit',confirmExit);
+}
+function confirmBox(title,text,okText,ok,danger=true){
+  openModal(`<h2>${title}</h2><p>${text}</p><div class="row"><button class="btn ${danger?'danger':''}" id="cbOk">${okText}</button><button class="btn ghost" id="cbNo">Отмена</button></div>`,true);
+  $('#cbNo').onclick=closeModal;$('#cbOk').onclick=()=>{closeModal();ok()};
+}
+function confirmExit(){confirmBox('Выйти из игры?','Прогресс сохраняется автоматически, вы сможете продолжить с того же хода.','Выйти',()=>{save();if(window.AndroidApp)AndroidApp.exit()})}
+function openPause(){
+  openModal(`<div class="pause"><h2>Пауза</h2><div class="small muted">${C().full} · ход ${s.day} · ${RANKS[s.rank].n}</div>
+    <button class="btn" id="pRes">Продолжить</button><button class="btn ghost" id="pSet">Настройки</button><button class="btn ghost" id="pHow">Как играть</button>
+    <button class="btn ghost" id="pMain">Главное меню</button>${IS_APP?'<button class="btn ghost" id="pExit">Выйти из игры</button>':''}
+    <div class="small muted">Игра сохраняется сама после каждого действия.</div></div>`,true);
+  $('#pRes').onclick=closeModal;$('#pSet').onclick=openSettings;$('#pHow').onclick=howTo;$('#pMain').onclick=()=>{save();showTitle()};
+  const e=$('#pExit');if(e)e.onclick=confirmExit;
+}
+function openSettings(){
+  const sl=(id,l,v)=>`<label class="setrow"><span>${l}</span><input type="range" id="${id}" min="0" max="100" value="${Math.round(v*100)}"></label>`;
+  const tg=(id,l,v,d)=>`<label class="setrow"><span>${l}${d?`<small>${d}</small>`:''}</span><input type="checkbox" class="sw" id="${id}" ${v?'checked':''}></label>`;
+  openModal(`<h2>Настройки</h2>
+    <div class="setgrp"><h3>Звук</h3>${tg('stMusOn','Музыка',AU.musicOn)}${sl('stMus','Громкость музыки',SET.music)}${tg('stSfxOn','Звуки',AU.sfxOn)}${sl('stSfx','Громкость звуков',SET.sfx)}</div>
+    <div class="setgrp"><h3>Экран</h3>${tg('stAnim','Анимации',SET.anim,'Раздача карт, вспышки, смена сезона')}${tg('stBig','Крупный текст',SET.big)}</div>
+    <div class="setgrp"><h3>Игра</h3><div class="row"><button class="btn ghost" id="stRename">Переименовать деревню</button><button class="btn ghost danger-t" id="stReset">Удалить сохранение</button></div></div>
+    <div class="small muted">Шесть Земель · версия ${BUILD_VER}${IS_APP?' · обновления приходят сами при запуске с интернетом':''}</div>
+    <button class="btn" id="stOk">Готово</button>`,true);
+  const v=id=>$('#'+id);
+  v('stMusOn').onchange=e=>{AU.musicOn=e.target.checked;auSave();AU.musicOn?musicStart():musicStop();renderAudio()};
+  v('stSfxOn').onchange=e=>{AU.sfxOn=e.target.checked;auSave();renderAudio();if(AU.sfxOn)sfx('card')};
+  v('stMus').oninput=e=>{SET.music=e.target.value/100;setSave();applySettings()};
+  v('stSfx').oninput=e=>{SET.sfx=e.target.value/100;setSave();applySettings()};
+  v('stSfx').onchange=()=>sfx('coin');
+  v('stAnim').onchange=e=>{SET.anim=e.target.checked;setSave();applySettings()};
+  v('stBig').onchange=e=>{SET.big=e.target.checked;setSave();applySettings()};
+  v('stRename').onclick=()=>{openModal(`<h2>Название деревни</h2><input type="text" id="rnI" maxlength="28" value="${esc(s.name||'')}"><div class="row"><button class="btn" id="rnOk">Сохранить</button><button class="btn ghost" id="rnX">Отмена</button></div>`,true);
+    $('#rnX').onclick=openSettings;$('#rnOk').onclick=()=>{const n=$('#rnI').value.trim();if(n){s.name=n;save();render()}openSettings()}};
+  v('stReset').onclick=()=>confirmBox('Удалить сохранение?','Деревня, армия и весь прогресс будут стёрты. Это нельзя отменить.','Удалить',()=>{try{localStorage.removeItem(KEY)}catch(e){}location.reload()});
+  v('stOk').onclick=closeModal;
+}
+function howTo(){
+  openModal(`<h2>Как играть</h2><div class="how">
+   <p><b>Цель.</b> Выведите свою деревню к победе одним из четырёх путей: военным (покорить все 5 народов), научным (Великое открытие), культурным (Золотой век) или став Городом чудес.</p>
+   <p><b>Ход.</b> Всё в игре пошаговое: стройте, нанимайте, исследуйте, а затем нажмите «Конец хода». Год длится 40 ходов, каждый сезон 10.</p>
+   <p><b>Деревня.</b> Постройки ложатся на участки земли. Лесопилки работают только на опушке, каменоломни на склоне, колодцы маны сильнее на лей-узле. Дома дают места для семей, а семьи работают и платят налоги.</p>
+   <p><b>Мастера.</b> Выполните условия мастера и поезжайте его уговаривать. Каждый мастер открывает свою лавку.</p>
+   <p><b>Наука и культура.</b> Выбирайте технологии и институты в разделе «Развитие». Без выбора ход не наступит.</p>
+   <p><b>Война.</b> Пехота бьёт конницу, конница бьёт стрелков и магов, стрелки и маги бьют пехоту, осадные машины ломают стены. Выбирайте тактику: Стена щитов бьёт Натиск, Натиск бьёт Обход, Обход бьёт Стену щитов.</p>
+   <p><b>Подсказка.</b> Нажмите на любой ресурс, фишку на столе или карту, чтобы узнать подробности. Не хватает дерева или камня, купите их, нажав на ресурс.</p></div>
+   <button class="btn" id="hwOk">Понятно</button>`,true);
+  $('#hwOk').onclick=closeModal;
+}
+window.onAndroidBack=function(){
+  if(!$('#modalBg').hidden){
+    if(!modalOpen){closeModal();return 1}
+    if($('#cuX')){$('#cuX').click();return 1}
+    return 1;
+  }
+  if(titleOn()){confirmExit();return 1}
+  openPause();return 1;
+};
+$('#menuBtn').onclick=()=>{sfx('card');openPause()};
+applySettings();
+
 /* ---------- время ---------- */
 function stopTimer(){clearInterval(timer);timer=null}
 function startTimer(){}
@@ -1943,8 +2075,8 @@ $('#fileMany').onchange=async e=>{let ok=0;const miss=[];for(const f of e.target
 
 TEX=mkTex();imgCSS();
 [['#pSeason','season'],['#pDef','def'],['#pTrip','trip'],['#pFate','fate'],['#rank','rank'],['#culture','culture'],['#res .x','']].forEach(([q,k])=>{const el=$(q);if(el&&k){el.onclick=()=>{if(k==='trip'&&s.trip)openInfo('trip');else openInfo(k)};el.setAttribute('role','button');el.tabIndex=0;el.onkeydown=e=>{if(e.key==='Enter')el.click()}}});
-if(load()){render();if(s.trip&&s.day>=s.trip.at)persuade();startTimer()}
-else{s={culture:'europe',name:'Тихолесье',day:1,res:{gold:0,wood:0,stone:0,food:0,mana:0},rep:0,happy:50,pop:{p:0},lands:[],masters:{},cool:{},bonus:{},trip:null,tax:'normal',rank:0,speed:1,log:[],favor:{},buffs:{},cd:{},defBonus:0,dream:0,pending:[],army:{},queue:[],rivals:[],peaceCd:{}};applyCulture();render();chooseCulture(true)}
+if(load()){render();showTitle()}
+else{s={culture:'europe',name:'Тихолесье',day:1,res:{gold:0,wood:0,stone:0,food:0,mana:0},rep:0,happy:50,pop:{p:0},lands:[],masters:{},cool:{},bonus:{},trip:null,tax:'normal',rank:0,speed:1,log:[],favor:{},buffs:{},cd:{},defBonus:0,dream:0,pending:[],army:{},queue:[],rivals:[],peaceCd:{}};applyCulture();render();showTitle()}
 idbOpen().then(idbAll).then(()=>{imgCSS();if(s.lands.length)render()});
 
 </script>

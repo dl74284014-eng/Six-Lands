@@ -24,4 +24,3 @@ android {
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
     aaptOptions { noCompress 'jpg', 'png', 'mp3' }
 }
-dependencies { implementation 'androidx.webkit:webkit:1.11.0' }

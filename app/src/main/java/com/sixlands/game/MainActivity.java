@@ -2,57 +2,186 @@ package com.sixlands.game;
 
 import android.app.Activity;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.Window;
 import android.view.WindowManager;
+import android.webkit.JavascriptInterface;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import androidx.webkit.WebViewAssetLoader;
 
+import org.json.JSONObject;
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+
+/**
+ * Игра грузится с того же адреса appassets.androidplatform.net, поэтому сохранения
+ * не теряются. Каждый файл берётся так: если в интернете есть новая версия
+ * (по manifest.json на GitHub) — она скачивается и кэшируется; без интернета
+ * используется кэш или файлы, встроенные в APK.
+ */
 public class MainActivity extends Activity {
+    static final String HOST = "appassets.androidplatform.net";
+    static final String PREFIX = "/assets/www/";
+    static final String REMOTE = "https://raw.githubusercontent.com/dl74284014-eng/Six-Lands/main/app/src/main/assets/www/";
+
     private WebView web;
+    private final Map<String, String> bundled = new HashMap<>();
+    private volatile Map<String, String> remote = null;
+    private File cacheDir;
 
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
         Window w = getWindow();
-        w.setStatusBarColor(Color.parseColor("#13110e"));
+        w.setStatusBarColor(Color.parseColor("#0d0b08"));
         w.setNavigationBarColor(Color.parseColor("#13110e"));
         w.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-        final WebViewAssetLoader loader = new WebViewAssetLoader.Builder()
-                .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
-                .build();
+        cacheDir = new File(getFilesDir(), "www");
+        cacheDir.mkdirs();
+        try { bundled.putAll(parse(readAll(getAssets().open("www/manifest.json")))); } catch (Exception ignored) {}
 
         web = new WebView(this);
-        web.setBackgroundColor(Color.parseColor("#13110e"));
+        web.setBackgroundColor(Color.parseColor("#0d0b08"));
         WebSettings s = web.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
         s.setDatabaseEnabled(true);
         s.setMediaPlaybackRequiresUserGesture(false);
         s.setTextZoom(100);
+        s.setCacheMode(WebSettings.LOAD_NO_CACHE);
+        web.addJavascriptInterface(new Bridge(), "AndroidApp");
         web.setWebViewClient(new WebViewClient() {
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest req) {
-                return loader.shouldInterceptRequest(req.getUrl());
+                Uri u = req.getUrl();
+                if (!HOST.equals(u.getHost()) || u.getPath() == null || !u.getPath().startsWith(PREFIX)) return null;
+                return serve(u.getPath().substring(PREFIX.length()));
             }
         });
         setContentView(web);
-        if (state != null) web.restoreState(state);
-        else web.loadUrl("https://appassets.androidplatform.net/assets/www/index.html");
+
+        new Thread(() -> {
+            try {
+                byte[] m = download(REMOTE + "manifest.json?t=" + System.currentTimeMillis(), 5000);
+                if (m != null) {
+                    remote = parse(new String(m, "UTF-8"));
+                    write(new File(cacheDir, "manifest.json"), m);
+                }
+            } catch (Exception ignored) {}
+            if (remote == null) {
+                try { remote = parse(new String(readFile(new File(cacheDir, "manifest.json")), "UTF-8")); } catch (Exception ignored) {}
+            }
+            runOnUiThread(() -> web.loadUrl("https://" + HOST + PREFIX + "index.html"));
+        }).start();
     }
 
-    @Override protected void onSaveInstanceState(Bundle out) { super.onSaveInstanceState(out); web.saveState(out); }
+    private WebResourceResponse serve(String rel) {
+        try {
+            String want = remote != null ? remote.get(rel) : null;
+            if (want == null) want = bundled.get(rel);
+            File f = new File(cacheDir, rel);
+            File h = new File(cacheDir, rel + ".sha");
+            byte[] data = null;
+            if (want != null && want.equals(bundled.get(rel))) {
+                data = readAll(getAssets().open("www/" + rel));
+            } else if (want != null && f.exists() && h.exists() && want.equals(new String(readFile(h), "UTF-8"))) {
+                data = readFile(f);
+            } else if (want != null && remote != null) {
+                data = download(REMOTE + rel + "?v=" + want, 15000);
+                if (data != null) { f.getParentFile().mkdirs(); write(f, data); write(h, want.getBytes("UTF-8")); }
+            }
+            if (data == null && f.exists()) data = readFile(f);
+            if (data == null) data = readAll(getAssets().open("www/" + rel));
+            WebResourceResponse r = new WebResourceResponse(mime(rel), rel.endsWith(".html") ? "utf-8" : null, new java.io.ByteArrayInputStream(data));
+            Map<String, String> hd = new HashMap<>();
+            hd.put("Cache-Control", "no-cache");
+            hd.put("Access-Control-Allow-Origin", "*");
+            r.setResponseHeaders(hd);
+            return r;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    static String mime(String p) {
+        if (p.endsWith(".html")) return "text/html";
+        if (p.endsWith(".js")) return "application/javascript";
+        if (p.endsWith(".css")) return "text/css";
+        if (p.endsWith(".json")) return "application/json";
+        if (p.endsWith(".png")) return "image/png";
+        if (p.endsWith(".jpg") || p.endsWith(".jpeg")) return "image/jpeg";
+        if (p.endsWith(".mp3")) return "audio/mpeg";
+        return "application/octet-stream";
+    }
+
+    static Map<String, String> parse(String json) throws Exception {
+        JSONObject o = new JSONObject(json).getJSONObject("files");
+        Map<String, String> m = new HashMap<>();
+        Iterator<String> it = o.keys();
+        while (it.hasNext()) { String k = it.next(); m.put(k, o.getString(k)); }
+        return m;
+    }
+
+    static byte[] download(String url, int timeout) {
+        HttpURLConnection c = null;
+        try {
+            c = (HttpURLConnection) new URL(url).openConnection();
+            c.setConnectTimeout(timeout);
+            c.setReadTimeout(timeout * 3);
+            c.setUseCaches(false);
+            if (c.getResponseCode() != 200) return null;
+            return readAll(c.getInputStream());
+        } catch (Exception e) {
+            return null;
+        } finally {
+            if (c != null) c.disconnect();
+        }
+    }
+
+    static byte[] readAll(InputStream in) throws Exception {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        byte[] buf = new byte[16384];
+        int n;
+        while ((n = in.read(buf)) > 0) out.write(buf, 0, n);
+        in.close();
+        return out.toByteArray();
+    }
+
+    static byte[] readFile(File f) throws Exception { return readAll(new FileInputStream(f)); }
+
+    static void write(File f, byte[] d) throws Exception {
+        File tmp = new File(f.getPath() + ".tmp");
+        FileOutputStream o = new FileOutputStream(tmp);
+        o.write(d);
+        o.close();
+        tmp.renameTo(f);
+    }
+
+    class Bridge {
+        @JavascriptInterface
+        public void exit() { runOnUiThread(() -> finishAndRemoveTask()); }
+    }
+
     @Override protected void onPause() { super.onPause(); web.onPause(); }
     @Override protected void onResume() { super.onResume(); web.onResume(); }
 
     @Override
     public void onBackPressed() {
-        web.evaluateJavascript("(function(){var m=document.getElementById('modalBg');if(m&&!m.hidden){closeModal();return 1}return 0})()",
+        web.evaluateJavascript("(function(){try{return window.onAndroidBack?onAndroidBack():0}catch(e){return 0}})()",
             v -> { if (!"1".equals(v)) MainActivity.super.onBackPressed(); });
     }
 }
