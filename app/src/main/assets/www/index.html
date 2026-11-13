@@ -378,6 +378,7 @@ body{overflow-x:hidden}
 .task.dn{opacity:.55}
 #questBox,#scnBox{display:none!important}
 @media (max-width:899px){.app{padding-bottom:calc(var(--dockH,140px) + 28px)!important}}
+[hidden]{display:none!important}
 .lnk{background:none;border:0;padding:0;color:var(--brass);font:inherit;font-size:12px;text-decoration:underline dotted;cursor:pointer}
 .btn.sm{padding:6px 10px;font-size:13px}
 .cards.hand{grid-template-columns:repeat(3,minmax(0,1fr))}
@@ -472,7 +473,7 @@ body{overflow-x:hidden}
 <style id="imgcss"></style>
 
 <script>
-const BUILD_VER="13.11.2026 09:27";
+const BUILD_VER="13.11.2026 09:37";
 let SLOT=1;try{SLOT=+localStorage.getItem('sixlands-slot')||1}catch(e){}
 const SK_=n=>'sixlands-save-'+n;
 try{const old=localStorage.getItem('tiholesye-v3');if(old&&!localStorage.getItem(SK_(1))){localStorage.setItem(SK_(1),old);localStorage.removeItem('tiholesye-v3')}}catch(e){}
@@ -3289,7 +3290,10 @@ function stopTimer(){clearInterval(timer);timer=null}
 function startTimer(){}
 function setSpeed(v){s.speed=v;save();renderTop();startTimer()}
 
-$('#endTurn').onclick=endTurn;
+{let lastET=0;const fire=e=>{const b=e.target&&e.target.closest&&e.target.closest('#endTurn');if(!b)return;const n=Date.now();if(n-lastET<450)return;lastET=n;
+  try{endTurn()}catch(err){toast('Ошибка кнопки: '+esc(String(err&&err.message||err).slice(0,140)))}};
+  document.addEventListener('click',fire,true);document.addEventListener('pointerup',e=>{if(e.pointerType==='touch')fire(e)},true)}
+window.addEventListener('error',e=>{try{const m=String(e.message||'').slice(0,140);if(!m||/ResizeObserver|Script error/.test(m))return;localStorage.setItem('sixlands-err',m);toast('Ошибка: '+esc(m))}catch(_){}});
 {const dk=document.querySelector('.dock');const setH=()=>{try{document.documentElement.style.setProperty('--dockH',Math.ceil(dk.getBoundingClientRect().height)+'px')}catch(e){}};setH();try{new ResizeObserver(setH).observe(dk)}catch(e){}addEventListener('resize',setH)}
 $('#lands').addEventListener('click',e=>{const c=e.target.closest('[data-l]');if(c)return openLand(+c.dataset.l);if(e.target.closest('#newland'))buyLand()});
 document.querySelectorAll('[data-sp]').forEach(b=>b.onclick=()=>setSpeed(+b.dataset.sp));
