@@ -481,7 +481,7 @@ body{overflow-x:hidden}
 <style id="imgcss"></style>
 
 <script>
-const BUILD_VER="13.11.2026 10:46";
+const BUILD_VER="13.11.2026 11:21";
 let SLOT=1;try{SLOT=+localStorage.getItem('sixlands-slot')||1}catch(e){}
 const SK_=n=>'sixlands-save-'+n;
 try{const old=localStorage.getItem('tiholesye-v3');if(old&&!localStorage.getItem(SK_(1))){localStorage.setItem(SK_(1),old);localStorage.removeItem('tiholesye-v3')}}catch(e){}
@@ -1101,8 +1101,9 @@ function card({cls='',name,artCls='',art='',cost='',text='',tag='',tagCls='',att
 const tr={tl:'',tr:'translate(40 0) scale(-1 1)',bl:'translate(0 40) scale(1 -1)',br:'translate(40 40) scale(-1 -1)'};
 for(const k in tr){const svg=`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><g transform='${tr[k]}'>${p}</g></svg>`;document.documentElement.style.setProperty('--c-'+k,`url("data:image/svg+xml,${encodeURIComponent(svg)}")`)}})();
 function buildingCard(d,o={}){
-  return card({cls:`c-${d.cat} ${o.cls||''}`,name:d.n,artCls:o.land?`tex-${o.land}`:'cat',art:artOf(o.key||d.id,d.ic),cost:o.cost?costSpans(d.cost)+` ${bTurns(d)}<i class="ico i-turns"></i>`:'',
-    text:o.why?`<span class="why"><i class="ico i-lock"></i> ${o.why}</span>`:effText(d),tag:o.tag||'',tagCls:o.tagCls||'',attrs:o.attrs||'',el:o.el,badge:(o.badge||'')+(o.lv>1?`<span class="lvst">${'<i></i>'.repeat(o.lv-1)}</span>`:'')});
+  const lk=o.lv>1&&src(s.culture+'__'+d.id+'_'+o.lv)?d.id+'_'+o.lv:null;
+  return card({cls:`c-${d.cat} ${o.cls||''}`,name:d.n,artCls:o.land?`tex-${o.land}`:'cat',art:artOf(o.key||lk||d.id,d.ic),cost:o.cost?costSpans(d.cost)+` ${bTurns(d)}<i class="ico i-turns"></i>`:'',
+    text:o.why?`<span class="why"><i class="ico i-lock"></i> ${o.why}</span>`:effText(d),tag:o.tag||'',tagCls:o.tagCls||'',attrs:o.attrs||'',el:o.el,badge:(o.badge||'')+(o.lv>1&&!lk?`<span class="lvst">${'<i></i>'.repeat(o.lv-1)}</span>`:'')});
 }
 function masterCard(m,o={}){
   let tag='',tc='';
