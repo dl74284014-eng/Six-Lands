@@ -472,7 +472,7 @@ body{overflow-x:hidden}
 <style id="imgcss"></style>
 
 <script>
-const BUILD_VER="13.11.2026 09:03";
+const BUILD_VER="13.11.2026 09:27";
 let SLOT=1;try{SLOT=+localStorage.getItem('sixlands-slot')||1}catch(e){}
 const SK_=n=>'sixlands-save-'+n;
 try{const old=localStorage.getItem('tiholesye-v3');if(old&&!localStorage.getItem(SK_(1))){localStorage.setItem(SK_(1),old);localStorage.removeItem('tiholesye-v3')}}catch(e){}
@@ -2095,7 +2095,7 @@ function ensureHero(){if(!s.hero){const L=HNAMES[s.culture]||HNAMES.europe;s.her
 function heroPow(){const h=s.hero;if(!h)return 0;return 6+3*h.lvl+(heroPerk('champion')?5:0)+relicSum('hero')+gwSum('hero')}
 const heroFree=()=>s.hero&&s.hero.at==='home'&&!(s.hero.hurt>s.day);
 function heroXp(n,why){const h=s.hero;if(!h)return;h.xp+=n;while(h.lvl<HXP.length&&h.xp>=HXP[h.lvl]){h.lvl++;const pool=HP.filter(p=>!h.perks.includes(p.id)).sort(()=>rnd()-.5).slice(0,3).map(p=>p.id);h.pick=pool.length?pool:null;
-  const m=`${h.name} достигает ${h.lvl}-го уровня${h.pick?'. Выберите новое умение во вкладке «Староста».':'.'}`;log(m,'good');REPORT.push(['Староста растёт',m,'good']);inc('hlvl')}}
+  const m=`${h.name} достигает ${h.lvl}-го уровня${h.pick?'. Выберите новое умение: Война → Войска, раздел «Староста».':'.'}`;log(m,'good');REPORT.push(['Староста растёт',m,'good']);inc('hlvl')}}
 function heroCard(x={}){const h=s.hero;return card({cls:`c-unit ${x.cls||''}`,name:h.name,artCls:'cat',art:artOf('hero',I('rank')),text:`Уровень ${h.lvl} · сила ${heroPow()}`,tag:h.hurt>s.day?`Ранен: ${h.hurt-s.day} ход.`:h.at!=='home'?'В экспедиции':'Дома',tagCls:h.hurt>s.day?'bad':h.at!=='home'?'arc':'ok',attrs:x.attrs||'',el:x.el})}
 function renderHero(p){ensureHero();const h=s.hero;const nx=HXP[h.lvl];
   p.innerHTML=`<div class="two"><div class="cards herocv">${heroCard({el:"div"})}</div><div class="stack">
@@ -2202,7 +2202,7 @@ function renderExp(p){ensureExp();ensureHero();const E=s.exp;
    ${E.party?`<div class="small">В пути: «${SITES[(E.sites.find(y=>y.id===E.party.site)||{k:'ruins'}).k].n}», вернётся через ${Math.max(0,E.party.end-s.day)} ход.</div>`:''}</div>
    </div>
    <div class="cards">${heroCard({attrs:'data-hero="1"'})}${E.sites.map(x=>siteCard(x,{attrs:`data-site="${x.id}"`})).join('')||'<div class="small muted">Пока мест нет. Разведчики ищут.</div>'}</div>`;
-  p.querySelectorAll('[data-site]').forEach(b=>b.onclick=()=>openSite(+b.dataset.site));p.querySelectorAll('[data-hero]').forEach(b=>b.onclick=()=>go('hero'))}
+  p.querySelectorAll('[data-site]').forEach(b=>b.onclick=()=>openSite(+b.dataset.site));p.querySelectorAll('[data-hero]').forEach(b=>b.onclick=()=>{go('a');setTimeout(()=>{const h=$('#aHero');if(h)h.scrollIntoView({behavior:'smooth',block:'start'})},200)})}
 
 /* ---------- дипломатия ---------- */
 const dipCost=n=>Math.round(n*(heroPerk('diplomat')?.67:1));
@@ -2532,7 +2532,7 @@ const NAV=[
  {id:'build',n:'Постройки',ic:'jobs',subs:[['b','Постройки'],['gw','Великие стройки']]},
  {id:'people',n:'Мастера',ic:'people',subs:[['m','Мастера']]},
  {id:'trade',n:'Торговля',ic:'trade',subs:[['tr','Рынок'],['tgd','Товары'],['tnb','Соседи'],['tcs','Города'],['tcv','Караваны']]},
- {id:'war',n:'Война',ic:'atk',subs:[['a','Войска'],['merc','Наёмники'],['ab','Тактика'],['hero','Староста'],['ex','Экспедиции'],['spy','Шпионаж'],['pir','Пираты']]},
+ {id:'war',n:'Война',ic:'atk',subs:[['a','Войска'],['ab','Тактика'],['ex','Экспедиции'],['spy','Шпионаж'],['pir','Пираты']]},
  {id:'prog',n:'Развитие',ic:'science',subs:[['t','Наука'],['tc','Культура'],['s','Магия'],['g','Боги'],['rl','Реликвии']]}
 ];
 const navOf=t=>NAV.find(n=>n.subs.some(x=>x[0]===t))||NAV[0];
@@ -2795,7 +2795,7 @@ function renderPane(){
   if(tab==='spy'){renderSpies(p);return}
   if(tab==='dip'){renderDip(p);return}
   if(tab==='q'){renderQ(p);return}
-  if(tab==='hero'){renderHero(p);return}
+  if(tab==='hero'||tab==='merc'){tab='a'}
   if(tab==='gw'){renderGW(p);return}
   if(tab==='merc'){renderMerc(p);return}
   if(tab==='ex'){renderExp(p);return}
@@ -2823,6 +2823,8 @@ function renderPane(){
       <div class="small muted">${cnt('barracks')&&here('barracks')?'Казарма: обучаются двое одновременно.':'Одновременно обучается один воин. Казарма с воеводой позволит двоих.'}</div></div></div>
       <div class="cards">${UNITS.map(u=>unitCard(u,{attrs:`data-u="${u.id}"`})).join('')}</div>`;
     p.querySelectorAll('[data-u]').forEach(b=>b.onclick=()=>openUnit(b.dataset.u));
+    p.insertAdjacentHTML('beforeend','<div class="zone-h" style="margin-top:18px"><span>Наёмники</span><span></span></div><div id="aMerc"></div><div class="zone-h" style="margin-top:18px"><span>Староста</span><span></span></div><div id="aHero"></div>');
+    renderMerc($('#aMerc'));renderHero($('#aHero'));
   }else if(tab==='ab'){
     p.innerHTML=`      <div class="two"><div class="stack"><h3>Кто кого бьёт</h3>
         <div class="small"><i class="ico i-inf"></i> Пехота бьёт <i class="ico i-cav"></i> конницу и <i class="ico i-siege"></i> осаду · <i class="ico i-cav"></i> Конница бьёт <i class="ico i-arch"></i> стрелков и <i class="ico i-mage"></i> магов · <i class="ico i-arch"></i> Стрелки бьют <i class="ico i-inf"></i> пехоту · <i class="ico i-mage"></i> Маги бьют <i class="ico i-inf"></i> пехоту, но боятся конницы · <i class="ico i-siege"></i> Осада ломает стены.</div>
