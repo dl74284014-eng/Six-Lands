@@ -387,6 +387,7 @@ body{overflow-x:hidden}
 .card .lvst{position:absolute;z-index:5;left:50%;transform:translateX(-50%);top:6cqi;display:flex;gap:2px}
 .card .lvst i{display:block;width:17px;height:17px;background:linear-gradient(#ffe7a0,#d39a2e);clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);filter:drop-shadow(0 0 2px #000)}
 .card.adj .gem{box-shadow:0 0 0 2px #a3d47c,0 0 12px #a3d47c}
+.herostat{display:flex;gap:10px;flex-wrap:wrap}.herostat span{display:flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid rgba(232,192,106,.4);border-radius:10px;background:rgba(232,192,106,.07)}.herostat b{font-size:17px;color:var(--brass)}
 .lnk{background:none;border:0;padding:0;color:var(--brass);font:inherit;font-size:12px;text-decoration:underline dotted;cursor:pointer}
 .btn.sm{padding:6px 10px;font-size:13px}
 .cards.hand{grid-template-columns:repeat(3,minmax(0,1fr))}
@@ -481,7 +482,7 @@ body{overflow-x:hidden}
 <style id="imgcss"></style>
 
 <script>
-const BUILD_VER="13.11.2026 14:14";
+const BUILD_VER="13.11.2026 21:03";
 let SLOT=1;try{SLOT=+localStorage.getItem('sixlands-slot')||1}catch(e){}
 const SK_=n=>'sixlands-save-'+n;
 try{const old=localStorage.getItem('tiholesye-v3');if(old&&!localStorage.getItem(SK_(1))){localStorage.setItem(SK_(1),old);localStorage.removeItem('tiholesye-v3')}}catch(e){}
@@ -2125,10 +2126,10 @@ function heroPow(){const h=s.hero;if(!h)return 0;return 6+3*h.lvl+(heroPerk('cha
 const heroFree=()=>s.hero&&s.hero.at==='home'&&!(s.hero.hurt>s.day);
 function heroXp(n,why){const h=s.hero;if(!h)return;h.xp+=n;while(h.lvl<HXP.length&&h.xp>=HXP[h.lvl]){h.lvl++;const pool=HP.filter(p=>!h.perks.includes(p.id)).sort(()=>rnd()-.5).slice(0,3).map(p=>p.id);h.pick=pool.length?pool:null;
   const m=`${h.name} достигает ${h.lvl}-го уровня${h.pick?'. Выберите новое умение: Война → Войска, раздел «Староста».':'.'}`;log(m,'good');REPORT.push(['Староста растёт',m,'good']);inc('hlvl')}}
-function heroCard(x={}){const h=s.hero;return card({cls:`c-unit ${x.cls||''}`,name:h.name,artCls:'cat',art:artOf('hero',I('rank')),text:`Уровень ${h.lvl} · сила ${heroPow()}`,tag:h.hurt>s.day?`Ранен: ${h.hurt-s.day} ход.`:h.at!=='home'?'В экспедиции':'Дома',tagCls:h.hurt>s.day?'bad':h.at!=='home'?'arc':'ok',attrs:x.attrs||'',el:x.el})}
+function heroCard(x={}){const h=s.hero;return card({cls:`c-unit ${x.cls||''}`,name:h.name,artCls:'cat',art:artOf('hero',I('rank')),text:`${I('atk')}${Math.round(heroPow()*.8)} · ${I('def')}${Math.round(heroPow()*.9)} · ур. ${h.lvl}`,tag:h.hurt>s.day?`Ранен: ${h.hurt-s.day} ход.`:h.at!=='home'?'В экспедиции':'Дома',tagCls:h.hurt>s.day?'bad':h.at!=='home'?'arc':'ok',attrs:x.attrs||'',el:x.el})}
 function renderHero(p){ensureHero();const h=s.hero;const nx=HXP[h.lvl];
   p.innerHTML=`<div class="two"><div class="cards herocv">${heroCard({el:"div"})}</div><div class="stack">
-   <h3>${h.name}</h3><div class="small">Уровень ${h.lvl} · опыт ${h.xp}${nx?` / ${nx}`:''} · сила ${heroPow()}</div>
+   <h3>${h.name}</h3><div class="small">Уровень ${h.lvl} · опыт ${h.xp}${nx?` / ${nx}`:''}</div><div class="herostat"><span>${I('atk')} Атака <b>${Math.round(heroPow()*.8)}</b></span><span>${I('def')} Защита <b>${Math.round(heroPow()*.9)}</b></span></div>
    ${nx?`<div class="bar"><i style="width:${Math.min(100,(h.xp-HXP[h.lvl-1])/(nx-HXP[h.lvl-1])*100)}%"></i></div>`:''}
    <div class="small muted">Опыт: победа в бою +2, поражение +1, удачная экспедиция +3, повергнутый босс +6.</div>
    <label class="setrow"><span>Ведёт армию в бой<small>Добавляет силу героя в каждую битву. При тяжёлом поражении герой может быть ранен на 6 ходов.</small></span><input type="checkbox" class="sw" id="hLead" ${h.lead!==false?'checked':''}></label>
@@ -2589,13 +2590,13 @@ function h4After(S,won){ensureH4();const save=(h4Free('guard')?(.2+.05*h4Lv('gua
     if(g.n<.5){h.hurt=s.day+5;log(`${h4Name(g.hk)} тяжело ранен и 5 ходов восстанавливает силы. Герои не погибают.`,'bad')}})}
 function h4Card(k,o={}){const h=h4(k),lk=!h&&HA[k].need();
   return card({cls:`c-unit ${lk?'locked':''} ${o.cls||''}`,name:h4Name(k),artCls:'cat',art:artOf('hr_'+k,I('rank')),cost:!h&&o.cost?`<span class="${s.res.gold<h4Cost(k)?'lack':''}">${h4Cost(k)}${RI.gold}</span>`:'',
-    text:`${HA[k].t} · ${HA[k].ab}`,tag:h?(h.hurt>s.day?`Ранен: ${h.hurt-s.day} ход.`:`Уровень ${h.lv}`):'',tagCls:h&&h.hurt>s.day?'bad':'gold',attrs:o.attrs||'',el:o.el})}
+    text:`${I('atk')}${Math.round(h4Pow(k).atk)} · ${I('def')}${Math.round(h4Pow(k).hp)} · ${HA[k].ab}`,tag:h?(h.hurt>s.day?`Ранен: ${h.hurt-s.day} ход.`:`Уровень ${h.lv}`):'',tagCls:h&&h.hurt>s.day?'bad':'gold',attrs:o.attrs||'',el:o.el})}
 function renderH4(p){ensureH4();
   p.innerHTML=`<div class="small muted" style="margin-bottom:10px">Герои сражаются вместе с армией и дают ей особую способность. Их нельзя убить: после тяжёлого поражения герой 5 ходов лечится, а потом возвращается. С каждой победой растут до 5-го уровня. Содержание: 2 золота за ход каждый.</div>
    <div class="cards">${HK.map(k=>h4Card(k,{cost:1,attrs:`data-h4="${k}"`})).join('')}</div>`;
   p.querySelectorAll('[data-h4]').forEach(b=>b.onclick=()=>openH4(b.dataset.h4))}
 function openH4(k){const h=h4(k),a=HA[k],lk=!h&&a.need(),pr=h4Cost(k),pw=h4Pow(k);
-  openModal(`<div class="cv">${h4Card(k,{cls:'big',el:'div'})}<div class="info"><h2>${h4Name(k)}</h2><div class="small">${a.t} · ${TY[a.type].n.toLowerCase()} · атака ${Math.round(pw.atk)} · стойкость ${Math.round(pw.hp)}</div>
+  openModal(`<div class="cv">${h4Card(k,{cls:'big',el:'div'})}<div class="info"><h2>${h4Name(k)}</h2><div class="small">${a.t} · ${TY[a.type].n.toLowerCase()}</div><div class="herostat"><span>${I('atk')} Атака <b>${Math.round(pw.atk)}</b></span><span>${I('def')} Защита <b>${Math.round(pw.hp)}</b></span></div><div class="small muted">Сражается как один сильный воин: ${TY[a.type].n.toLowerCase()} бьёт по врагу своим ударом и принимает удары на себя. Атака и защита растут на 20% с каждым уровнем и понемногу с ходами.</div>
    <p><b>${a.ab}:</b> ${a.d(h4Lv(k))}</p>
    ${h?`<div class="small">Уровень ${h.lv}${h.lv<5?` · опыт ${Math.round(h.xp*10)/10}/${HXP4[h.lv]}`:' · высший'}${h.hurt>s.day?` · <span class="dn">ранен ещё ${h.hurt-s.day} ход.</span>`:''}</div>
      <label class="setrow"><span>Сражается в боях<small>Если выключить, способность не действует, но и ранить героя не смогут.</small></span><input type="checkbox" class="sw" id="h4F" ${h.fight!==false?'checked':''}></label>`
