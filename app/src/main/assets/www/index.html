@@ -482,7 +482,7 @@ body{overflow-x:hidden}
 <style id="imgcss"></style>
 
 <script>
-const BUILD_VER="13.11.2026 21:17";
+const BUILD_VER="13.11.2026 21:33";
 let SLOT=1;try{SLOT=+localStorage.getItem('sixlands-slot')||1}catch(e){}
 const SK_=n=>'sixlands-save-'+n;
 try{const old=localStorage.getItem('tiholesye-v3');if(old&&!localStorage.getItem(SK_(1))){localStorage.setItem(SK_(1),old);localStorage.removeItem('tiholesye-v3')}}catch(e){}
@@ -1303,7 +1303,7 @@ function tick(){
   while(s.rank<RANKS.length-1&&RANKS[s.rank+1].ok()){s.rank++;s.rep=Math.min(100,s.rep+5);sfx('good');log(`Деревня получает звание «${RANKS[s.rank].n}»! Слава +5.`,'arc');toast('Новое звание: '+RANKS[s.rank].n)}
   trainTurn();
   REPORT=REPORT0;REPORT0=[];aiTurn();
-  progTurn(st);greatTurn(st);checkQuests(true);tradeTurn();spyTurn();featTurn(st);
+  safeRun('progTurn',()=>progTurn(st));safeRun('greatTurn',()=>greatTurn(st));safeRun('checkQuests',()=>checkQuests(true));safeRun('tradeTurn',tradeTurn);safeRun('spyTurn',spyTurn);featTurn(st);
 
   if(!s.won&&(s.rivals.every(r=>r.vassal)||s.rank>=RANKS.length-1||hasT('final')||hasC('golden'))){s.won=true;s.sumDue=1;REPORT.push(['Победа!',s.rivals.every(r=>r.vassal)?'Военная победа: все народы признали вашу власть.':hasT('final')?'Научная победа: ваш народ совершил Великое открытие.':hasC('golden')?'Культурная победа: настал Золотой век.':'Ваша деревня стала Городом чудес.','good'])}
   if(s.trip&&s.day>=s.trip.at)persuade();
@@ -1321,7 +1321,7 @@ function endTurn(){if(!s.lands.length)return;
   if($('#modalBg').hidden)modalOpen=false;else if(modalOpen)return;else closeModal();
   const nc=needChoice();if(nc){sfx('bad');toast(nc==='t'?'Сначала выберите, что исследовать':'Сначала выберите институт');go(nc);return}
   const d0=s.day;
-  try{tick()}catch(e){TURNERR=(e&&e.message||String(e))+' | '+((e&&e.stack)||'').split('\n').slice(1,3).join(' ');try{localStorage.setItem('sixlands-err',`ход ${s.day}: `+TURNERR)}catch(_){}
+  try{tick()}catch(e){errNote('ход: '+(e&&e.message||e),e&&e.stack);TURNERR=(e&&e.message||String(e))+' | '+((e&&e.stack)||'').split('\n').slice(1,3).join(' ');try{localStorage.setItem('sixlands-err',`ход ${s.day}: `+TURNERR)}catch(_){}
     modalOpen=false;try{render()}catch(_){}toast('Ход завершён с ошибкой. Скриншот этого сообщения поможет исправить: '+esc(TURNERR.slice(0,140)));return}
   try{sweep();seasonBanner()}catch(e){}if(!modalOpen&&!REPORT.length)toast(`Ход ${s.day}`)}
 
@@ -2436,7 +2436,8 @@ function tutPos(){if(!TUTD||TUTD.done)return;const o=$('#tut');if(!o)return;cons
 setInterval(()=>{try{tutPos()}catch(e){}},400);
 
 /* ---------- общий ход ---------- */
-function featTurn(st){ensureTasks();tasksTurn();ensureOrd();ensureHero();ensureGW();ensureMerc();gwTurn();mercTurn();ordTurn();expTurn();dipTurn();carTurn();scnTurn();histTurn();achCheck()}
+function safeRun(n,f){try{f()}catch(e){errNote(n+': '+(e&&e.message||e),e&&e.stack)}}
+function featTurn(st){[['tasks',()=>{ensureTasks();tasksTurn()}],['ensure',()=>{ensureOrd();ensureHero();ensureGW();ensureMerc()}],['gwTurn',gwTurn],['mercTurn',mercTurn],['ordTurn',ordTurn],['expTurn',expTurn],['dipTurn',dipTurn],['carTurn',carTurn],['scnTurn',scnTurn],['histTurn',histTurn],['achCheck',achCheck]].forEach(([n,f])=>safeRun(n,f))}
 function ensureFeat(){ensureTasks();ensureGW();ensureMerc();ensureOrd();ensureHero();ensureExp();if(!s.relics)s.relics=[];if(!s.car)s.car=[];if(!s.cnt)s.cnt={};if(!s.hist)s.hist=[];if(!s.chron)s.chron=[]}
 
 /* ---------- великие стройки ---------- */
@@ -3298,7 +3299,7 @@ function openSettings(){
   openModal(`<h2>Настройки</h2>
     <div class="setgrp"><h3>Звук</h3>${tg('stMusOn','Музыка',AU.musicOn)}${sl('stMus','Громкость музыки',SET.music)}${tg('stSfxOn','Звуки',AU.sfxOn)}${sl('stSfx','Громкость звуков',SET.sfx)}${tg('stAmbOn','Звуки окружения',AU.ambOn,'Ветер, дождь, птицы, колокола народа')}${sl('stAmb','Громкость окружения',SET.amb)}</div>
     <div class="setgrp"><h3>Экран</h3>${tg('stAnim','Анимации',SET.anim,'Раздача карт, вспышки, смена сезона')}${tg('stBig','Крупный текст',SET.big)}${tg('stWx','Погода на столе',SET.weather!==false,'Снег, дождь, листопад, туман поверх стола')}</div>
-    <div class="setgrp"><h3>Игра</h3><div class="row"><button class="btn ghost" id="stRename">Переименовать деревню</button><button class="btn ghost" id="stTut">Обучение заново</button><button class="btn ghost danger-t" id="stReset">Удалить сохранение (ячейка ${SLOT})</button>${IS_APP&&window.AndroidApp.checkNow?'<button class="btn ghost" id="stUpd">Проверить обновления</button>':''}</div></div>
+    <div class="setgrp"><h3>Игра</h3><div class="row"><button class="btn ghost" id="stRename">Переименовать деревню</button><button class="btn ghost" id="stTut">Обучение заново</button><button class="btn ghost" id="stErr">Отчёт об ошибке</button><button class="btn ghost danger-t" id="stReset">Удалить сохранение (ячейка ${SLOT})</button>${IS_APP&&window.AndroidApp.checkNow?'<button class="btn ghost" id="stUpd">Проверить обновления</button>':''}</div></div>
     <div class="small muted">Шесть Земель · версия ${BUILD_VER}${IS_APP?` · ${appStatus()||'обновления приходят сами при запуске с интернетом'}`:''}</div>
     <button class="btn" id="stOk">Готово</button>`,true);
   const v=id=>$('#'+id);
@@ -3317,6 +3318,7 @@ function openSettings(){
   v('stReset').onclick=()=>confirmBox('Удалить сохранение?','Деревня, армия и весь прогресс будут стёрты. Это нельзя отменить.','Удалить',()=>{try{localStorage.removeItem(SK_(SLOT))}catch(e){}location.reload()});
   {const u=$('#stUpd');if(u)u.onclick=()=>{try{AndroidApp.checkNow()}catch(e){}toast('Проверяю обновления… Если есть новая версия, игра перезагрузится.')}}
   v('stOk').onclick=closeModal;
+  v('stErr').onclick=openErrReport;
   v('stTut').onclick=()=>{closeModal();if(!s.lands.length)return;if(!$('#title').hidden)hideTitle();tab='h';render();setTimeout(()=>tutStart(true),500)};
 }
 function howTo(){
@@ -3369,9 +3371,18 @@ function startTimer(){}
 function setSpeed(v){s.speed=v;save();renderTop();startTimer()}
 
 {let lastET=0;const fire=e=>{const b=e.target&&e.target.closest&&e.target.closest('#endTurn');if(!b)return;const n=Date.now();if(n-lastET<450)return;lastET=n;
-  try{endTurn()}catch(err){toast('Ошибка кнопки: '+esc(String(err&&err.message||err).slice(0,140)))}};
+  try{endTurn()}catch(err){errNote('кнопка: '+(err&&err.message||err),err&&err.stack);toast('Ошибка кнопки: '+esc(String(err&&err.message||err).slice(0,140)))}};
   document.addEventListener('click',fire,true);document.addEventListener('pointerup',e=>{if(e.pointerType==='touch')fire(e)},true)}
-window.addEventListener('error',e=>{try{const m=String(e.message||'').slice(0,140);if(!m||/ResizeObserver|Script error/.test(m))return;localStorage.setItem('sixlands-err',m);toast('Ошибка: '+esc(m))}catch(_){}});
+let ERRLOG=[];try{ERRLOG=JSON.parse(localStorage.getItem('sixlands-errlog')||'[]')}catch(_){}
+function errNote(m,st){try{const where=String(st||'').split('\n').slice(1,6).map(x=>x.trim().replace(/\(?(https?|file):[^)]*\/([^/)]*)\)?/,'$2')).join(' ← ');
+  ERRLOG.unshift({t:Date.now(),v:typeof BUILD_VER!=='undefined'?BUILD_VER:'',day:s&&s.day,tab,m:String(m).slice(0,200),w:where.slice(0,600)});ERRLOG=ERRLOG.slice(0,8);localStorage.setItem('sixlands-errlog',JSON.stringify(ERRLOG))}catch(_){}}
+window.addEventListener('error',e=>{try{const m=String(e.message||'').slice(0,140);if(!m||/ResizeObserver|Script error/.test(m))return;errNote(m,e.error&&e.error.stack);toast('Ошибка: '+esc(m)+'. Меню → Настройки → «Отчёт об ошибке».')}catch(_){}});
+function openErrReport(){const data=JSON.stringify({errors:ERRLOG,save:s},null,0);
+  openModal(`<h2>Отчёт об ошибке</h2><p class="small">Скопируйте этот текст и пришлите его разработчику в чат. Там последние ошибки и ваша текущая партия, по ним можно найти причину.</p>
+   <div class="small">Ошибок записано: ${ERRLOG.length}${ERRLOG[0]?` · последняя: ход ${ERRLOG[0].day}, «${esc(ERRLOG[0].m)}»`:''}</div>
+   <textarea id="erT" readonly style="width:100%;height:160px;font:11px monospace;background:#120e09;color:#d8c9a8;border:1px solid var(--line);border-radius:8px">${esc(data)}</textarea>
+   <div class="row"><button class="btn" id="erC">Скопировать</button><button class="btn ghost" id="erX">Закрыть</button></div>`,true);
+  $('#erX').onclick=closeModal;$('#erC').onclick=()=>{const ta=$('#erT');ta.focus();ta.select();try{navigator.clipboard.writeText(data).then(()=>toast('Скопировано'),()=>{document.execCommand('copy');toast('Скопировано')})}catch(_){try{document.execCommand('copy');toast('Скопировано')}catch(__){toast('Выделите текст и скопируйте вручную')}}}}
 {const dk=document.querySelector('.dock');const setH=()=>{try{document.documentElement.style.setProperty('--dockH',Math.ceil(dk.getBoundingClientRect().height)+'px')}catch(e){}};setH();try{new ResizeObserver(setH).observe(dk)}catch(e){}addEventListener('resize',setH)}
 $('#lands').addEventListener('click',e=>{const c=e.target.closest('[data-l]');if(c)return openLand(+c.dataset.l);if(e.target.closest('#newland'))buyLand()});
 document.querySelectorAll('[data-sp]').forEach(b=>b.onclick=()=>setSpeed(+b.dataset.sp));
