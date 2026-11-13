@@ -472,7 +472,7 @@ body{overflow-x:hidden}
 <style id="imgcss"></style>
 
 <script>
-const BUILD_VER="13.11.2026 08:51";
+const BUILD_VER="13.11.2026 09:03";
 let SLOT=1;try{SLOT=+localStorage.getItem('sixlands-slot')||1}catch(e){}
 const SK_=n=>'sixlands-save-'+n;
 try{const old=localStorage.getItem('tiholesye-v3');if(old&&!localStorage.getItem(SK_(1))){localStorage.setItem(SK_(1),old);localStorage.removeItem('tiholesye-v3')}}catch(e){}
@@ -2532,7 +2532,7 @@ const NAV=[
  {id:'build',n:'Постройки',ic:'jobs',subs:[['b','Постройки'],['gw','Великие стройки']]},
  {id:'people',n:'Мастера',ic:'people',subs:[['m','Мастера']]},
  {id:'trade',n:'Торговля',ic:'trade',subs:[['tr','Рынок'],['tgd','Товары'],['tnb','Соседи'],['tcs','Города'],['tcv','Караваны']]},
- {id:'war',n:'Война',ic:'atk',subs:[['a','Войска'],['merc','Наёмники'],['ab','Тактика'],['hero','Староста'],['ex','Экспедиции'],['n','Народы'],['spy','Шпионаж'],['pir','Пираты']]},
+ {id:'war',n:'Война',ic:'atk',subs:[['a','Войска'],['merc','Наёмники'],['ab','Тактика'],['hero','Староста'],['ex','Экспедиции'],['spy','Шпионаж'],['pir','Пираты']]},
  {id:'prog',n:'Развитие',ic:'science',subs:[['t','Наука'],['tc','Культура'],['s','Магия'],['g','Боги'],['rl','Реликвии']]}
 ];
 const navOf=t=>NAV.find(n=>n.subs.some(x=>x[0]===t))||NAV[0];
