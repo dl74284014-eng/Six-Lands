@@ -482,7 +482,7 @@ body{overflow-x:hidden}
 <style id="imgcss"></style>
 
 <script>
-const BUILD_VER="14.11.2026 08:03";
+const BUILD_VER="14.11.2026 08:10";
 let SLOT=1;try{SLOT=+localStorage.getItem('sixlands-slot')||1}catch(e){}
 const SK_=n=>'sixlands-save-'+n;
 try{const old=localStorage.getItem('tiholesye-v3');if(old&&!localStorage.getItem(SK_(1))){localStorage.setItem(SK_(1),old);localStorage.removeItem('tiholesye-v3')}}catch(e){}
@@ -1397,7 +1397,7 @@ function attackRival(i,tac){
       <h3>Выберите тактику</h3><div class="cards picker">${TK.map(k=>tacCard(k,{attrs:`data-tc="${k}"`})).join('')}</div>
       <div class="small muted">Стена щитов бьёт Натиск, Натиск бьёт Обход, Обход бьёт Стену щитов. Осадные машины пробивают стены.</div>
       <button class="btn ghost" id="tcx">Отмена</button>`,true);
-    $('#tcx').onclick=closeModal;document.querySelectorAll('[data-tc]').forEach(b=>b.onclick=()=>{closeModal();attackRival(i,b.dataset.tc)});return;
+    $('#tcx').onclick=closeModal;$('#modal').querySelectorAll('[data-tc]').forEach(b=>b.onclick=()=>{closeModal();attackRival(i,b.dataset.tc)});return;
   }
   s.rivals.forEach(o=>{if(o!==r&&!o.vassal&&!o.war)o.rel-=3});
   const A=mySide({tac,vs:r}),D=rivalSide(r,{home:true});const res=battle(A,D);
@@ -1759,9 +1759,9 @@ function openLand(i){
       <div class="small muted">Бригады заняты ${crewsBusy()}/${crews()}</div>
       <div class="row"><button class="btn ghost" id="lb">Все постройки</button><button class="btn ghost" id="lx">Закрыть</button></div></div></div>
       ${(()=>{const rec=advIds();const L=BL.filter(d=>!d.noBuild&&!lockReason(d)&&fitsLand(d,l)).sort((a,b)=>(rec.includes(b.id)-rec.includes(a.id))||((b.land===l.t)-(a.land===l.t))||(afford(b.cost)-afford(a.cost)));
-        return L.length?`<div class="zone-h"><span>Можно построить здесь</span><span>${L.length}</span></div><div class="cards picker">${L.map(d=>buildingCard(d,{cls:(rec.includes(d.id)?'rec ':'')+(afford(d.cost)?'':'poor'),cost:1,land:l.t,attrs:`data-lb="${d.id}"`,tag:rec.includes(d.id)?'Советуем':'',tagCls:'gold'})).join('')}</div>`:'<p class="small muted">Пока здесь нечего строить: откройте новые постройки наукой и ростом деревни.</p>'})()}`,true);
+        return L.length?`<div class="zone-h"><span>Можно построить здесь</span><span>${L.length}</span></div><div class="cards picker">${L.map(d=>buildingCard(d,{cls:(rec.includes(d.id)?'rec ':'')+(afford(d.cost)?'':'poor'),cost:1,land:l.t,attrs:`data-pick="${d.id}"`,tag:rec.includes(d.id)?'Советуем':'',tagCls:'gold'})).join('')}</div>`:'<p class="small muted">Пока здесь нечего строить: откройте новые постройки наукой и ростом деревни.</p>'})()}`,true);
     $('#lb').onclick=()=>{closeModal();buildCat='ready';go('b')};
-    document.querySelectorAll('[data-lb]').forEach(b=>b.onclick=()=>openBuild(b.dataset.lb,i));
+    $('#modal').querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>openBuild(b.dataset.pick,i));
   }
   $('#lx').onclick=closeModal;
 }
@@ -2078,14 +2078,14 @@ function ordPick(){s.ord.asked=1;save();
    <div class="small muted">Нажмите на карту, чтобы разыграть её. Можно отложить: приказы останутся на Столе.</div>
    <div class="row"><button class="btn ghost" id="opLater">Позже</button></div>`,true);
   $('#opLater').onclick=closeModal;
-  document.querySelectorAll('[data-op]').forEach(b=>b.onclick=()=>{const o=ORDM[b.dataset.op];o.fx();s.ord.hand=[];s.ord.next=s.day+ordEvery();inc('orders');sfx('spell');log(`Приказ старосты: «${o.n}».`,'arc');toast(`Приказ: ${o.n}`);closeModal();checkQuests(false);save();render()})}
+  $('#modal').querySelectorAll('[data-op]').forEach(b=>b.onclick=()=>{const o=ORDM[b.dataset.op];o.fx();s.ord.hand=[];s.ord.next=s.day+ordEvery();inc('orders');sfx('spell');log(`Приказ старосты: «${o.n}».`,'arc');toast(`Приказ: ${o.n}`);closeModal();checkQuests(false);save();render()})}
 function openDeck(){ensureOrd();const O=s.ord;
   openModal(`<h2>Колода приказов</h2><p class="small">В колоде ${O.deck.length} карт. Новые карты добавляются сами, когда вы открываете постройки, технологии и растите героя. Слабую карту можно сжечь, тогда сильные будут выпадать чаще (в колоде должно остаться хотя бы 4 карты).</p>
     <div class="cards picker">${O.deck.map(id=>ordCard(ORDM[id],{attrs:`data-burn="${id}"`})).join('')}</div>
     ${O.burn.length?`<div class="small muted">Сожжены: ${O.burn.map(id=>ORDM[id].n).join(', ')}</div>`:''}
     <div class="small muted">Ещё закрыто: ${ORD.filter(o=>!O.deck.includes(o.id)&&!O.burn.includes(o.id)).length}</div><button class="btn ghost" id="dkX">Закрыть</button>`,true);
   $('#dkX').onclick=closeModal;
-  document.querySelectorAll('[data-burn]').forEach(b=>b.onclick=()=>{const id=b.dataset.burn;if(O.deck.length<=4){toast('В колоде должно остаться хотя бы 4 карты');return}
+  $('#modal').querySelectorAll('[data-burn]').forEach(b=>b.onclick=()=>{const id=b.dataset.burn;if(O.deck.length<=4){toast('В колоде должно остаться хотя бы 4 карты');return}
     confirmBox(`Сжечь «${ORDM[id].n}»?`,'Карта навсегда уйдёт из колоды этой партии.','Сжечь',()=>{O.deck=O.deck.filter(x=>x!==id);O.burn.push(id);O.hand=O.hand.filter(x=>x!==id);save();render();openDeck()})})}
 
 /* ---------- соседство карт ---------- */
@@ -2220,7 +2220,7 @@ function openSite(id){ensureExp();const x=s.exp.sites.find(y=>y.id===id);if(!x)r
     `<div class="small">Кого отправить со старостой (воины уходят из армии на время похода):</div><div class="stack">${opts.map(n=>`<button class="opt" data-pn="${n}"><span><b>${n?`Староста и ${n} воин.`:'Только староста'}</b></span><span class="p">${Math.round(est(n)*100)}%</span></button>`).join('')}</div>`}
     <button class="btn ghost" id="stX">Закрыть</button></div></div>`,true);
   $('#stX').onclick=closeModal;
-  document.querySelectorAll('[data-pn]').forEach(b=>b.onclick=()=>{const n=+b.dataset.pn;const u=takeUnits(n);s.exp.party={site:x.id,units:u,end:s.day+turns};s.hero.at='exp';sfx('card');log(`Экспедиция выступила: «${S.n}».`);closeModal();save();render()})}
+  $('#modal').querySelectorAll('[data-pn]').forEach(b=>b.onclick=()=>{const n=+b.dataset.pn;const u=takeUnits(n);s.exp.party={site:x.id,units:u,end:s.day+turns};s.hero.at='exp';sfx('card');log(`Экспедиция выступила: «${S.n}».`);closeModal();save();render()})}
 function takeUnits(n,dry){const u={};let left=n;const L=UNITS.map(x=>x.id).filter(id=>(s.army[id]||0)>0).sort((a,b)=>uAtk(U[b])-uAtk(U[a]));
   while(left>0&&L.some(id=>(s.army[id]||0)-(u[id]||0)>0)){for(const id of L){if(left<=0)break;if((s.army[id]||0)-(u[id]||0)>0){u[id]=(u[id]||0)+1;left--}}}
   if(!dry)for(const id in u)s.army[id]-=u[id];return u}
@@ -2352,7 +2352,7 @@ let SCND={};try{SCND=JSON.parse(localStorage.getItem('sixlands-scn')||'{}')}catc
 function openScn(){openModal(`<h2>Испытания</h2><p class="small">Короткие партии с особыми условиями. Народ и сложность заданы заранее.</p>
   <div class="cards picker">${SCN.map(x=>card({cls:'c-civic',name:x.n,artCls:'cat',art:artOfRaw('sc_'+x.id,I('rank')),text:`${CULTURES[x.cu].n} · ${DIFF[x.diff].n} · ${x.lim} ход.`,tag:SCND[x.id]?'Пройдено':'',tagCls:'gold',attrs:`data-scn="${x.id}"`})).join('')}</div><button class="btn ghost" id="scX">Назад</button>`,true);
   $('#scX').onclick=()=>{closeModal();showTitle()};
-  document.querySelectorAll('[data-scn]').forEach(b=>b.onclick=()=>{const x=SCN.find(y=>y.id===b.dataset.scn);
+  $('#modal').querySelectorAll('[data-scn]').forEach(b=>b.onclick=()=>{const x=SCN.find(y=>y.id===b.dataset.scn);
     openModal(`<div class="cv">${card({cls:'c-civic big',name:x.n,artCls:'cat',art:artOfRaw('sc_'+x.id,I('rank')),text:CULTURES[x.cu].full,el:'div'})}<div class="info"><h2>${x.n}</h2><p>${x.d}</p><div class="small">Народ: ${CULTURES[x.cu].full} · сложность: ${DIFF[x.diff].n} · ${x.lim} ходов</div>
       <div class="row"><button class="btn" id="scGo">Начать</button><button class="btn ghost" id="scB">Назад</button></div></div></div>`,true);
     $('#scB').onclick=openScn;$('#scGo').onclick=()=>pickSlot('new',()=>startScn(x))})}
@@ -2403,7 +2403,7 @@ function openEnc(back){const T=[['b','Постройки'],['u','Войска'],
   else if(ENCT==='hr')L=HK.map(k=>row(artOf('hr_'+k,I('rank')),`${h4Name(k)} · ${HA[k].t}`,`${HA[k].ab}: ${HA[k].d(1)} ${HA[k].need()||''}`)).join('');
   else if(ENCT==='h')L=HP.map(p=>row(I('rank'),p.n,p.d)).join('');
   openModal(`<h2>Энциклопедия</h2>${chipRow(T.map(([k,l])=>[k,l]),ENCT,'enc')}<div class="enclist">${L}</div><button class="btn ghost" id="enX">Закрыть</button>`,true);
-  document.querySelectorAll('[data-enc]').forEach(b=>b.onclick=()=>{ENCT=b.dataset.enc;openEnc(back)});$('#enX').onclick=()=>{closeModal();if(back)back()}}
+  $('#modal').querySelectorAll('[data-enc]').forEach(b=>b.onclick=()=>{ENCT=b.dataset.enc;openEnc(back)});$('#enX').onclick=()=>{closeModal();if(back)back()}}
 
 /* ---------- ячейки сохранения ---------- */
 function slotInfo(n){try{const j=localStorage.getItem(SK_(n));if(!j)return null;const o=JSON.parse(j);if(!o||!o.lands||!o.lands.length||!CULTURES[o.culture])return null;return o}catch(e){return null}}
@@ -2411,7 +2411,7 @@ function pickSlot(mode,then){const rows=[1,2,3].map(n=>{const o=slotInfo(n);
   return`<button class="opt slot" data-slot="${n}" ${mode==='load'&&!o?'disabled':''}><span><b>Ячейка ${n}${n===SLOT&&o?' · текущая':''}</b><br><span class="small muted">${o?`${esc(o.name||'')} · ${CULTURES[o.culture].n} · ${(DIFF[o.diff]||DIFF.normal).n} · ход ${o.day}${o.scn?' · испытание':''}${o.saved?' · '+new Date(o.saved).toLocaleDateString('ru-RU'):''}`:'Пусто'}</span></span>${o&&mode==='load'?'':''}</button>`}).join('');
   openModal(`<h2>${mode==='load'?'Загрузить игру':'Ячейка для новой игры'}</h2><div class="stack">${rows}</div>${mode==='load'?'<div class="small muted">Удерживать не нужно: удалить сохранение можно в Настройках.</div>':''}<button class="btn ghost" id="slX">Назад</button>`,true);
   $('#slX').onclick=()=>{closeModal();showTitle()};
-  document.querySelectorAll('[data-slot]').forEach(b=>b.onclick=()=>{const n=+b.dataset.slot;const o=slotInfo(n);
+  $('#modal').querySelectorAll('[data-slot]').forEach(b=>b.onclick=()=>{const n=+b.dataset.slot;const o=slotInfo(n);
     if(mode==='load'){setSlot(n);if(load()){closeModal();hideTitle();tab='h';render();if(AU.musicOn&&!AU.playing)musicStart()}}
     else if(o)confirmBox(`Перезаписать ячейку ${n}?`,`Там деревня «${esc(o.name||'')}» (${CULTURES[o.culture].n}, ход ${o.day}). Она будет потеряна.`,'Перезаписать',()=>{setSlot(n);then()});
     else{setSlot(n);then()}})}
@@ -2421,7 +2421,7 @@ function setSlot(n){SLOT=n;try{localStorage.setItem('sixlands-slot',String(n))}c
 const TUT=[
  {t:'Добро пожаловать, староста! Это ваша деревня. Коротко покажу главное — займёт минуту.',btn:'Начнём'},
  {sel:'#res',t:'Это ресурсы и их прирост за ход. Нажмите на любой ресурс, чтобы узнать, откуда он берётся.',btn:'Понятно'},
- {sel:'#lands',t:'Это стол: каждая карта — участок земли. Нажмите на свободный участок, там будут постройки, которые можно на нём поставить.',until:()=>!$('#modalBg').hidden&&document.querySelector('[data-lb]'),pre:()=>{if(tab!=='h')go('h')}},
+ {sel:'#lands',t:'Это стол: каждая карта — участок земли. Нажмите на свободный участок, там будут постройки, которые можно на нём поставить.',until:()=>!$('#modalBg').hidden&&document.querySelector('[data-pick]'),pre:()=>{if(tab!=='h')go('h')}},
  {sel:'.picker',t:'Выберите постройку. Советуемые отмечены золотой рамкой. Например, ферма даст еду.',until:()=>s.lands.some(l=>l.bt>0)},
  {sel:'#advice',t:'Здесь неброские советы: что деревне нужно прямо сейчас. Нажмите на совет — откроется нужная постройка.',btn:'Дальше',pre:()=>{if(tab!=='h')go('h')}},
  {sel:'#bnav',t:'Разделы игры: постройки, мастера, торговля, война и развитие. Перед концом хода нужно выбрать технологию и институт в разделе «Развитие».',until:()=>s.tech.cur&&(s.civ.cur||!CIVICS.some(canC)),pre:()=>{if(!s.tech.cur)go('t');else if(!s.civ.cur)go('tc')}},
@@ -2827,7 +2827,7 @@ function openSpy(id){
     <p class="small">Выберите задание. Опытный шпион справляется чаще. Если шпиона поймают, отношения с целью испортятся.</p></div></div>
     <div class="cards picker">${Object.keys(MS).map(k=>msCard(k,{attrs:`data-ms="${k}"`})).join('')}</div><button class="btn ghost" id="spX">Закрыть</button>`,true);
   $('#spX').onclick=closeModal;
-  document.querySelectorAll('[data-ms]').forEach(b=>b.onclick=()=>pickTarget(sp,b.dataset.ms));
+  $('#modal').querySelectorAll('[data-ms]').forEach(b=>b.onclick=()=>pickTarget(sp,b.dataset.ms));
 }
 function pickTarget(sp,k){
   const m=MS[k];
@@ -2838,7 +2838,7 @@ function pickTarget(sp,k){
     <div class="stack">${opts.map(o=>{const ch=m.t==='city'?Math.min(.95,spyCh(sp,m)):spyChance(sp,k,o.tg);return`<button class="opt" data-tg="${o.tg}"><span><b>${o.n}</b><br><span class="small muted">${o.sub}</span></span><span class="p">${Math.round(ch*100)}%</span></button>`}).join('')}</div>
     <button class="btn ghost" id="tgX">Назад</button>`,true);
   $('#tgX').onclick=()=>openSpy(sp.id);
-  document.querySelectorAll('[data-tg]').forEach(b=>b.onclick=()=>{const tg=m.t==='city'?b.dataset.tg:+b.dataset.tg;const ch=m.t==='city'?Math.min(.95,spyCh(sp,m)):spyChance(sp,k,tg);
+  $('#modal').querySelectorAll('[data-tg]').forEach(b=>b.onclick=()=>{const tg=m.t==='city'?b.dataset.tg:+b.dataset.tg;const ch=m.t==='city'?Math.min(.95,spyCh(sp,m)):spyChance(sp,k,tg);
     sp.m={k,t:m.t,tg,end:s.day+Math.max(1,m.turns-(sp.lvl>=3?1:0)),ch};sfx('card');log(`${sp.name} отправлен: ${m.n} (${targetName(sp.m)}).`);closeModal();save();render()});
 }
 function spyTurn(){
