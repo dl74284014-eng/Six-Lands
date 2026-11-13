@@ -482,7 +482,7 @@ body{overflow-x:hidden}
 <style id="imgcss"></style>
 
 <script>
-const BUILD_VER="13.11.2026 21:51";
+const BUILD_VER="14.11.2026 08:03";
 let SLOT=1;try{SLOT=+localStorage.getItem('sixlands-slot')||1}catch(e){}
 const SK_=n=>'sixlands-save-'+n;
 try{const old=localStorage.getItem('tiholesye-v3');if(old&&!localStorage.getItem(SK_(1))){localStorage.setItem(SK_(1),old);localStorage.removeItem('tiholesye-v3')}}catch(e){}
@@ -1316,6 +1316,7 @@ function tick(){
   else if(s.pir.due)pirateModal();
   else if(s.sumDue){s.sumDue=0;openSummary()}
   else if(s.day>4&&s.day-s.lastEv>3&&rnd()<.18){s.lastEv=s.day;event()}
+  else setTimeout(ordAuto,300);
   save();renderTop();renderRes();renderTable();if(tab!=='i')renderPane();
 }
 function needChoice(){if(!s.tech.cur&&TECHS.some(canT))return't';if(!s.civ.cur&&CIVICS.some(canC))return'tc';return null}
@@ -1649,7 +1650,7 @@ function event(){
 
 /* ---------- окна ---------- */
 function openModal(h,soft){modalOpen=!soft;if(!soft)stopTimer();$('#modal').innerHTML=h;const bg=$('#modalBg');bg.hidden=false;bg.classList.remove('in');void bg.offsetWidth;bg.classList.add('in');const f=$('#modal button:not(:disabled)');f&&f.focus()}
-function closeModal(){const was=modalOpen;modalOpen=false;$('#modalBg').hidden=true;if(was)startTimer()}
+function closeModal(){const was=modalOpen;modalOpen=false;$('#modalBg').hidden=true;if(was)startTimer();setTimeout(ordAuto,250)}
 
 /* ---------- строительство ---------- */
 function lockReason(d){
@@ -2059,7 +2060,7 @@ function ensureOrd(){if(!s.ord)s.ord={deck:ORD.filter(o=>o.base).map(o=>o.id),bu
 function ordEvery(){return heroPerk('chief')?2:3}
 function ordTurn(){ensureOrd();
   ORD.forEach(o=>{if(!o.base&&!s.ord.deck.includes(o.id)&&!s.ord.burn.includes(o.id)&&o.need&&o.need()){s.ord.deck.push(o.id);log(`Новый приказ в колоде: «${o.n}».`,'arc')}});
-  if(!s.ord.hand.length&&s.day>=s.ord.next){const d=s.ord.deck.slice().sort(()=>rnd()-.5);s.ord.hand=d.slice(0,3)}}
+  if(!s.ord.hand.length&&s.day>=s.ord.next){const d=s.ord.deck.slice().sort(()=>rnd()-.5);s.ord.hand=d.slice(0,3);s.ord.asked=0}}
 function ordCard(o,x={}){return card({cls:`c-spell ${x.cls||''}`,name:o.n,artCls:'cat',art:artOfRaw('o_'+o.id,I('rank')),text:o.d,attrs:x.attrs||'',el:x.el,tag:x.tag||'',tagCls:'gold'})}
 function ordHTML(){ensureOrd();const O=s.ord;
   return`<div class="zone-h"><span>Приказы старосты</span><span><button class="lnk" id="ordDeck">колода ${O.deck.length}</button></span></div>
@@ -2070,6 +2071,14 @@ function openOrd(id){const o=ORDM[id];
   openModal(`<div class="cv">${ordCard(o,{cls:'big',el:'div'})}<div class="info"><h2>${o.n}</h2><p>${o.d}</p><div class="small muted">Разыграть можно только один приказ из трёх.</div>
     <div class="row"><button class="btn" id="opPlay">Разыграть</button><button class="btn ghost" id="opX">Закрыть</button></div></div></div>`,true);
   $('#opX').onclick=closeModal;$('#opPlay').onclick=()=>{o.fx();s.ord.hand=[];s.ord.next=s.day+ordEvery();inc('orders');sfx('spell');log(`Приказ старосты: «${o.n}».`,'arc');toast(`Приказ: ${o.n}`);closeModal();checkQuests(false);save();render()}}
+function ordAuto(){try{if(!s||!s.ord||!s.ord.hand.length||s.ord.asked||modalOpen||!$('#modalBg').hidden||($('#title')&&!$('#title').hidden))return;ordPick()}catch(e){}}
+function ordPick(){s.ord.asked=1;save();
+  openModal(`<h2>Приказы старосты</h2><p class="small">Пришли новые приказы. Выберите один, остальные вернутся в колоду.</p>
+   <div class="cards hand">${s.ord.hand.map(id=>ordCard(ORDM[id],{attrs:`data-op="${id}"`})).join('')}</div>
+   <div class="small muted">Нажмите на карту, чтобы разыграть её. Можно отложить: приказы останутся на Столе.</div>
+   <div class="row"><button class="btn ghost" id="opLater">Позже</button></div>`,true);
+  $('#opLater').onclick=closeModal;
+  document.querySelectorAll('[data-op]').forEach(b=>b.onclick=()=>{const o=ORDM[b.dataset.op];o.fx();s.ord.hand=[];s.ord.next=s.day+ordEvery();inc('orders');sfx('spell');log(`Приказ старосты: «${o.n}».`,'arc');toast(`Приказ: ${o.n}`);closeModal();checkQuests(false);save();render()})}
 function openDeck(){ensureOrd();const O=s.ord;
   openModal(`<h2>Колода приказов</h2><p class="small">В колоде ${O.deck.length} карт. Новые карты добавляются сами, когда вы открываете постройки, технологии и растите героя. Слабую карту можно сжечь, тогда сильные будут выпадать чаще (в колоде должно остаться хотя бы 4 карты).</p>
     <div class="cards picker">${O.deck.map(id=>ordCard(ORDM[id],{attrs:`data-burn="${id}"`})).join('')}</div>
