@@ -481,7 +481,7 @@ body{overflow-x:hidden}
 <style id="imgcss"></style>
 
 <script>
-const BUILD_VER="13.11.2026 12:41";
+const BUILD_VER="13.11.2026 13:46";
 let SLOT=1;try{SLOT=+localStorage.getItem('sixlands-slot')||1}catch(e){}
 const SK_=n=>'sixlands-save-'+n;
 try{const old=localStorage.getItem('tiholesye-v3');if(old&&!localStorage.getItem(SK_(1))){localStorage.setItem(SK_(1),old);localStorage.removeItem('tiholesye-v3')}}catch(e){}
@@ -891,10 +891,12 @@ function gainVet(S,won){if(!s.vet)s.vet={};VETMSG=[];
 function applyMyLosses(S){const won=LASTRES?(S===LASTRES.A?LASTRES.win:!LASTRES.win):false;if(LASTRES)gainVet(S,won);
   const hg=S.g.find(g=>g.id==='hero');if(hg&&s.hero){heroXp(won?2:1);if(!won&&hg.n<.4&&rnd()<.6){s.hero.hurt=s.day+6;log(`Староста ${s.hero.name} ранен и 6 ходов не сможет сражаться.`,'bad')}}
   S.g.filter(g=>g.ally).forEach(g=>{const r2=s.rivals[g.ri];if(r2){r2.army=Math.max(0,r2.army-(g.n0-Math.max(0,g.n)));r2.rel=Math.min(100,r2.rel+1)}});
+  h4After(S,won);
   if(buff('cry'))delete s.buffs.cry;S.g.forEach(x=>{if(x.fixed)return;const k=Math.max(0,x.n);s.army[x.id]=Math.min(s.army[x.id]||0,Math.floor(k)+(rnd()<k-Math.floor(k)?1:0))})}
 function mySide(o={}){const st=stats();const S=mkSide('Ваше войско',s.army,id=>({...U[id],def:U[id].def*(1+vb(id)/2)}),u=>uAtk(u)*(1+vb(u.id)),{garrison:o.home?st.bdef/5+st.P/10:0,wall:o.home?st.bdef:0,tac:o.tac||s.tactic||'shield',home:o.home});
   S.g.forEach(x=>{if(!x.fixed&&vr(x.id))x.name+=` · ${VR[vr(x.id)].n}`});
   if(s.hero&&heroFree()&&s.hero.lead!==false)S.g.push({id:'hero',name:'Староста '+s.hero.name,ic:I('rank'),type:'inf',atk:heroPow()*.8,hp:heroPow()*.9,n0:1,n:1,fixed:1});
+  h4Groups().forEach(g=>S.g.push(g));h4Buff(S);
   if(o.vs)allyGroups(o.vs).forEach(g=>S.g.push(g));
   if(buff('cry'))S.g.forEach(g=>g.atk*=1.2);return S}
 function rivalSide(r,o={}){return mkSide(rivalName(r),rivalCounts(r,o.attacking),id=>rivalUnit(r.c,id),u=>rivalAtk(r.c,u),{garrison:o.home?r.wall*3/4+r.pop/10:0,wall:o.home?r.wall*3:0,tac:o.tac||pickTac(r.c),home:o.home})}
@@ -1241,7 +1243,7 @@ function stats(){
   delta.food-=P*.5;add('food','Жители едят',-P*.5);
   if(WXo().eat){delta.food-=P*WXo().eat;add('food','Мороз',-P*WXo().eat)}
   if(s.gw&&s.gw.built.length){const h=gwSum('happy');if(h){happy+=h;hp.push(['Великие стройки',h])}for(const k of ['food','gold']){const v=gwSum(k);if(v){delta[k]+=v;add(k,'Великие стройки',v)}}const a=gwSum('sci'),b=gwSum('cult');if(a){sci+=a;add('sci','Великие стройки',a)}if(b){cult+=b;add('cult','Великие стройки',b)}}
-  {const mu=mercUp();if(mu){delta.gold-=mu;add('gold','Наёмники',-mu)}}
+  {const mu=mercUp();if(mu){delta.gold-=mu;add('gold','Наёмники',-mu)}const hu=s.h4?Object.keys(s.h4).length*2:0;if(hu){delta.gold-=hu;add('gold','Содержание героев',-hu)}}
   if(relicSum('happy')){happy+=relicSum('happy');hp.push(['Реликвии',relicSum('happy')])}
   if(WXo().happy){happy+=WXo().happy;hp.push(['Погода: '+WXo().n,WXo().happy])}
   const starving=s.res.food+delta.food<0;
@@ -2192,6 +2194,7 @@ function expTurn(){ensureExp();ensureHero();const E=s.exp;
   if(E.party&&s.day>=E.party.end)expResolve()}
 function monsterSide(x){const S=SITES[x.k];const P=sitePow(x);const n=Math.max(1,P/2);return{name:S.n,g:[{id:'mon',name:S.boss?S.n:'Стражи: '+S.n,ic:I('threat'),type:S.t,atk:2.6,hp:3,n0:n,n}],wall:0,tac:'rush',home:false}}
 function partySide(units,withHero){const g=[];for(const id in units){const n=units[id];if(!(n>0))continue;const u=U[id];g.push({id,name:u.n,ic:u.ic,type:uType(u),atk:uAtk(u)*(1+vb(id)),hp:u.def*(1+vb(id)/2),n0:n,n})}
+  if(withHero){h4Groups().forEach(x=>g.push(x))}
   if(withHero)g.push({id:'hero',name:'Староста '+s.hero.name,ic:I('rank'),type:'inf',atk:heroPow()*.8,hp:heroPow()*.9,n0:1,n:1,fixed:1});return{name:'Экспедиция',g,wall:0,tac:s.tactic||'rush',home:false}}
 function openSite(id){ensureExp();const x=s.exp.sites.find(y=>y.id===id);if(!x)return;const S=SITES[x.k];const busyP=!!s.exp.party;
   const P=sitePow(x);const turns=Math.max(1,S.turns-(heroPerk('seeker')?1:0));
@@ -2367,7 +2370,7 @@ function openSummary(){const H=s.hist||[];
 
 /* ---------- энциклопедия ---------- */
 let ENCT='b';
-function openEnc(back){const T=[['b','Постройки'],['u','Войска'],['t','Технологии'],['c','Институты'],['m','Мастера'],['g','Боги'],['o','Приказы'],['r','Реликвии'],['x','Экспедиции'],['a','Соседство'],['gw','Великие стройки'],['mc','Наёмники'],['w','Погода'],['n','Народы'],['h','Умения старосты']];
+function openEnc(back){const T=[['b','Постройки'],['u','Войска'],['t','Технологии'],['c','Институты'],['m','Мастера'],['g','Боги'],['o','Приказы'],['r','Реликвии'],['x','Экспедиции'],['a','Соседство'],['gw','Великие стройки'],['mc','Наёмники'],['w','Погода'],['n','Народы'],['hr','Герои'],['h','Умения старосты']];
   const row=(art,n,d)=>`<div class="encrow"><div class="encart">${art}</div><div><b>${n}</b><div class="small muted">${d}</div></div></div>`;
   let L='';
   if(ENCT==='b')L=BL.filter(d=>!d.noBuild).map(d=>row(artOf(d.id,d.ic),d.n,`${effText(d)} · ${costSpans(d.cost)} · ${bTurns(d)} ход. ${d.desc||''}`)).join('');
@@ -2384,6 +2387,7 @@ function openEnc(back){const T=[['b','Постройки'],['u','Войска'],
   else if(ENCT==='mc')L=MERC.map(m=>row(artOfRaw('mc_'+m.id,I('atk')),m.n,`${m.d} ${m.k} × ${U[m.u].n}, от ${m.price} золота.`)).join('');
   else if(ENCT==='w')L=Object.values(WX).map(w=>row(I('s_spring'),w.n,w.d)).join('');
   else if(ENCT==='n')L=CK.map(c=>row(`<i class="ico em i-em-${c}"></i>`,CULTURES[c].full,`Сильные стороны: ${CULTURES[c].bonus.join('; ')}. Слабые: ${CULTURES[c].minus.join('; ')}.`)).join('');
+  else if(ENCT==='hr')L=HK.map(k=>row(artOf('hr_'+k,I('rank')),`${h4Name(k)} · ${HA[k].t}`,`${HA[k].ab}: ${HA[k].d(1)} ${HA[k].need()||''}`)).join('');
   else if(ENCT==='h')L=HP.map(p=>row(I('rank'),p.n,p.d)).join('');
   openModal(`<h2>Энциклопедия</h2>${chipRow(T.map(([k,l])=>[k,l]),ENCT,'enc')}<div class="enclist">${L}</div><button class="btn ghost" id="enX">Закрыть</button>`,true);
   document.querySelectorAll('[data-enc]').forEach(b=>b.onclick=()=>{ENCT=b.dataset.enc;openEnc(back)});$('#enX').onclick=()=>{closeModal();if(back)back()}}
@@ -2553,6 +2557,54 @@ function renderQ(p){ensureTasks();const T=TASKS.slice().sort((a,b)=>(s.tasks.don
   p.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>openQuest(+b.dataset.q));
   {const sb=p.querySelector('#scnBar');if(sb)sb.onclick=()=>{const x=SCN.find(y=>y.id===s.scn.id);openModal(`<h2>Испытание: ${x.n}</h2><p>${x.d}</p><div class="small">${x.prog()} · осталось ${Math.max(0,s.scn.end-s.day)} ход.</div><button class="btn ghost" id="sbX">Закрыть</button>`,true);$('#sbX').onclick=closeModal}}
   p.querySelectorAll('[data-tk]').forEach(b=>b.onclick=()=>{const x=TASKS.find(y=>y.id===b.dataset.tk);if(!taskReady(x))return;giveRew(x.rew);s.tasks.done.push(x.id);inc('tasks');sfx('coin');log(`Задание «${x.n}»: награда ${rewText(x.rew)}.`,'good');toast(`Награда: ${x.n}`);save();render()})}
+/* ---------- герои ---------- */
+const HA={
+ champ:{t:'Чемпион',ab:'Натиск',type:'inf',atk:10,hp:9,cost:150,d:lv=>`Вся армия +${8+2*lv}% к атаке.`,need:()=>cnt('yard')?'':'Нужен Тренировочный двор'},
+ guard:{t:'Страж',ab:'Стена щитов',type:'inf',atk:5,hp:16,cost:200,d:lv=>`Армия теряет на ${20+5*lv}% меньше воинов.`,need:()=>(cnt('palisade')||cnt('stonewall')||cnt('watchtower'))?'':'Нужен частокол, стена или сторожевая башня'},
+ ranger:{t:'Следопыт',ab:'Засада',type:'arch',atk:9,hp:7,cost:220,d:lv=>`Стрелки и маги армии +${20+5*lv}% к атаке.`,need:()=>hasT('archery')?'':'Нужна технология «Стрельба из лука»'},
+ mystic:{t:'Мистик',ab:'Исцеление',type:'mage',atk:7,hp:8,cost:260,d:lv=>`После боя возвращается ${25+5*lv}% погибших воинов.`,need:()=>cnt('temple')?'':'Нужен Храм'}
+};
+const HK=['champ','guard','ranger','mystic'];
+const HERO4={
+ east:{champ:['Кэнсэй Такэда','a legendary sword-saint samurai hero in ornate red lacquered armor with a glowing katana'],guard:['Ин Хо, монах-хранитель','a stoic warrior monk guardian with a heavy iron staff and prayer beads, standing firm'],ranger:['Аюми, лиса-лучница','a kitsune huntress archer with fox ears and a white fox tail, drawing a longbow with a glowing arrow'],mystic:['Сэйра, жрица-онмёдзи','a shrine priestess onmyoji in white and red robes casting paper talismans that glow with healing light']},
+ europe:{champ:['Сэр Гавейн Львиное Сердце','a heroic knight champion in shining plate armor with a lion crest and a greatsword'],guard:['Брат Ансельм','a templar shield guardian with a tower shield bearing a sun emblem and a warhammer'],ranger:['Робин Зелёный Плащ','a legendary outlaw archer hero in a green hooded cloak with a longbow'],mystic:['Мать Иоланта','a holy priestess healer with a glowing staff and radiant golden healing light']},
+ elves:{champ:['Талион Клинок Рассвета','an elven blademaster hero with twin curved silver blades and flowing hair'],guard:['Ирма Корень Древа','an elven warden guardian with a living bark shield and armor of leaves and vines'],ranger:['Лиара Ветрострел','an elven ranger heroine with a silver longbow and wind swirling around her arrows'],mystic:['Эленвэ Лунная Песнь','an elven druid healer singing with moonlight and glowing leaves swirling around her']},
+ magi:{champ:['Кассиан Огненный Клинок','a battle mage spellblade hero with a sword wreathed in arcane fire'],guard:['Вэлла Хранительница Ауры','a ward mage guardian projecting a shimmering hexagonal barrier with raised hands'],ranger:['Орин Звёздный Лучник','an arcane archer hero shooting arrows of pure starlight from a crystal bow'],mystic:['Миранда Целительница','a gentle arcane healer mage with floating glowing runes and healing violet light']},
+ north:{champ:['Бьорн Медвежья Шкура','a huge berserker hero in a bear pelt with a two-handed axe, roaring'],guard:['Хельга Щитоносица','a shieldmaiden guardian with a large painted round shield and a spear in a shield wall stance'],ranger:['Ульф Охотник','a nordic hunter hero with a bow, a wolf companion and snowy furs'],mystic:['Асгерд-вёльва','a nordic seeress volva with a rune staff, glowing runes and ravens']},
+ desert:{champ:['Аль-Фарис Клинок Пустыни','a desert champion hero with two scimitars and golden armor, flowing crimson cape'],guard:['Джамиль Страж Ворот','a towering palace gate guardian with a great crescent shield and a glaive'],ranger:['Самира Соколица','a desert falconer archer heroine with a falcon on her arm and a recurve bow'],mystic:['Мудрец Хаким','an old desert sage alchemist healer with glowing potions and a star-patterned robe']}
+};
+const HXP4=[0,3,7,12,18];
+function ensureH4(){if(!s.h4)s.h4={}}
+const h4=k=>s.h4&&s.h4[k];
+const h4Free=k=>{const h=h4(k);return h&&!(h.hurt>s.day)&&h.fight!==false};
+const h4Lv=k=>h4(k)?h4(k).lv:1;
+const h4Name=k=>(HERO4[s.culture]||HERO4.europe)[k][0];
+const h4Cost=k=>Math.round(HA[k].cost*(1+s.day/200));
+function h4Pow(k){const a=HA[k],m=(1+.2*(h4Lv(k)-1))*(1+s.day/160);return{atk:a.atk*m,hp:a.hp*m}}
+function h4Groups(){ensureH4();return HK.filter(h4Free).map(k=>{const p=h4Pow(k);return{id:'h4_'+k,hk:k,name:`${HA[k].t} ${h4Name(k)}`,ic:I('rank'),type:HA[k].type,atk:p.atk,hp:p.hp,n0:1,n:1,fixed:1}})}
+function h4Buff(S){if(h4Free('champ'))S.g.forEach(g=>g.atk*=1+(.08+.02*h4Lv('champ')));if(h4Free('ranger'))S.g.forEach(g=>{if(g.type==='arch'||g.type==='mage')g.atk*=1+(.2+.05*h4Lv('ranger'))})}
+function h4After(S,won){ensureH4();const save=(h4Free('guard')?(.2+.05*h4Lv('guard')):0),heal=(h4Free('mystic')?(.25+.05*h4Lv('mystic')):0);
+  S.g.forEach(g=>{if(g.fixed||!g.n0)return;const lost=g.n0-Math.max(0,g.n);if(lost>0)g.n+=lost*Math.min(.9,save+heal)});
+  S.g.filter(g=>g.hk).forEach(g=>{const h=h4(g.hk);h.xp=(h.xp||0)+(won?1:.4);while(h.lv<5&&h.xp>=HXP4[h.lv]){h.lv++;log(`${h4Name(g.hk)} достигает ${h.lv}-го уровня.`,'good')}
+    if(g.n<.5){h.hurt=s.day+5;log(`${h4Name(g.hk)} тяжело ранен и 5 ходов восстанавливает силы. Герои не погибают.`,'bad')}})}
+function h4Card(k,o={}){const h=h4(k),lk=!h&&HA[k].need();
+  return card({cls:`c-unit ${lk?'locked':''} ${o.cls||''}`,name:h4Name(k),artCls:'cat',art:artOf('hr_'+k,I('rank')),cost:!h&&o.cost?`<span class="${s.res.gold<h4Cost(k)?'lack':''}">${h4Cost(k)}${RI.gold}</span>`:'',
+    text:`${HA[k].t} · ${HA[k].ab}`,tag:h?(h.hurt>s.day?`Ранен: ${h.hurt-s.day} ход.`:`Уровень ${h.lv}`):'',tagCls:h&&h.hurt>s.day?'bad':'gold',attrs:o.attrs||'',el:o.el})}
+function renderH4(p){ensureH4();
+  p.innerHTML=`<div class="small muted" style="margin-bottom:10px">Герои сражаются вместе с армией и дают ей особую способность. Их нельзя убить: после тяжёлого поражения герой 5 ходов лечится, а потом возвращается. С каждой победой растут до 5-го уровня. Содержание: 2 золота за ход каждый.</div>
+   <div class="cards">${HK.map(k=>h4Card(k,{cost:1,attrs:`data-h4="${k}"`})).join('')}</div>`;
+  p.querySelectorAll('[data-h4]').forEach(b=>b.onclick=()=>openH4(b.dataset.h4))}
+function openH4(k){const h=h4(k),a=HA[k],lk=!h&&a.need(),pr=h4Cost(k),pw=h4Pow(k);
+  openModal(`<div class="cv">${h4Card(k,{cls:'big',el:'div'})}<div class="info"><h2>${h4Name(k)}</h2><div class="small">${a.t} · ${TY[a.type].n.toLowerCase()} · атака ${Math.round(pw.atk)} · стойкость ${Math.round(pw.hp)}</div>
+   <p><b>${a.ab}:</b> ${a.d(h4Lv(k))}</p>
+   ${h?`<div class="small">Уровень ${h.lv}${h.lv<5?` · опыт ${Math.round(h.xp*10)/10}/${HXP4[h.lv]}`:' · высший'}${h.hurt>s.day?` · <span class="dn">ранен ещё ${h.hurt-s.day} ход.</span>`:''}</div>
+     <label class="setrow"><span>Сражается в боях<small>Если выключить, способность не действует, но и ранить героя не смогут.</small></span><input type="checkbox" class="sw" id="h4F" ${h.fight!==false?'checked':''}></label>`
+   :`<div class="small">Призвать: ${pr}${RI.gold}</div>${lk?`<div class="small dn">${lk}</div>`:''}`}
+   <div class="row">${h?'':`<button class="btn" id="h4H" ${!lk&&s.res.gold>=pr?'':'disabled'}>Призвать героя</button>`}<button class="btn ghost" id="h4X">Закрыть</button></div></div></div>`,true);
+  $('#h4X').onclick=closeModal;
+  const hb=$('#h4H');if(hb)hb.onclick=()=>{if(lk||s.res.gold<pr)return;s.res.gold-=pr;s.h4[k]={lv:1,xp:0,hurt:0};inc('heroes');sfx('good');log(`К деревне присоединился герой: ${h4Name(k)}.`,'good');toast(`Герой: ${h4Name(k)}`);closeModal();save();render()};
+  const f=$('#h4F');if(f)f.onchange=e=>{h.fight=e.target.checked;save()}}
+
 /* ---------- навигация ---------- */
 const NAV=[
  {id:'home',n:'Деревня',ic:'home',subs:[['h','Стол'],['dip','Дипломатия'],['v','Сводка'],['l','Летопись'],['q','Поручения']]},
@@ -2850,8 +2902,8 @@ function renderPane(){
       <div class="small muted">${cnt('barracks')&&here('barracks')?'Казарма: обучаются двое одновременно.':'Одновременно обучается один воин. Казарма с воеводой позволит двоих.'}</div></div></div>
       <div class="cards">${UNITS.map(u=>unitCard(u,{attrs:`data-u="${u.id}"`})).join('')}</div>`;
     p.querySelectorAll('[data-u]').forEach(b=>b.onclick=()=>openUnit(b.dataset.u));
-    p.insertAdjacentHTML('beforeend','<div class="zone-h" style="margin-top:18px"><span>Наёмники</span><span></span></div><div id="aMerc"></div><div class="zone-h" style="margin-top:18px"><span>Староста</span><span></span></div><div id="aHero"></div>');
-    renderMerc($('#aMerc'));renderHero($('#aHero'));
+    p.insertAdjacentHTML('beforeend','<div class="zone-h" style="margin-top:18px"><span>Герои</span><span></span></div><div id="aH4"></div><div class="zone-h" style="margin-top:18px"><span>Наёмники</span><span></span></div><div id="aMerc"></div><div class="zone-h" style="margin-top:18px"><span>Староста</span><span></span></div><div id="aHero"></div>');
+    renderH4($('#aH4'));renderMerc($('#aMerc'));renderHero($('#aHero'));
   }else if(tab==='ab'){
     p.innerHTML=`      <div class="two"><div class="stack"><h3>Кто кого бьёт</h3>
         <div class="small"><i class="ico i-inf"></i> Пехота бьёт <i class="ico i-cav"></i> конницу и <i class="ico i-siege"></i> осаду · <i class="ico i-cav"></i> Конница бьёт <i class="ico i-arch"></i> стрелков и <i class="ico i-mage"></i> магов · <i class="ico i-arch"></i> Стрелки бьют <i class="ico i-inf"></i> пехоту · <i class="ico i-mage"></i> Маги бьют <i class="ico i-inf"></i> пехоту, но боятся конницы · <i class="ico i-siege"></i> Осада ломает стены.</div>
