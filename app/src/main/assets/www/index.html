@@ -482,7 +482,7 @@ body{overflow-x:hidden}
 <style id="imgcss"></style>
 
 <script>
-const BUILD_VER="13.11.2026 21:11";
+const BUILD_VER="13.11.2026 21:17";
 let SLOT=1;try{SLOT=+localStorage.getItem('sixlands-slot')||1}catch(e){}
 const SK_=n=>'sixlands-save-'+n;
 try{const old=localStorage.getItem('tiholesye-v3');if(old&&!localStorage.getItem(SK_(1))){localStorage.setItem(SK_(1),old);localStorage.removeItem('tiholesye-v3')}}catch(e){}
@@ -3232,8 +3232,7 @@ function wxLoop(ts){requestAnimationFrame(wxLoop);
   const x=WXFX.ctx;x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,W,H);
   const tt=ts/1000;const k=wxMode(),wk=wxNow();document.documentElement.dataset.wx=wk;
   const tint={rain:'rgba(20,32,55,.14)',storm:'rgba(14,20,40,.22)',heat:'rgba(255,160,60,.07)',blizzard:'rgba(210,225,255,.1)',frost:'rgba(180,210,255,.06)',snow:'rgba(200,215,240,.05)'}[wk];
-  if(tint){x.fillStyle=tint;x.fillRect(0,0,W,H)}
-  if(wk==='fog'){for(let j=0;j<4;j++){const cx=((tt*12*(j+1)+j*W*.4)%(W+600))-300,cy=H*(.25+.18*j);const g=x.createRadialGradient(cx,cy,10,cx,cy,W*.55);g.addColorStop(0,'rgba(215,215,205,.16)');g.addColorStop(1,'rgba(215,215,205,0)');x.fillStyle=g;x.fillRect(0,0,W,H)}}
+
   if(WXFX.k!==k){WXFX.k=k;WXFX.P=[];WXFX.started=0}
   const N={rain:90,storm:140,snow:70,frost:45,blizzard:160,wind:30,leaf:20,petal:20,mote:22}[k]*(W<500?.7:1);
   while(WXFX.P.length<N)WXFX.P.push(wxSpawn(k,W,H,WXFX.P.length<N*.8&&!WXFX.started));WXFX.started=1;
@@ -3246,7 +3245,7 @@ function wxLoop(ts){requestAnimationFrame(wxLoop);
     else{const a=.25+.35*Math.abs(Math.sin(tt*1.7+p.ph));x.fillStyle=`rgba(255,228,150,${a})`;x.shadowColor='rgba(255,220,140,.9)';x.shadowBlur=8;x.beginPath();x.arc(p.x,p.y,p.r,0,7);x.fill();x.shadowBlur=0}
   });
   if(wxNow()==='storm'&&Math.random()<.002)WXFX.flash=1;
-  if(WXFX.flash>0){x.fillStyle=`rgba(235,240,255,${WXFX.flash*.35})`;x.fillRect(0,0,W,H);WXFX.flash=Math.max(0,WXFX.flash-dt*2.2)}
+  if(WXFX.flash>0){x.fillStyle=`rgba(235,240,255,${WXFX.flash*.12})`;x.fillRect(0,0,W,H);WXFX.flash=Math.max(0,WXFX.flash-dt*2.2)}
 }
 requestAnimationFrame(wxLoop);
 
