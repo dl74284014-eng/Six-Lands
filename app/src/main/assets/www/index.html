@@ -388,6 +388,7 @@ body{overflow-x:hidden}
 .card .lvst i{display:block;width:17px;height:17px;background:linear-gradient(#ffe7a0,#d39a2e);clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);filter:drop-shadow(0 0 2px #000)}
 .card.adj .gem{box-shadow:0 0 0 2px #a3d47c,0 0 12px #a3d47c}
 .herostat{display:flex;gap:10px;flex-wrap:wrap}.herostat span{display:flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid rgba(232,192,106,.4);border-radius:10px;background:rgba(232,192,106,.07)}.herostat b{font-size:17px;color:var(--brass)}
+.troops{display:grid;gap:6px;margin:6px 0}.trow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--line);border-radius:10px}.tctl{display:flex;align-items:center;gap:8px}.tctl b{min-width:22px;text-align:right}
 .lnk{background:none;border:0;padding:0;color:var(--brass);font:inherit;font-size:12px;text-decoration:underline dotted;cursor:pointer}
 .btn.sm{padding:6px 10px;font-size:13px}
 .cards.hand{grid-template-columns:repeat(3,minmax(0,1fr))}
@@ -482,7 +483,7 @@ body{overflow-x:hidden}
 <style id="imgcss"></style>
 
 <script>
-const BUILD_VER="14.11.2026 08:10";
+const BUILD_VER="14.11.2026 08:57";
 let SLOT=1;try{SLOT=+localStorage.getItem('sixlands-slot')||1}catch(e){}
 const SK_=n=>'sixlands-save-'+n;
 try{const old=localStorage.getItem('tiholesye-v3');if(old&&!localStorage.getItem(SK_(1))){localStorage.setItem(SK_(1),old);localStorage.removeItem('tiholesye-v3')}}catch(e){}
@@ -893,11 +894,13 @@ function applyMyLosses(S){const won=LASTRES?(S===LASTRES.A?LASTRES.win:!LASTRES.
   const hg=S.g.find(g=>g.id==='hero');if(hg&&s.hero){heroXp(won?2:1);if(!won&&hg.n<.4&&rnd()<.6){s.hero.hurt=s.day+6;log(`Староста ${s.hero.name} ранен и 6 ходов не сможет сражаться.`,'bad')}}
   S.g.filter(g=>g.ally).forEach(g=>{const r2=s.rivals[g.ri];if(r2){r2.army=Math.max(0,r2.army-(g.n0-Math.max(0,g.n)));r2.rel=Math.min(100,r2.rel+1)}});
   h4After(S,won);
-  if(buff('cry'))delete s.buffs.cry;S.g.forEach(x=>{if(x.fixed)return;const k=Math.max(0,x.n);s.army[x.id]=Math.min(s.army[x.id]||0,Math.floor(k)+(rnd()<k-Math.floor(k)?1:0))})}
-function mySide(o={}){const st=stats();const S=mkSide('Ваше войско',s.army,id=>({...U[id],def:U[id].def*(1+vb(id)/2)}),u=>uAtk(u)*(1+vb(u.id)),{garrison:o.home?st.bdef/5+st.P/10:0,wall:o.home?st.bdef:0,tac:o.tac||s.tactic||'shield',home:o.home});
+  if(buff('cry'))delete s.buffs.cry;S.g.forEach(x=>{if(x.fixed)return;const k=Math.max(0,x.n);const surv=Math.min(x.n0,Math.floor(k)+(rnd()<k-Math.floor(k)?1:0));s.army[x.id]=Math.max(0,(s.army[x.id]||0)-(x.n0-surv));x.surv=surv});
+  if(!S.home)markUsed(S)}
+function mySide(o={}){const st=stats();const S=mkSide('Ваше войско',o.home?s.army:(o.counts||availArmy()),id=>({...U[id],def:U[id].def*(1+vb(id)/2)}),u=>uAtk(u)*(1+vb(u.id)),{garrison:o.home?st.bdef/5+st.P/10:0,wall:o.home?st.bdef:0,tac:o.tac||s.tactic||'shield',home:o.home});
   S.g.forEach(x=>{if(!x.fixed&&vr(x.id))x.name+=` · ${VR[vr(x.id)].n}`});
-  if(s.hero&&heroFree()&&s.hero.lead!==false)S.g.push({id:'hero',name:'Староста '+s.hero.name,ic:I('rank'),type:'inf',atk:heroPow()*.8,hp:heroPow()*.9,n0:1,n:1,fixed:1});
-  h4Groups().forEach(g=>S.g.push(g));h4Buff(S);
+  const heroOk=o.home||!usedT().h;
+  if(heroOk&&s.hero&&heroFree()&&s.hero.lead!==false)S.g.push({id:'hero',name:'Староста '+s.hero.name,ic:I('rank'),type:'inf',atk:heroPow()*.8,hp:heroPow()*.9,n0:1,n:1,fixed:1});
+  if(heroOk)h4Groups().forEach(g=>S.g.push(g));h4Buff(S);
   if(o.vs)allyGroups(o.vs).forEach(g=>S.g.push(g));
   if(buff('cry'))S.g.forEach(g=>g.atk*=1.2);return S}
 function rivalSide(r,o={}){return mkSide(rivalName(r),rivalCounts(r,o.attacking),id=>rivalUnit(r.c,id),u=>rivalAtk(r.c,u),{garrison:o.home?r.wall*3/4+r.pop/10:0,wall:o.home?r.wall*3:0,tac:o.tac||pickTac(r.c),home:o.home})}
@@ -908,6 +911,21 @@ const uAtk=u=>u.atk*(1+.1*((s&&s.gens)||0))*MOD('atk')*(u.bow?MOD('bow'):1)*(u.m
 function armyAtk(){return UNITS.reduce((a,u)=>a+(s.army[u.id]||0)*uAtk(u)*(1+vb(u.id)),0)}
 function armyDef(){return UNITS.reduce((a,u)=>a+(s.army[u.id]||0)*u.def,0)}
 function armySize(){return UNITS.reduce((a,u)=>a+(s.army[u.id]||0),0)}
+function usedT(){if(!s.used||s.used.d!==s.day)s.used={d:s.day,u:{},h:0};return s.used}
+function availArmy(){const U2=usedT().u,o={};for(const k in s.army){const v=(s.army[k]||0)-(U2[k]||0);if(v>0)o[k]=v}return o}
+const availSize=()=>Object.values(availArmy()).reduce((a,b)=>a+b,0);
+function markUsed(S){const T=usedT();S.g.forEach(g=>{if(g.fixed||!U[g.id])return;T.u[g.id]=(T.u[g.id]||0)+(g.surv!=null?g.surv:Math.round(Math.max(0,g.n)))});T.h=1}
+let SEND=null;
+function troopRows(){const A=availArmy();SEND={...A};
+  return`<div class="troops">${Object.keys(A).map(id=>`<div class="trow"><span>${U[id].ic} ${U[id].n}${vr(id)?' · '+VR[vr(id)].n:''}</span><span class="tctl"><button class="btn ghost sm" data-tm="${id}">−</button><b id="tn_${id}">${A[id]}</b>/${A[id]}<button class="btn ghost sm" data-tp="${id}">+</button></span></div>`).join('')}</div>
+  <div class="small muted">Отправленные воины сражаются один раз за ход. Оставшиеся смогут выступить в другой поход в этот же ход.</div>`}
+function bindTroops(){const A=availArmy();const M=$('#modal');
+  M.querySelectorAll('[data-tm]').forEach(b=>b.onclick=()=>{const id=b.dataset.tm;SEND[id]=Math.max(0,SEND[id]-1);$('#tn_'+id).textContent=SEND[id]});
+  M.querySelectorAll('[data-tp]').forEach(b=>b.onclick=()=>{const id=b.dataset.tp;SEND[id]=Math.min(A[id],SEND[id]+1);$('#tn_'+id).textContent=SEND[id]})}
+const sendSize=()=>SEND?Object.values(SEND).reduce((a,b)=>a+b,0):0;
+function pickTroops(title,cb){if(noFresh())return;openModal(`<h2>${title}</h2><h3>Кого отправить</h3>${troopRows()}<div class="row"><button class="btn" id="ptGo">В бой</button><button class="btn ghost" id="ptX">Отмена</button></div>`,true);
+  bindTroops();$('#ptX').onclick=closeModal;$('#ptGo').onclick=()=>{if(!sendSize()){toast('Выберите хотя бы одного воина');return}const c={...SEND};closeModal();cb(c)}}
+function noFresh(){if(availSize()>0)return false;toast('Все воины уже сражались в этот ход. Они смогут снова выступить в следующем ходу.');sfx('bad');return true}
 function myPower(){return armyAtk()+stats().def*.5}
 const BUFFN={fest:'Праздник',skin:'Каменная кожа',bloom:'Цветение полей',ward:'Погодный оберег',scare:'Страх после набега',horn:'Боевой рог',mirage:'Мираж'};
 
@@ -1387,20 +1405,23 @@ function enemyAttack(r){
   else{const g=Math.round(s.res.gold*.2),f=Math.round(s.res.food*.2),w=Math.round(s.res.wood*.2);s.res.gold-=g;s.res.food-=f;s.res.wood-=w;s.buffs.scare=s.day+6;loseFamily('После разорения');REPORT.push([`Деревня разграблена: ${n}`,`Потеряно ${g} золота, ${f} еды, ${w} дерева, одна семья ушла.`,'bad',html]);sfx('bad')}
 }
 function tacCard(k,o={}){const t=TACT[k];return card({cls:`c-unit ${o.cls||''}`,name:t.n,artCls:'cat',art:`<span class="emo">${t.ic}</span>`,text:`${t.d} Бьёт «${TACT[t.beats].n}».`,attrs:o.attrs||'',el:o.el})}
-function attackRival(i,tac){
+function attackRival(i,tac,counts){
   const r=s.rivals[i];if(!r.war||!armySize())return;const n=rivalName(r);
+  if(noFresh())return;
   if(!tac){
     const est=rivalCounts(r,false);
     openModal(`<h2>Поход на народ «${n}»</h2>
+      <p class="small up">Готовы к походу в этот ход: ${availSize()} из ${armySize()} воинов.</p>
       <p class="small">Разведка: у врага около ${Math.round(r.army)} воинов, стены ${Math.round(r.wall*3)}. Их любимая тактика — <b>${TACT[favTac(r.c)].n}</b>.</p>
       <div class="small muted">${hasIntel(i)?'<b class="up">Точные сведения шпиона.</b> ':''}Состав: ${Object.entries(est).filter(([k,v])=>v>.3).map(([k,v])=>{const u=rivalUnit(r.c,k);return`${u.ic} ${u.n} ~${Math.round(v)}`}).join(' · ')}</div>
+      <h3>Кого отправить</h3>${troopRows()}
       <h3>Выберите тактику</h3><div class="cards picker">${TK.map(k=>tacCard(k,{attrs:`data-tc="${k}"`})).join('')}</div>
       <div class="small muted">Стена щитов бьёт Натиск, Натиск бьёт Обход, Обход бьёт Стену щитов. Осадные машины пробивают стены.</div>
       <button class="btn ghost" id="tcx">Отмена</button>`,true);
-    $('#tcx').onclick=closeModal;$('#modal').querySelectorAll('[data-tc]').forEach(b=>b.onclick=()=>{closeModal();attackRival(i,b.dataset.tc)});return;
+    $('#tcx').onclick=closeModal;bindTroops();$('#modal').querySelectorAll('[data-tc]').forEach(b=>b.onclick=()=>{if(!sendSize()){toast('Выберите хотя бы одного воина');return}const c={...SEND};closeModal();attackRival(i,b.dataset.tc,c)});return;
   }
   s.rivals.forEach(o=>{if(o!==r&&!o.vassal&&!o.war)o.rel-=3});
-  const A=mySide({tac,vs:r}),D=rivalSide(r,{home:true});const res=battle(A,D);
+  const A=mySide({tac,vs:r,counts}),D=rivalSide(r,{home:true});const res=battle(A,D);
   applyMyLosses(A);r.army=remainArmy(D);let msg;
   if(res.win){
     const loot=Math.round(r.gold*.4+r.pop*2);s.res.gold+=loot;r.gold*=.6;r.pop*=.8;r.wall=Math.max(1,r.wall*.8);r.hits++;s.rep=Math.min(100,s.rep+3);
@@ -2713,9 +2734,10 @@ function pirateModal(){
     log(`Набег пиратов: ${res.win?'поражение':'победа'}.`,res.win?'bad':'good');
     openModal(`<h2>Бой с пиратами</h2><p>${msg}</p>${battleHTML(res,false)}<button class="btn" id="prx">Дальше</button>`);$('#prx').onclick=()=>{closeModal();save();render()}};
 }
-function attackCove(){
-  if(!armySize())return;
-  const A=mySide({tac:s.tactic==='shield'?'rush':s.tactic||'rush'}),D=pirSide(true);const res=battle(A,D);applyMyLosses(A);let msg;
+function attackCove(counts){
+  if(!armySize()||noFresh())return;
+  if(!counts){pickTroops('Штурм пиратской бухты',c=>attackCove(c));return}
+  const A=mySide({counts,tac:s.tactic==='shield'?'rush':s.tactic||'rush'}),D=pirSide(true);const res=battle(A,D);applyMyLosses(A);let msg;
   if(res.win){const loot=Math.round(120+s.day*1.2);s.res.gold+=loot;s.rep=Math.min(100,s.rep+5);s.pir.quiet=s.day+50;s.pir.next=Math.max(s.pir.next,s.pir.quiet);s.pir.due=false;s.wins=(s.wins||0)+1;s.gp.war++;msg=`<b class="up">Бухта взята!</b> Сокровища пиратов: ${loot}${RI.gold}, слава +5. Пираты не появятся ближайшие 50 ходов.`;sfx('good')}
   else{msg=`<b class="dn">Штурм провалился.</b> Пираты удержали бухту.`;sfx('bad')}
   log(`Штурм пиратской бухты: ${res.win?'победа':'поражение'}.`,res.win?'good':'bad');
@@ -2739,11 +2761,11 @@ function openCity(id){
   on('#cyG',()=>{s.res.gold-=cost;x.inf=Math.min(100,x.inf+15);sfx('coin');log(`Дар городу ${c.n}: влияние ${Math.round(x.inf)}.`);save();render();openCity(id)});
   on('#cyW',()=>confirmBox(`Война с городом ${c.n}?`,'Влияние упадёт до нуля, другие города-государства станут хуже к вам относиться.','Объявить войну',()=>{x.war=true;x.inf=0;CITIES.forEach(o=>{if(o!==c&&!s.cs[o.id].own)s.cs[o.id].inf=Math.max(0,s.cs[o.id].inf-10)});sfx('war');log(`Объявлена война городу ${c.n}.`,'bad');save();render();openCity(id)}));
   on('#cyP',()=>{x.war=false;x.inf=0;log(`Мир с городом ${c.n}.`);save();render();openCity(id)});
-  on('#cyA',()=>{const A=mySide({tac:s.tactic==='shield'?'rush':s.tactic||'rush'}),D=citySide(c);const res=battle(A,D);applyMyLosses(A);let msg;
+  on('#cyA',()=>pickTroops(`Штурм: ${c.n}`,counts=>{const A=mySide({counts,tac:s.tactic==='shield'?'rush':s.tactic||'rush'}),D=citySide(c);const res=battle(A,D);applyMyLosses(A);let msg;
     if(res.win){x.own=true;x.war=false;CITIES.forEach(o=>{if(o!==c&&!s.cs[o.id].own)s.cs[o.id].inf=Math.max(0,s.cs[o.id].inf-20)});s.rivals.forEach(r=>{if(!r.vassal)r.rel-=5});s.rep=Math.min(100,s.rep+4);s.wins=(s.wins||0)+1;s.gp.war++;msg=`<b class="up">${c.n} захвачен!</b> Теперь город приносит: ${c.a}, в полтора раза больше.`;sfx('good')}
     else{msg=`<b class="dn">Штурм отбит.</b> Стены города выстояли.`;sfx('bad')}
     log(`Штурм города ${c.n}: ${res.win?'победа':'поражение'}.`,res.win?'good':'bad');
-    openModal(`<h2>${c.n}</h2><p>${msg}</p>${battleHTML(res,true)}<button class="btn" id="cyR">Дальше</button>`);$('#cyR').onclick=()=>{closeModal();save();render()}});
+    openModal(`<h2>${c.n}</h2><p>${msg}</p>${battleHTML(res,true)}<button class="btn" id="cyR">Дальше</button>`);$('#cyR').onclick=()=>{closeModal();save();render()}}));
 }
 function cityCard(c,o={}){const l=csLevel(c),x=s.cs[c.id];const tag=x.war?'Война':['','Друг','Союзник','Ваш город'][Math.max(0,l)];
   return card({cls:`c-rival ${o.cls||''}`,name:c.n,artCls:'cat',art:artOfRaw('cs_'+c.id,I(c.ic)),text:o.cls==='big'?c.kind:(x.own?c.kind:`Влияние ${Math.round(x.inf)}`),tag,tagCls:x.war?'bad':l>=2?'ok':l===1?'arc':'',attrs:o.attrs||'',el:o.el})}
